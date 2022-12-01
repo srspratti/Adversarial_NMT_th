@@ -52,9 +52,14 @@ class SequenceGenerator(object):
                 where x is the source sentence length.
             cuda: use GPU for generation
         """
+        print("maxlen_a: ", maxlen_a)
+        print("maxlen_b: ", maxlen_b)
+        print("maxlen: ", self.maxlen)
         if maxlen_b is None:
             maxlen_b = self.maxlen
 
+        print("maxlen: ", self.maxlen)
+        
         for sample in data_itr:
             s = utils.make_variable(sample, cuda=cuda)
             input = s['net_input']

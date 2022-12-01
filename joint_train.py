@@ -33,6 +33,7 @@ from generator import LSTMModel
 from train_generator_new import train_g
 from train_discriminator import train_d
 from PGLoss import PGLoss
+from tqdm import tqdm
 
 
 
@@ -116,9 +117,9 @@ def main(args):
         generator.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint'):
-        os.makedirs('checkpoints/joint')
-    checkpoints_path = 'checkpoints/joint/'
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_raw_sm_v2'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_raw_sm_v2')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_raw_sm_v2/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -146,7 +147,7 @@ def main(args):
     best_dev_loss = math.inf
     num_update = 0
     # main training loop
-    for epoch_i in range(1, args.epochs + 1):
+    for epoch_i in tqdm(range(1, args.epochs + 1)):
         logging.info("At {0}-th epoch.".format(epoch_i))
 
         seed = args.seed + epoch_i
@@ -181,7 +182,7 @@ def main(args):
         discriminator.train()
         update_learning_rate(num_update, 8e4, args.g_learning_rate, args.lr_shrink, g_optimizer)
 
-        for i, sample in enumerate(trainloader):
+        for i, sample in tqdm(enumerate(trainloader)):
 
             if use_cuda:
                 # wrap input tensors in cuda tensors
@@ -269,6 +270,12 @@ def main(args):
 
             fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
 
+            
+            # To-Do : Can add ? ? Need to research a bit more on this 
+            # disc_out_humanTranSent = discriminator(src_sentence, true_sentence)
+            # d_loss_human = d_criterion(disc_out_humanTranSent.squeeze(1), true_labels)
+            # then d_loss = Average(d_loss + d_loss_human)
+            
             if use_cuda:
                 fake_labels = fake_labels.cuda()
             
@@ -312,7 +319,10 @@ def main(args):
             if val is not None:
                 val.reset()
 
-        for i, sample in enumerate(valloader):
+        for i, sample in tqdm(enumerate(valloader)):
+            
+            # print statements for debugging purposes
+            print("####################### the value of i in valloader is {} #######################".format(i))
 
             with torch.no_grad():
                 if use_cuda:
@@ -332,19 +342,55 @@ def main(args):
 
                 # discriminator validation
                 bsz = sample['target'].size(0)
+                print("bsz value is {}".format(bsz))
                 src_sentence = sample['net_input']['src_tokens']
                 # train with half human-translation and half machine translation
 
                 true_sentence = sample['target']
                 true_labels = Variable(torch.ones(sample['target'].size(0)).float())
 
+                
+                # print statements for debugging purposes
+                print("sample type is {}".format(type(sample)))
+                print("sample keys are {}".format(sample.keys()))
+                print("sample dict length is {}".format(len(sample)))
+                
+                print("sample['id] ", type(sample['id']))
+                print("sample['id] size ", sample['id'].size())
+                
+                print("sample[''ntokens'] ", type(sample['ntokens']))
+                print("sample['ntokens'] ", sample['ntokens'])
+                
+                print("sample[''net_input'] ", type(sample['net_input']))
+                print("sample['net_input'] ", sample['net_input'].keys())
+                
+                print("sample['target'] ", type(sample['target']))
+                print("sample['target'] ", sample['target'].size())
+                
+                print("sample['net_input']['src_tokens'] ", sample['net_input']['src_tokens'])
+                print("sample['net_input']['prev_output_tokens'] ", sample['net_input']['prev_output_tokens'])
+            
                 with torch.no_grad():
                     sys_out_batch = generator(sample)
+                
+                # print statements for debugging purposes
+                print("sys_out_batch size is {}".format(sys_out_batch.size()))
 
                 out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
+                
+                # print statements for debugging purposes
+                print("out_batch size is {}".format(out_batch.size()))
 
                 _,prediction = out_batch.topk(1)
+                
+                # print statements for debugging purposes
+                print("prediction size is {}".format(prediction.size()))
+                
                 prediction = prediction.squeeze(1)  #64 * 50 = 6632
+                
+                # print statements for debugging purposes
+                print("prediction.squeeze(1) value  is {}".format(prediction))
+                print("prediction.squeeze(1) type  is {}".format(type(prediction)))
 
                 fake_labels = Variable(torch.zeros(sample['target'].size(0)).float())
 
@@ -352,8 +398,34 @@ def main(args):
 
                 if use_cuda:
                     fake_labels = fake_labels.cuda()
-
+                    
+                print("This {} is the source sentence type".format(type(src_sentence)))
+                print("This {} is the source sentence size".format(src_sentence.size()))
+                print("This {} is the fake sentence(generated by G)type".format(type(fake_sentence)))
+                print("This {} is the fake sentence(generated by G)size".format(fake_sentence.size()))
+                
+                """
+                This <class 'torch.Tensor'> is the source sentence type
+                This torch.Size([1, 50]) is the source sentence size
+                This <class 'torch.Tensor'> is the fake sentence(generated by G)type
+                This torch.Size([1, 50]) is the fake sentence(generated by G)size
+                """
+                
                 disc_out = discriminator(src_sentence, fake_sentence)
+                
+                print("This {} is the disc_out type".format(type(disc_out)))
+                print("This {} is the disc_out size".format(disc_out.size()))
+                print("This {} is the disc_out.squeeze(1) type".format(type(disc_out.squeeze(1))))
+                print("This {} is the disc_out.squeeze(1) size".format(disc_out.squeeze(1).size()))
+                print("This {} is the disc_out.squeeze(1) value".format(disc_out.squeeze(1)))
+                
+                """
+                This <class 'torch.Tensor'> is the disc_out type
+                This torch.Size([1, 1]) is the disc_out size
+                This <class 'torch.Tensor'> is the disc_out.squeeze(1) type
+                This torch.Size([1]) is the disc_out.squeeze(1) size
+                This tensor([0.0113], device='cuda:0') is the disc_out.squeeze(1) value
+                """
                 d_loss = d_criterion(disc_out.squeeze(1), fake_labels)
                 acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
                 d_logging_meters['valid_acc'].update(acc)
@@ -361,12 +433,21 @@ def main(args):
                 logging.debug(f"D dev loss {d_logging_meters['valid_loss'].avg:.3f}, acc {d_logging_meters['valid_acc'].avg:.3f} at batch {i}")
 
         torch.save(generator,
-                   open(checkpoints_path + f"joint_{g_logging_meters['valid_loss'].avg:.3f}.epoch_{epoch_i}.pt",
+                   open(checkpoints_path + f"test_joint_g_{g_logging_meters['valid_loss'].avg:.3f}.epoch_{epoch_i}.pt",
+                        'wb'), pickle_module=dill)
+        print("saving discriminator: ")
+        torch.save(discriminator,
+                   open(checkpoints_path + f"test_joint_d_{d_logging_meters['valid_loss'].avg:.3f}.epoch_{epoch_i}.pt",
                         'wb'), pickle_module=dill)
 
         if g_logging_meters['valid_loss'].avg < best_dev_loss:
             best_dev_loss = g_logging_meters['valid_loss'].avg
-            torch.save(generator, open(checkpoints_path + "best_gmodel.pt", 'wb'), pickle_module=dill)
+            torch.save(generator, open(checkpoints_path + "test_best_gmodel.pt", 'wb'), pickle_module=dill)
+            torch.save(discriminator, open(checkpoints_path + "test_best_dmodel_at_best_gmodel.pt", 'wb'), pickle_module=dill)
+        
+        # if g_logging_meters['valid_loss'].avg < best_dev_loss:
+        #     best_dev_loss = g_logging_meters['valid_loss'].avg
+        #     torch.save(generator, open(checkpoints_path + "best_gmodel.pt", 'wb'), pickle_module=dill)
 
 
 def update_learning_rate(update_times, target_times, init_lr, lr_shrink, optimizer):

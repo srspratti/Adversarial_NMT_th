@@ -34,6 +34,7 @@ class Dictionary(object):
 
     def index(self, sym):
         """Returns the index of the specified symbol"""
+        print("self.indices", self.indices)
         if sym in self.indices:
             return self.indices[sym]
         return self.unk_index

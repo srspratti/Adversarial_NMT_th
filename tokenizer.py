@@ -60,15 +60,24 @@ class Tokenizer:
     @staticmethod
     def tokenize(line, dict, tokenize=tokenize_line, add_if_not_exist=True, consumer=None):
         words = tokenize(line)
+        print("words ", words)
         nwords = len(words)
+        print("nwords ", nwords)
         ids = torch.IntTensor(nwords + 1)
+        print("type of dict ", type(dict))
         for i, word in enumerate(words):
+            print("word ==> ", word) 
+            print("add_if_not_exist ", add_if_not_exist)
             if add_if_not_exist:
                 idx = dict.add_symbol(word)
             else:
                 idx = dict.index(word)
             if consumer is not None:
                 consumer(word, idx)
+            print("i ", i)
+            print("idx ", idx)
             ids[i] = idx
+            print("ids[i] ", ids[i])
         ids[nwords] = dict.eos_index
+        print("ids ", ids)
         return ids

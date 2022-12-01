@@ -36,6 +36,10 @@ class LSTMModel(nn.Module):
         # encoder_output: (seq_len, batch, hidden_size * num_directions)
         # _encoder_hidden: (num_layers * num_directions, batch, hidden_size)
         # _encoder_cell: (num_layers * num_directions, batch, hidden_size)
+        print("sample['net_input'] size, ", len(sample['net_input']))
+        
+        print("sample['net_input']['src_tokens'] size ", sample['net_input']['src_tokens'].size())
+        print("sample['net_input']['src_lengths'] size", sample['net_input']['src_lengths'].size())
         encoder_out = self.encoder(sample['net_input']['src_tokens'], sample['net_input']['src_lengths'])
         
         # # The encoder hidden is  (layers*directions) x batch x dim.   
@@ -46,6 +50,8 @@ class LSTMModel(nn.Module):
 
         decoder_out, attn_scores = self.decoder(sample['net_input']['prev_output_tokens'], encoder_out)
         decoder_out = F.log_softmax(decoder_out, dim=2)
+        
+        print("size of decoder_out is {}".format(decoder_out.size()))
         
         # sys_out_batch = decoder_out.contiguous().view(-1, decoder_out.size(-1))
         # loss = F.nll_loss(sys_out_batch, train_trg_batch, reduction='sum', ignore_index=self.dst_dict.pad())        
@@ -70,6 +76,9 @@ class LSTMEncoder(nn.Module):
         self.dropout_out = dropout_out
 
         num_embeddings = len(dictionary)
+        print("num_embeddings in LSTM Encoder", num_embeddings)
+        print("embed_dim in LSTM Encoder", embed_dim)
+        
         self.padding_idx = dictionary.pad()
         self.embed_tokens = Embedding(num_embeddings, embed_dim, self.padding_idx)
 
@@ -84,9 +93,17 @@ class LSTMEncoder(nn.Module):
     def forward(self, src_tokens, src_lengths):
 
         bsz, seqlen = src_tokens.size()
+        
+        print("src_tokens.size() : ", src_tokens.size())
+        print("bsz in forward G Encoder: is {}".format(bsz))
+        print("seqlen in forward G Encoder: is {}".format(seqlen))
 
         # embed tokens
         x = self.embed_tokens(src_tokens)
+        
+        # print statements for debugging purposes
+        print(" encoder fwd. 'x' size is {}".format(x.size()))
+            
         x = F.dropout(x, p=self.dropout_in, training=self.training)
         embed_dim = x.size(2)
 
@@ -108,6 +125,9 @@ class LSTMEncoder(nn.Module):
         # x, _ = nn.utils.rnn.pad_packed_sequence(packed_outs, padding_value=0.)
         x = F.dropout(x, p=self.dropout_out, training=self.training)
         assert list(x.size()) == [seqlen, bsz, embed_dim]
+        
+        # print statements for debugging purposes
+        print(" returning encoder fwd. 'x' size is {}".format(x.size()))
 
         return x, final_hiddens, final_cells
 
@@ -150,6 +170,8 @@ class LSTMDecoder(nn.Module):
         self.dropout_out = dropout_out
 
         num_embeddings = len(dictionary)
+        print("num_embeddings in LSTM Decoder", num_embeddings)
+        print("embed_dim in LSTM Decoder", embed_dim)
         padding_idx = dictionary.pad()
         self.embed_tokens = Embedding(num_embeddings, embed_dim, padding_idx)
 
@@ -232,6 +254,9 @@ class LSTMDecoder(nn.Module):
         attn_scores = attn_scores.transpose(0, 2)
 
         x = self.fc_out(x)
+        
+        # print statements for debugging purposes
+        print(" returning decoder fwd. 'x' size is {}".format(x.size()))
 
         return x, attn_scores
 
@@ -258,6 +283,8 @@ class LSTMDecoder(nn.Module):
 
 
 def Embedding(num_embeddings, embedding_dim, padding_idx):
+    print("num_embeddings in def Embedding: ", num_embeddings)
+    print("embedding_dim in def Embedding: ", num_embeddings)
     m = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
     m.weight.data.uniform_(-0.1, 0.1)
     return m

@@ -106,18 +106,28 @@ def load_dataset(path, load_splits, src=None, dst=None, maxlen=None):
 def load_raw_text_dataset(path, load_splits, src=None, dst=None, maxlen=None):
     """Loads specified data splits (e.g., test, train or valid) from raw text
     files in the specified folder."""
+    print("{} is the source \n".format(src))
+    print("{} is the destination \n".format(dst))
     if src is None and dst is None:
         # find language pair automatically
         src, dst = infer_language_pair(path, load_splits)
     assert src is not None and dst is not None, 'Source and target languages should be provided'
 
+    print("path: \n", path)
     src_dict, dst_dict = load_dictionaries(path, src, dst)
+    print("{} : is source dictionary".format(len(src_dict)))
+    print("{} : is destination dictionary".format(len(dst_dict)))
     dataset = LanguageDatasets(src, dst, src_dict, dst_dict)
 
     # Load dataset from raw text files
     for split in load_splits:
+        print("split ",split)
         src_path = os.path.join(path, '{}.{}'.format(split, src))
         dst_path = os.path.join(path, '{}.{}'.format(split, dst))
+        print("src_path : ", src_path)
+        print("src_dict : ", src_dict)
+        print("dst_path : ", dst_path)
+        print("dst_dict : ", dst_dict)
         dataset.splits[split] = LanguagePairDataset(
             IndexedRawTextDataset(src_path, src_dict),
             IndexedRawTextDataset(dst_path, dst_dict),

@@ -47,8 +47,11 @@ class IndexedDataset(object):
         with open(path + '.idx', 'rb') as f:
             magic = f.read(8)
             print("magic: ",magic)
-            assert magic == b'TNTIDX\x00\x00'
+            print("file f: ", f)
+            # assert magic == b'TNTIDX\x00\x00'
+            # assert magic == b'MMIDIDX\x00'
             version = f.read(8)
+            print("struct.unpack('<Q', version) :", struct.unpack('<Q', version))
             assert struct.unpack('<Q', version) == (1,)
             code, self.element_size = struct.unpack('<QQ', f.read(16))
             self.dtype = dtypes[code]
@@ -116,8 +119,10 @@ class IndexedRawTextDataset(IndexedDataset):
         self.size = len(self.tokens_list)
 
     def read_data(self, path, dictionary):
+        print("path ", path)
         with open(path, 'r') as f:
             for line in f:
+                print("line : ", line)
                 self.lines.append(line.strip('\n'))
                 # +1 for Lua compatibility
                 tokens = Tokenizer.tokenize(line, dictionary, add_if_not_exist=False) + 1

@@ -33,7 +33,7 @@ def main(args):
         cuda.set_device(args.gpuid[0])
 
         # Load dataset
-        if args.replace_unk is None:
+        if args.replace_unk is not None:
             dataset = data.load_dataset(
                 args.data,
                 ['test'],
@@ -58,7 +58,10 @@ def main(args):
             dataset.dst, len(dataset.dst_dict)))
         print('| {} {} {} examples'.format(
             args.data, 'test', len(dataset.splits['test'])))
-
+    
+    print("dataset type:", type(dataset))
+    
+    
     # Set model parameters
     args.encoder_embed_dim = 1000
     args.encoder_layers = 2
@@ -70,7 +73,8 @@ def main(args):
     args.bidirectional = False
 
     # Load model
-    g_model_path = 'checkpoints/joint/best_gmodel.pt'
+    # g_model_path = 'checkpoints/joint/best_gmodel.pt'
+    g_model_path = 'checkpoints/joint/test_wmt14_en_fr_raw_sm_v2/test_best_gmodel.pt'
     assert os.path.exists(g_model_path)
     generator = LSTMModel(args, dataset.src_dict,
                           dataset.dst_dict, use_cuda=use_cuda)
@@ -112,8 +116,8 @@ def main(args):
     if use_cuda:
         translator.cuda()
 
-    with open('predictions.txt', 'wb') as translation_writer:
-        with open('real.txt', 'wb') as ground_truth_writer:
+    with open('predictions_fr_en.txt', 'wb') as translation_writer:
+        with open('real_fr_en.txt', 'wb') as ground_truth_writer:
 
             translations = translator.generate_batched_itr(
                 testloader, maxlen_a=args.max_len_a, maxlen_b=args.max_len_b, cuda=use_cuda)
