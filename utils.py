@@ -72,3 +72,14 @@ def set_incremental_state(module, incremental_state, key, value):
         full_key = _get_full_incremental_state_key(module, key)
         incremental_state[full_key] = value
 
+def translate():
+    from deep_translator import GoogleTranslator
+    translated = GoogleTranslator(source='auto', target='fr').translate("keep it up, you are awesome")  # output -> Weiter so, du bist großartig
+    print("translated ", translated)
+    
+def main():
+        print("main ")
+        translate()
+        
+if __name__ == "__main__":
+    main()
