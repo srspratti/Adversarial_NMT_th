@@ -144,6 +144,43 @@ class IndexedRawTextDataset(IndexedDataset):
     def __len__(self):
         return self.size
 
+class IndexedRawTextDataset_label(IndexedDataset):
+    """Takes a text file containing labels as input and binarizes it in memory at instantiation.
+    Original lines are also kept in memory"""
+
+    def __init__(self, path):
+        # self.tokens_list = []
+        self.lines = []
+        self.sizes = []
+        self.read_data(path)
+        self.size = len(self.sizes)
+
+    def read_data(self, path):
+        print("path ", path)
+        with open(path, 'r') as f:
+            for i, line in enumerate(f):
+                print("line : ", line)
+                self.lines.append(int(line.strip('\n')))
+                # # +1 for Lua compatibility
+                # tokens = Tokenizer.tokenize(line, dictionary, add_if_not_exist=False) + 1
+                # self.tokens_list.append(tokens)
+                self.sizes.append(i)
+        self.sizes = np.array(self.sizes)
+
+    def __getitem__(self, i):
+        self.check_index(i)
+        return self.lines[i]
+
+    def get_original_label(self, i):
+        self.check_index(i)
+        return self.lines[i]
+
+    def __del__(self):
+        pass
+
+    def __len__(self):
+        return self.size
+
 
 class IndexedDatasetBuilder(object):
 

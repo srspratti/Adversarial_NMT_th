@@ -8,6 +8,9 @@ import options
 import data
 from generator import LSTMModel
 from discriminator import Discriminator
+import utils
+from tqdm import tqdm
+from torch.autograd import Variable
 
 from sequence_generator import SequenceGenerator
 
@@ -42,7 +45,7 @@ def main(args):
                 args.trg_lang,
             )
         else:
-            dataset = data.load_raw_text_dataset(
+            dataset = data.load_raw_text_dataset_test_classify(
                 args.data,
                 ['test'],
                 args.src_lang,
@@ -68,7 +71,8 @@ def main(args):
     
     ########### --- Loading best discriminator ---------###################
     
-    d_model_path = 'checkpoints/joint/wmt14_en_fr_raw_sm/best_dmodel_at_best_gmodel.pt'
+    # d_model_path = 'checkpoints/joint/wmt14_en_fr_raw_sm/best_dmodel_at_best_gmodel.pt'
+    d_model_path = 'checkpoints/joint/test_wmt14_en_fr_raw_sm_v2/test_best_dmodel_at_best_gmodel.pt'
     assert os.path.exists(d_model_path)
     discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict,  use_cuda=use_cuda)
     model_dict_dmodel = discriminator.state_dict()
@@ -104,7 +108,7 @@ def main(args):
     else:
         discriminator.cpu()
     
-    #max_positions = generator.encoder.max_positions()
+    max_positions = int(1e5)
     
     # initialize dataloader
     testloader = dataset.eval_dataloader(
@@ -116,11 +120,25 @@ def main(args):
     
     ################ TO-DO from here ############
     # discriminator validation
-    bsz = sample['target'].size(0)
-    src_sentence = sample['net_input']['src_tokens'] # Fr 
-    
-    true_sentence = sample['target'] # En 
-    true_labels = Variable(torch.ones(sample['target'].size(0)).float()) # Human Translated 
+    for i, sample in tqdm(enumerate(testloader)):
+        
+        if use_cuda:
+            sample = utils.make_variable(sample, cuda=cuda)
+        
+        print("in testloader")
+            
+        bsz = sample['target'].size(0)
+        src_sentence = sample['net_input']['src_tokens'] # Fr 
+        target = sample['target'] # En Human Translated
+        ht_mt_target = sample['ht_mt_target_trans']['ht_mt_target'] # En human or Machine
+        ht_mt_label = sample['ht_mt_target_trans']['ht_mt_label'] # En human or Machine labels - 1 for human and 0 for Machine
+        
+        # disc_out = discriminator(src_sentToBeTranslated, hm_or_mch_translSent)
+        disc_out = discriminator(src_sentence, ht_mt_target)
+        # If disc_out is 1 -> Human else if disc_out is 0 -> Machine
+        print("disc_out ", disc_out)
+        d_loss = d_criterion(disc_out.squeeze(1), ht_mt_label)
+        print("d_loss ", d_loss)
 
     
     # Machine Translated sentences

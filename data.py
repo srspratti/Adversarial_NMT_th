@@ -15,7 +15,7 @@ import os
 import torch
 import torch.utils.data
 from dictionary import Dictionary
-from indexed_dataset import IndexedDataset, IndexedInMemoryDataset, IndexedRawTextDataset
+from indexed_dataset import IndexedDataset, IndexedInMemoryDataset, IndexedRawTextDataset, IndexedRawTextDataset_label
 
 
 def has_binary_files(data_dir, splits):
@@ -135,6 +135,53 @@ def load_raw_text_dataset(path, load_splits, src=None, dst=None, maxlen=None):
             eos_idx=dataset.src_dict.eos(),
             maxlen=maxlen
         )
+    print("dataset: ", dataset)    
+    return dataset
+
+def load_raw_text_dataset_test_classify(path, load_splits, src=None, dst=None, maxlen=None):
+    """Loads specified data splits (e.g., test, train or valid) from raw text
+    files in the specified folder."""
+
+    print("{} is the source in load_raw_text_dataset_test_classify\n".format(src))
+    print("{} is the destination in load_raw_text_dataset_test_classify\n".format(dst))
+
+    assert src is not None and dst is not None, 'Source and target languages should be provided'
+
+    print("path: \n", path)
+    src_dict, dst_dict = load_dictionaries(path, src, dst)
+
+    print("{} : is source dictionary load_raw_text_dataset_test_classify".format(len(src_dict)))
+    print("{} : is destination dictionary load_raw_text_dataset_test_classify".format(len(dst_dict)))
+# to-do : Dec 5th - 2022 
+    dataset = LanguageDatasets_test_classify(src, dst, src_dict, dst_dict)
+
+    # Load dataset from raw text files
+    for split in load_splits:
+        print("split ",split)
+
+        src_path = os.path.join(path, 'src.fr')
+        dst_path = os.path.join(path, 'target.en')
+        ht_mt_path = os.path.join(path, 'ht_mt_target.en')
+        ht_mt_label_path = os.path.join(path, 'ht_mt_label')
+
+        print("src_path : ", src_path)
+        print("src_dict : ", src_dict)
+        print("dst_path : ", dst_path)
+        print("dst_dict : ", dst_dict)
+        
+        print("ht_mt_path ", ht_mt_path)
+        print("ht_mt_label_path ", ht_mt_label_path)
+        
+        dataset.splits[split] = LanguagePairDataset_test_classify(
+            IndexedRawTextDataset(src_path, src_dict),
+            IndexedRawTextDataset(dst_path, dst_dict),
+            IndexedRawTextDataset(ht_mt_path, dst_dict),
+            IndexedRawTextDataset_label(ht_mt_label_path),
+            pad_idx=dataset.src_dict.pad(),
+            eos_idx=dataset.src_dict.eos(),
+            maxlen=maxlen)
+        # )
+    print("dataset: ", dataset)    
     return dataset
 
 class LanguageDatasets(object):
@@ -177,6 +224,50 @@ class LanguageDatasets(object):
             ignore_invalid_inputs=skip_invalid_size_inputs_valid_test,
             descending=descending)
         batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards)
+        return torch.utils.data.DataLoader(
+            dataset, num_workers=num_workers, collate_fn=dataset.collater,
+            batch_sampler=batch_sampler)
+# to-do : Dec 5th - 2022 
+class LanguageDatasets_test_classify(object):
+    def __init__(self, src, dst, src_dict, dst_dict):
+        self.src = src
+        self.dst = dst
+        self.src_dict = src_dict
+        self.dst_dict = dst_dict
+        self.splits = {}
+
+        assert self.src_dict.pad() == self.dst_dict.pad()
+        assert self.src_dict.eos() == self.dst_dict.eos()
+        assert self.src_dict.unk() == self.dst_dict.unk()
+
+    # def train_dataloader(self, split, max_tokens=None,
+    #                      max_sentences=None, max_positions=(1024, 1024),
+    #                      seed=None, epoch=1, sample_without_replacement=0,
+    #                      sort_by_source_size=False, shard_id=0, num_shards=1):
+    #     dataset = self.splits[split]
+    #     with numpy_seed(seed):
+    #         batch_sampler = shuffled_batches_by_size(
+    #             dataset.src, dataset.dst, max_tokens=max_tokens,
+    #             max_sentences=max_sentences, epoch=epoch,
+    #             sample=sample_without_replacement, max_positions=max_positions,
+    #             sort_by_source_size=sort_by_source_size)
+    #         batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards)
+    #     return torch.utils.data.DataLoader(
+    #         dataset, collate_fn=dataset.collater,
+    #         batch_sampler=batch_sampler)
+        
+    def eval_dataloader(self, split, num_workers=0, max_tokens=None,
+                        max_sentences=None, max_positions=(1024, 1024),
+                        skip_invalid_size_inputs_valid_test=False,
+                        descending=False, shard_id=0, num_shards=1):
+        dataset = self.splits[split]
+        print("dataset: ", type(dataset))
+        batch_sampler = batches_by_size_test_classify(
+            dataset.src, dataset.dst, max_tokens, max_sentences,
+            max_positions=max_positions,
+            ignore_invalid_inputs=skip_invalid_size_inputs_valid_test,
+            descending=descending)
+        batch_sampler = mask_batches_test_classify(batch_sampler, shard_id=shard_id, num_shards=num_shards)
         return torch.utils.data.DataLoader(
             dataset, num_workers=num_workers, collate_fn=dataset.collater,
             batch_sampler=batch_sampler)
@@ -292,6 +383,143 @@ class LanguagePairDataset(torch.utils.data.Dataset):
                 copy_tensor(v, res[i][:len(v)])
         return res
 
+class LanguagePairDataset_test_classify(torch.utils.data.Dataset):
+    
+    # padding constants
+    LEFT_PAD_SOURCE = False
+    LEFT_PAD_TARGET = False
+
+    def __init__(self, src, dst, ht_mt, ht_mt_label, pad_idx, eos_idx, maxlen=None):
+        self.src = src
+        self.dst = dst
+        self.ht_mt = ht_mt
+        self.ht_mt_label = ht_mt_label
+        self.pad_idx = pad_idx
+        self.eos_idx = eos_idx
+        self.maxlen = maxlen
+
+    def __getitem__(self, i):
+        # subtract 1 for 0-based indexing
+        
+        print("self.src[i] ", self.src[i])
+        print("self.src[i].long() ", self.src[i].long())
+        print("self.src[i].long()-1 ", self.src[i].long()-1)
+        
+        source = self.src[i].long() - 1
+        
+        print("source in init --getitem-- ", source)
+        
+        target = self.dst[i].long() - 1
+        ht_mt_target = self.ht_mt[i].long() - 1
+        ht_mt_label =self.ht_mt_label[i]
+        
+        return {
+            'id': i,
+            'source': source,
+            'target': target,
+            'ht_mt_target': ht_mt_target,
+            'ht_mt_label': ht_mt_label, 
+        }
+
+    def __len__(self):
+        return len(self.src)
+
+    def collater(self, samples):
+        return LanguagePairDataset_test_classify.collate(samples, self.pad_idx, self.eos_idx, self.maxlen)
+
+    @staticmethod
+    def collate(samples, pad_idx, eos_idx, maxlen):
+        if len(samples) == 0:
+            return {}
+        def merge(key, left_pad, move_eos_to_beginning=False):
+            return LanguagePairDataset_test_classify.collate_tokens(
+                [s[key] for s in samples],
+                pad_idx, eos_idx, left_pad, move_eos_to_beginning, maxlen
+            )
+
+        id = torch.LongTensor([s['id'] for s in samples])
+        print("id ", id.size())
+        for s in samples:
+            print("s type ", type(s))
+            print("s keys() ", s.keys())
+            print("s s['id'] ", s['id'])
+            print("s s['source'] ", s['source'])
+            print("s s['target'] ", s['target'])
+            print("s s['ht_mt_target'] ", s['ht_mt_target'])
+            print("s s['ht_mt_label'] ", s['ht_mt_label'])
+        src_tokens = merge('source', left_pad=LanguagePairDataset_test_classify.LEFT_PAD_SOURCE)
+        target = merge('target', left_pad=LanguagePairDataset_test_classify.LEFT_PAD_TARGET)
+        ht_mt_target = merge('ht_mt_target', left_pad=LanguagePairDataset_test_classify.LEFT_PAD_TARGET)
+        ht_mt_label = torch.LongTensor([s['ht_mt_label'] for s in samples])
+        
+        # we create a shifted version of targets for feeding the
+        # previous output token(s) into the next decoder step
+        prev_output_tokens = merge(
+            'target',
+            left_pad=LanguagePairDataset_test_classify.LEFT_PAD_TARGET,
+            move_eos_to_beginning=True,
+        )
+        
+        prev_output_tokens_ht_mt_target = merge(
+            'ht_mt_target',
+            left_pad=LanguagePairDataset_test_classify.LEFT_PAD_TARGET,
+            move_eos_to_beginning=True,
+        )
+
+        # sort by descending source length
+        src_lengths = torch.LongTensor([s['source'].numel() for s in samples])
+        src_lengths, sort_order = src_lengths.sort(descending=True)
+        print("sort_order :", sort_order)
+        id = id.index_select(0, sort_order)
+        src_tokens = src_tokens.index_select(0, sort_order)
+        prev_output_tokens = prev_output_tokens.index_select(0, sort_order)
+        target = target.index_select(0, sort_order)
+        
+        prev_output_tokens_ht_mt_target = prev_output_tokens_ht_mt_target.index_select(0, sort_order)
+        ht_mt_target = ht_mt_target.index_select(0, sort_order)
+        ht_mt_label = ht_mt_label.index_select(0, sort_order)
+        
+        return {
+            'id': id,
+            'ntokens': sum(len(s['target']) for s in samples),
+            'net_input': {
+                'src_tokens': src_tokens,
+                'src_lengths': src_lengths,
+                'prev_output_tokens': prev_output_tokens,
+            },
+            'target': target,
+            'ht_mt_target_trans' :{
+                'ht_mt_target' : ht_mt_target, # ht_mt_target
+                'ht_mt_label' : ht_mt_label,
+                'prev_output_tokens_ht_mt_target': prev_output_tokens_ht_mt_target,
+            },
+        }
+
+    @staticmethod
+    def collate_tokens(values, pad_idx, eos_idx, left_pad, move_eos_to_beginning=False, maxlen=None):        
+        if maxlen is not None:
+            if not max([v.size(0) for v in values]) <= maxlen:
+                maxlen = max([v.size(0) for v in values])
+        size = max([v.size(0) for v in values]) if maxlen is None else maxlen
+        res = values[0].new(len(values), size).fill_(pad_idx)
+
+        def copy_tensor(src, dst):
+            assert dst.numel() == src.numel()
+            if move_eos_to_beginning:
+                assert src[-1] == eos_idx
+                dst[0] = eos_idx
+                dst[1:] = src[:-1]
+            else:
+                dst.copy_(src)
+
+        for i, v in enumerate(values):
+            if left_pad:
+                copy_tensor(v, res[i][size-len(v):])
+            else:
+                copy_tensor(v, res[i][:len(v)])
+        print("res type: ", type(res))
+        return res
+
 class Subset(LanguagePairDataset):
     def __init__(self, dataset, indices):
         self.dataset = dataset
@@ -391,6 +619,23 @@ def batches_by_size(src, dst, max_tokens=None, max_sentences=None,
         src, dst, indices, max_tokens, max_sentences, max_positions,
         ignore_invalid_inputs, allow_different_src_lens=False))
 
+def batches_by_size_test_classify(src, dst, max_tokens=None, max_sentences=None,
+                    max_positions=(1024, 1024), ignore_invalid_inputs=False,
+                    descending=False):
+    """Returns batches of indices sorted by size. Sequences with different
+    source lengths are not allowed in the same batch."""
+    assert isinstance(src, IndexedDataset) and isinstance(dst, IndexedDataset)
+    if max_tokens is None:
+        max_tokens = float('Inf')
+    if max_sentences is None:
+        max_sentences = float('Inf')
+    indices = np.argsort(src.sizes, kind='mergesort')
+    if descending:
+        indices = np.flip(indices, 0)
+    return list(_make_batches(
+        src, dst, indices, max_tokens, max_sentences, max_positions,
+        ignore_invalid_inputs, allow_different_src_lens=False))
+
 
 def shuffled_batches_by_size(src, dst, max_tokens=None, max_sentences=None,
                              epoch=1, sample=0, max_positions=(1024, 1024),
@@ -449,6 +694,16 @@ def mask_batches(batch_sampler, shard_id, num_shards):
     expected_length = int(math.ceil(len(batch_sampler) / num_shards))
     return res + [[]] * (expected_length - len(res))
 
+def mask_batches_test_classify(batch_sampler, shard_id, num_shards):
+    if num_shards == 1:
+        return batch_sampler
+    res = [
+        batch
+        for i, batch in enumerate(batch_sampler)
+        if i % num_shards == shard_id
+    ]
+    expected_length = int(math.ceil(len(batch_sampler) / num_shards))
+    return res + [[]] * (expected_length - len(res))
 
 @contextlib.contextmanager
 def numpy_seed(seed):
