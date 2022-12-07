@@ -74,6 +74,8 @@ def main(args):
     
     for split in splits:
         print('| {} {} {} examples'.format(args.data, split, len(dataset.splits[split])))
+        print('| type of dataset: ' , type(dataset.splits[split]))
+        print('| actual dataset: ' , dataset.splits[split])
     
     g_logging_meters = OrderedDict()
     g_logging_meters['train_loss'] = AverageMeter()

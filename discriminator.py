@@ -53,23 +53,56 @@ class Discriminator(nn.Module):
     def forward(self, src_sentence, trg_sentence):
         batch_size = src_sentence.size(0)
 
+        
         src_out = self.embed_src_tokens(src_sentence)
         trg_out = self.embed_src_tokens(trg_sentence)
 
+        print("src_out type ", type(src_out))
+        print("src_out size ", src_out.size())
+        
+        print("trg_out type ", type(trg_out))
+        print("trg_out size ", trg_out.size())
+        
         src_out = torch.stack([src_out] * trg_out.size(1), dim=2)
         trg_out = torch.stack([trg_out] * src_out.size(1), dim=1)
         
+        print("after torch.stack....")
+        print("src_out type ", type(src_out))
+        print("src_out size ", src_out.size())
+        
+        print("trg_out type ", type(trg_out))
+        print("trg_out size ", trg_out.size())
+        
         out = torch.cat([src_out, trg_out], dim=3)
+        
+        print("out type after torch.cat ", type(out))
+        print("out size after torch.cat ", out.size())
         
         out = out.permute(0,3,1,2)
         
+        print("out type after out.permute(0,3,1,2) ", type(out))
+        print("out size after out.permute(0,3,1,2) ", out.size())
+        
         out = self.conv1(out)
+        
+        print("out type after self.conv1(out) ", type(out))
+        print("out size after self.conv1(out) ", out.size())
+        
         out = self.conv2(out)
+        
+        print("out type after self.conv2(out) ", type(out))
+        print("out size after self.conv2(out) ", out.size())
         
         out = out.permute(0, 2, 3, 1)
         
-        out = out.contiguous().view(batch_size, -1)
+        print("out type after out.permute(0, 2, 3, 1) ", type(out))
+        print("out size after out.permute(0, 2, 3, 1) ", out.size())
         
+        out = out.contiguous().view(batch_size, -1)
+       
+        print("out type after out.continguous", type(out))
+        print("out size after out.continguous", out.size())
+       
         out = torch.sigmoid(self.classifier(out))
 
         return out
