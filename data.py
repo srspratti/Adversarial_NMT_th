@@ -108,6 +108,8 @@ def load_raw_text_dataset(path, load_splits, src=None, dst=None, maxlen=None):
     files in the specified folder."""
     print("{} is the source \n".format(src))
     print("{} is the destination \n".format(dst))
+    print("{} is the maxlen \n".format(maxlen))
+    
     if src is None and dst is None:
         # find language pair automatically
         src, dst = infer_language_pair(path, load_splits)
@@ -144,6 +146,7 @@ def load_raw_text_dataset_test_classify(path, load_splits, src=None, dst=None, m
 
     print("{} is the source in load_raw_text_dataset_test_classify\n".format(src))
     print("{} is the destination in load_raw_text_dataset_test_classify\n".format(dst))
+    print("{} is the maxlen in load_raw_text_dataset_test_classify\n".format(maxlen))
 
     assert src is not None and dst is not None, 'Source and target languages should be provided'
 
@@ -268,6 +271,21 @@ class LanguageDatasets_test_classify(object):
             ignore_invalid_inputs=skip_invalid_size_inputs_valid_test,
             descending=descending)
         batch_sampler = mask_batches_test_classify(batch_sampler, shard_id=shard_id, num_shards=num_shards)
+        return torch.utils.data.DataLoader(
+            dataset, num_workers=num_workers, collate_fn=dataset.collater,
+            batch_sampler=batch_sampler)
+    
+    def eval_dataloader(self, split, num_workers=0, max_tokens=None,
+                    max_sentences=None, max_positions=(1024, 1024),
+                    skip_invalid_size_inputs_valid_test=False,
+                    descending=False, shard_id=0, num_shards=1):
+        dataset = self.splits[split]
+        batch_sampler = batches_by_size(
+            dataset.src, dataset.dst, max_tokens, max_sentences,
+            max_positions=max_positions,
+            ignore_invalid_inputs=skip_invalid_size_inputs_valid_test,
+            descending=descending)
+        batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards)
         return torch.utils.data.DataLoader(
             dataset, num_workers=num_workers, collate_fn=dataset.collater,
             batch_sampler=batch_sampler)

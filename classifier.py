@@ -11,6 +11,8 @@ from discriminator import Discriminator
 import utils
 from tqdm import tqdm
 from torch.autograd import Variable
+from collections import OrderedDict
+from meters import AverageMeter
 
 from sequence_generator import SequenceGenerator
 
@@ -21,17 +23,23 @@ logging.basicConfig(
 parser = argparse.ArgumentParser(
     description="Driver program for JHU Adversarial-NMT.")
 
+# parser = argparse.ArgumentParser(description="Adversarial-NMT.")
+
+
 # Load args
 options.add_general_args(parser)
 options.add_dataset_args(parser)
-options.add_checkpoint_args(parser)
 options.add_distributed_training_args(parser)
-options.add_generation_args(parser)
+options.add_optimization_args(parser)
+options.add_checkpoint_args(parser)
 options.add_generator_model_args(parser)
-
+options.add_discriminator_model_args(parser)
+options.add_generation_args(parser)
 
 def main(args):
 
+    # torch.cuda.empty_cache()
+    print("args.fixed_max_len) ", args.fixed_max_len)
     use_cuda = (len(args.gpuid) >= 1)
     if args.gpuid:
         cuda.set_device(args.gpuid[0])
@@ -50,6 +58,7 @@ def main(args):
                 ['test'],
                 args.src_lang,
                 args.trg_lang,
+                args.fixed_max_len,
             )
 
         if args.src_lang is None or args.trg_lang is None:
@@ -63,6 +72,13 @@ def main(args):
         print('| {} {} {} examples'.format(
             args.data, 'test', len(dataset.splits['test'])))
 
+    d_logging_meters = OrderedDict()
+    d_logging_meters['train_loss'] = AverageMeter()
+    d_logging_meters['valid_loss'] = AverageMeter()
+    d_logging_meters['train_acc'] = AverageMeter()
+    d_logging_meters['valid_acc'] = AverageMeter()
+    d_logging_meters['bsz'] = AverageMeter()  # sentences per batch
+    
     # Set model parameters
     args.encoder_embed_dim = 1000
     args.fixed_max_len = 50
@@ -102,6 +118,7 @@ def main(args):
     
     print("Best Discriminator loaded successfully!")
     
+    d_criterion = torch.nn.BCELoss()
     
     if use_cuda > 0:
         discriminator.cuda()
@@ -111,13 +128,23 @@ def main(args):
     max_positions = int(1e5)
     
     # initialize dataloader
+    # testloader = dataset.eval_dataloader(
+    #     'test',
+    #     max_sentences=args.max_sentences,
+    #     max_positions=max_positions,
+    #     skip_invalid_size_inputs_valid_test=args.skip_invalid_size_inputs_valid_test,
+    # )
+    max_positions_test = (args.fixed_max_len, args.fixed_max_len)
     testloader = dataset.eval_dataloader(
-        'test',
-        max_sentences=args.max_sentences,
-        max_positions=max_positions,
-        skip_invalid_size_inputs_valid_test=args.skip_invalid_size_inputs_valid_test,
+    'test',
+    max_tokens=args.max_tokens,
+    max_sentences=args.joint_batch_size,
+    max_positions=max_positions_test,
+    skip_invalid_size_inputs_valid_test=True,
+    descending=True,  # largest batch first to warm the caching allocator
+    shard_id=args.distributed_rank,
+    num_shards=args.distributed_world_size
     )
-    
     ################ TO-DO from here ############
     # discriminator validation
     for i, sample in tqdm(enumerate(testloader)):
@@ -137,9 +164,15 @@ def main(args):
         disc_out = discriminator(src_sentence, ht_mt_target)
         # If disc_out is 1 -> Human else if disc_out is 0 -> Machine
         print("disc_out ", disc_out)
-        d_loss = d_criterion(disc_out.squeeze(1), ht_mt_label)
+        d_loss = d_criterion(disc_out.squeeze(1), ht_mt_label.float())
         print("d_loss ", d_loss)
-
+        acc = torch.sum(torch.round(disc_out).squeeze(1) == ht_mt_label).float() / len(ht_mt_label)
+        print("acc: ", acc)
+        
+        d_logging_meters['valid_acc'].update(acc)
+        d_logging_meters['valid_loss'].update(d_loss)
+        logging.debug(f"D dev loss {d_logging_meters['valid_loss'].avg:.3f}, acc {d_logging_meters['valid_acc'].avg:.3f} at batch {i}")
+        
     
     # Machine Translated sentences
     # pip install deep_translator
@@ -231,8 +264,8 @@ def main(args):
 """
 if __name__ == "__main__":
     ret = parser.parse_known_args()
-    args = ret[0]
+    options = ret[0]
     if ret[1]:
         logging.warning("unknown arguments: {0}".format(
             parser.parse_known_args()[1]))
-    main(args)
+    main(options)

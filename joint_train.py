@@ -56,7 +56,7 @@ options.add_generation_args(parser)
 def main(args):
     use_cuda = (len(args.gpuid) >= 1)
     print("{0} GPU(s) are available".format(cuda.device_count()))
-
+    print("args.fixed_max_len) ", args.fixed_max_len)
     # Load dataset
     splits = ['train', 'valid']
     if data.has_binary_files(args.data, splits):
