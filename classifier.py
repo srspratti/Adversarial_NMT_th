@@ -149,6 +149,7 @@ def main(args):
     # discriminator validation
     for i, sample in tqdm(enumerate(testloader)):
         
+        print("i ", i)
         if use_cuda:
             sample = utils.make_variable(sample, cuda=cuda)
         

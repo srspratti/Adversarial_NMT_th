@@ -35,9 +35,32 @@ fi
 src=fr
 tgt=en
 lang=fr-en
+dest=data-bin/wmt14_en_fr_raw_sm
 prep=test_classify_data/wmt14_fr_en_test_processed
 tmp=$prep/tmp
 orig=test_classify_data/orig
+
+FILES=(
+    $orig/src.fr
+    $orig/target.en
+    $orig/ht_mt_target.en
+)
+
+echo  "checking if existing files exist"
+if [ -e test_classify_data/orig ]; then
+    echo "deleting test_classify_data/orig."
+    rm -r test_classify_data/orig
+fi
+
+if [ -e test_classify_data/wmt14_fr_en_test_processed ]; then
+    echo "deleting test_classify_data/wmt14_fr_en_test_processed"
+    rm -r test_classify_data/wmt14_fr_en_test_processed
+fi
+
+if [ -e test_classify_data/wmt14_fr_en_test_processed/tmp ]; then
+    echo "deleting test_classify_data/wmt14_fr_en_test_processed/tmp"
+    rm -r test_classify_data/wmt14_fr_en_test_processed/tmp
+fi
 
 mkdir -p $orig $prep $tmp
 
@@ -110,3 +133,7 @@ cp $tmp/src.bpe.fr $prep/src.fr
 cp $tmp/target.bpe.en $prep/target.en
 cp $tmp/ht_mt_target.bpe.en $prep/ht_mt_target.en
 
+cp $prep/src.fr $dest/src.fr
+cp $prep/target.en $dest/target.en
+cp $prep/ht_mt_target.en $dest/ht_mt_target.en
+cp test_classify_data/wmt14_fr_en_test/ht_mt_label $dest/ht_mt_label

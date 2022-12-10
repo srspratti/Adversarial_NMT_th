@@ -426,6 +426,8 @@ class LanguagePairDataset_test_classify(torch.utils.data.Dataset):
         source = self.src[i].long() - 1
         
         print("source in init --getitem-- ", source)
+        print("i value ", i)
+        print("self.ht_mt_label[i] ", self.ht_mt_label[i])
         
         target = self.dst[i].long() - 1
         ht_mt_target = self.ht_mt[i].long() - 1
