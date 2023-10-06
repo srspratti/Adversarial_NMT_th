@@ -106,9 +106,9 @@ def load_dataset(path, load_splits, src=None, dst=None, maxlen=None):
 def load_raw_text_dataset(path, load_splits, src=None, dst=None, maxlen=None):
     """Loads specified data splits (e.g., test, train or valid) from raw text
     files in the specified folder."""
-    print("{} is the source \n".format(src))
-    print("{} is the destination \n".format(dst))
-    print("{} is the maxlen \n".format(maxlen))
+    # print("{} is the source \n".format(src))
+    # print("{} is the destination \n".format(dst))
+    # print("{} is the maxlen \n".format(maxlen))
     
     if src is None and dst is None:
         # find language pair automatically
@@ -144,17 +144,17 @@ def load_raw_text_dataset_test_classify(path, load_splits, src=None, dst=None, m
     """Loads specified data splits (e.g., test, train or valid) from raw text
     files in the specified folder."""
 
-    print("{} is the source in load_raw_text_dataset_test_classify\n".format(src))
-    print("{} is the destination in load_raw_text_dataset_test_classify\n".format(dst))
-    print("{} is the maxlen in load_raw_text_dataset_test_classify\n".format(maxlen))
+    # print("{} is the source in load_raw_text_dataset_test_classify\n".format(src))
+    # print("{} is the destination in load_raw_text_dataset_test_classify\n".format(dst))
+    # print("{} is the maxlen in load_raw_text_dataset_test_classify\n".format(maxlen))
 
     assert src is not None and dst is not None, 'Source and target languages should be provided'
 
     print("path: \n", path)
     src_dict, dst_dict = load_dictionaries(path, src, dst)
 
-    print("{} : is source dictionary load_raw_text_dataset_test_classify".format(len(src_dict)))
-    print("{} : is destination dictionary load_raw_text_dataset_test_classify".format(len(dst_dict)))
+    # print("{} : is source dictionary load_raw_text_dataset_test_classify".format(len(src_dict)))
+    # print("{} : is destination dictionary load_raw_text_dataset_test_classify".format(len(dst_dict)))
 # to-do : Dec 5th - 2022 
     dataset = LanguageDatasets_test_classify(src, dst, src_dict, dst_dict)
 
@@ -167,13 +167,13 @@ def load_raw_text_dataset_test_classify(path, load_splits, src=None, dst=None, m
         ht_mt_path = os.path.join(path, 'ht_mt_target.en')
         ht_mt_label_path = os.path.join(path, 'ht_mt_label')
 
-        print("src_path : ", src_path)
-        print("src_dict : ", src_dict)
-        print("dst_path : ", dst_path)
-        print("dst_dict : ", dst_dict)
+        # print("src_path : ", src_path)
+        # print("src_dict : ", src_dict)
+        # print("dst_path : ", dst_path)
+        # print("dst_dict : ", dst_dict)
         
-        print("ht_mt_path ", ht_mt_path)
-        print("ht_mt_label_path ", ht_mt_label_path)
+        # print("ht_mt_path ", ht_mt_path)
+        # print("ht_mt_label_path ", ht_mt_label_path)
         
         dataset.splits[split] = LanguagePairDataset_test_classify(
             IndexedRawTextDataset(src_path, src_dict),
@@ -419,13 +419,15 @@ class LanguagePairDataset_test_classify(torch.utils.data.Dataset):
     def __getitem__(self, i):
         # subtract 1 for 0-based indexing
         
-        print("self.src[i] ", self.src[i])
-        print("self.src[i].long() ", self.src[i].long())
-        print("self.src[i].long()-1 ", self.src[i].long()-1)
+        # print("self.src[i] ", self.src[i])
+        # print("self.src[i].long() ", self.src[i].long())
+        # print("self.src[i].long()-1 ", self.src[i].long()-1)
         
         source = self.src[i].long() - 1
         
-        print("source in init --getitem-- ", source)
+        # print("source in init --getitem-- ", source)
+        # print("i value ", i)
+        # print("self.ht_mt_label[i] ", self.ht_mt_label[i])
         
         target = self.dst[i].long() - 1
         ht_mt_target = self.ht_mt[i].long() - 1
@@ -456,15 +458,15 @@ class LanguagePairDataset_test_classify(torch.utils.data.Dataset):
             )
 
         id = torch.LongTensor([s['id'] for s in samples])
-        print("id ", id.size())
+        # print("id ", id.size())
         for s in samples:
             print("s type ", type(s))
-            print("s keys() ", s.keys())
-            print("s s['id'] ", s['id'])
-            print("s s['source'] ", s['source'])
-            print("s s['target'] ", s['target'])
-            print("s s['ht_mt_target'] ", s['ht_mt_target'])
-            print("s s['ht_mt_label'] ", s['ht_mt_label'])
+            # print("s keys() ", s.keys())
+            # print("s s['id'] ", s['id'])
+            # print("s s['source'] ", s['source'])
+            # print("s s['target'] ", s['target'])
+            # print("s s['ht_mt_target'] ", s['ht_mt_target'])
+            # print("s s['ht_mt_label'] ", s['ht_mt_label'])
         src_tokens = merge('source', left_pad=LanguagePairDataset_test_classify.LEFT_PAD_SOURCE)
         target = merge('target', left_pad=LanguagePairDataset_test_classify.LEFT_PAD_TARGET)
         ht_mt_target = merge('ht_mt_target', left_pad=LanguagePairDataset_test_classify.LEFT_PAD_TARGET)
@@ -535,7 +537,7 @@ class LanguagePairDataset_test_classify(torch.utils.data.Dataset):
                 copy_tensor(v, res[i][size-len(v):])
             else:
                 copy_tensor(v, res[i][:len(v)])
-        print("res type: ", type(res))
+        # print("res type: ", type(res))
         return res
 
 class Subset(LanguagePairDataset):

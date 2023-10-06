@@ -52,9 +52,18 @@ class IndexedDataset(object):
             # assert magic == b'MMIDIDX\x00'
             version = f.read(8)
             print("struct.unpack('<Q', version) :", struct.unpack('<Q', version))
-            assert struct.unpack('<Q', version) == (1,)
+            # assert struct.unpack('<Q', version) == (1,)
+            assert struct.unpack('<Q', version) in [(1,), (256,)]
             code, self.element_size = struct.unpack('<QQ', f.read(16))
+            # code, self.element_size = struct.unpack('>QQ', f.read(16))
+            print("self.element_size ", self.element_size)
+            print('Available dtypes:', dtypes.keys())
+            print('Trying to access key:', code)
             self.dtype = dtypes[code]
+            # if code in dtypes:
+            #     self.dtype = dtypes[code]
+            # else:
+            #     print(f"Unexpected code: {code}. Expected one of {list(dtypes.keys())}.")
             self.size, self.s = struct.unpack('<QQ', f.read(16))
             self.dim_offsets = read_longs(f, self.size + 1)
             self.data_offsets = read_longs(f, self.size + 1)
@@ -126,6 +135,7 @@ class IndexedRawTextDataset(IndexedDataset):
                 self.lines.append(line.strip('\n'))
                 # +1 for Lua compatibility
                 tokens = Tokenizer.tokenize(line, dictionary, add_if_not_exist=False) + 1
+                print("tokens ", tokens)
                 self.tokens_list.append(tokens)
                 self.sizes.append(len(tokens))
         self.sizes = np.array(self.sizes)

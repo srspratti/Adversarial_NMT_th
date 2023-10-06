@@ -36,10 +36,10 @@ class LSTMModel(nn.Module):
         # encoder_output: (seq_len, batch, hidden_size * num_directions)
         # _encoder_hidden: (num_layers * num_directions, batch, hidden_size)
         # _encoder_cell: (num_layers * num_directions, batch, hidden_size)
-        print("sample['net_input'] size, ", len(sample['net_input']))
+        # print("sample['net_input'] size, ", len(sample['net_input']))
         
-        print("sample['net_input']['src_tokens'] size ", sample['net_input']['src_tokens'].size())
-        print("sample['net_input']['src_lengths'] size", sample['net_input']['src_lengths'].size())
+        # print("sample['net_input']['src_tokens'] size ", sample['net_input']['src_tokens'].size())
+        # print("sample['net_input']['src_lengths'] size", sample['net_input']['src_lengths'].size())
         encoder_out = self.encoder(sample['net_input']['src_tokens'], sample['net_input']['src_lengths'])
         
         # # The encoder hidden is  (layers*directions) x batch x dim.   
