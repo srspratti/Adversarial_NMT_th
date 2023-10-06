@@ -55,7 +55,7 @@ class Discriminator(nn.Module):
 
         
         src_out = self.embed_src_tokens(src_sentence)
-        trg_out = self.embed_src_tokens(trg_sentence)
+        trg_out = self.embed_trg_tokens(trg_sentence)
 
         print("src_out type ", type(src_out))
         print("src_out size ", src_out.size())

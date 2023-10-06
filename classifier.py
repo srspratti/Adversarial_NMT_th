@@ -15,6 +15,8 @@ from collections import OrderedDict
 from meters import AverageMeter
 
 from sequence_generator import SequenceGenerator
+from sklearn.metrics import precision_score, recall_score, f1_score  # for metrics
+
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s: %(message)s',
@@ -25,7 +27,7 @@ parser = argparse.ArgumentParser(
 
 # parser = argparse.ArgumentParser(description="Adversarial-NMT.")
 
-
+torch.cuda.empty_cache()
 # Load args
 options.add_general_args(parser)
 options.add_dataset_args(parser)
@@ -36,7 +38,24 @@ options.add_generator_model_args(parser)
 options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
 
+# Metric Calculation Functions
+def calculate_metrics(y_true, y_pred):
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    y_true = [float(i) for i in y_true]
+    print("y_pred ", y_pred)
+    print("y_true ", y_true)
+    y_pred = torch.tensor(y_pred)
+    y_true = torch.tensor(y_true)
+    accuracy = torch.sum((y_pred == y_true).float()) / y_true.numel()
+    return precision, recall, f1, accuracy
+
 def main(args):
+    
+    import gc
+    torch.cuda.empty_cache()
+    gc.collect()
 
     # torch.cuda.empty_cache()
     print("args.fixed_max_len) ", args.fixed_max_len)
@@ -73,10 +92,10 @@ def main(args):
             args.data, 'test', len(dataset.splits['test'])))
 
     d_logging_meters = OrderedDict()
-    d_logging_meters['train_loss'] = AverageMeter()
-    d_logging_meters['valid_loss'] = AverageMeter()
-    d_logging_meters['train_acc'] = AverageMeter()
-    d_logging_meters['valid_acc'] = AverageMeter()
+    # d_logging_meters['train_loss'] = AverageMeter()
+    d_logging_meters['test_classify_loss'] = AverageMeter()
+    # d_logging_meters['train_acc'] = AverageMeter()
+    d_logging_meters['test_classify_acc'] = AverageMeter()
     d_logging_meters['bsz'] = AverageMeter()  # sentences per batch
     
     # Set model parameters
@@ -87,8 +106,17 @@ def main(args):
     
     ########### --- Loading best discriminator ---------###################
     
-    # d_model_path = 'checkpoints/joint/wmt14_en_fr_raw_sm/best_dmodel_at_best_gmodel.pt'
-    d_model_path = 'checkpoints/joint/test_wmt14_en_fr_raw_sm_v2/test_best_dmodel_at_best_gmodel.pt'
+    # d_model_path = 'checkpoints/joint/wmt14_en_fr_raw_sm_v2/best_dmodel_at_best_gmodel.pt' # LSTM 
+    import os
+    # d_model_path = os.getcwd()+'/'+'checkpoints/joint/wmt14_en_fr_raw_sm_tf_v2/test_best_dmodel_at_best_gmodel.pt' # TF
+    # d_model_path = 'checkpoints/joint/test_wmt14_en_fr_raw_sm_v2/test_best_dmodel_at_best_gmodel.pt'
+    # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_v2/test_best_dmodel_at_best_gmodel.pt'
+    # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_v3/tf_best_dmodel_at_best_gmodel.pt'
+    # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc_v3/tf_disc_best_dmodel_at_best_gmodel.pt'
+    # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc_v3/test_joint_d_0.691.epoch_25.pt'
+    d_model_path = '/u/prattisr/phase-2/all_repos/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc7030_s20_v1/tf_disc_best_dmodel_at_best_gmodel.pt'
+    print("d_model_path ", d_model_path)
+    
     assert os.path.exists(d_model_path)
     discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict,  use_cuda=use_cuda)
     model_dict_dmodel = discriminator.state_dict()
@@ -147,12 +175,17 @@ def main(args):
     )
     ################ TO-DO from here ############
     # discriminator validation
+    
+    y_true = []
+    y_pred = []
+    
     for i, sample in tqdm(enumerate(testloader)):
         
         print("i ", i)
+        print("sample before use_cuda: ", sample)
         if use_cuda:
             sample = utils.make_variable(sample, cuda=cuda)
-        
+        print("sample after use_cuda: ", sample)
         print("in testloader")
             
         bsz = sample['target'].size(0)
@@ -161,20 +194,45 @@ def main(args):
         ht_mt_target = sample['ht_mt_target_trans']['ht_mt_target'] # En human or Machine
         ht_mt_label = sample['ht_mt_target_trans']['ht_mt_label'] # En human or Machine labels - 1 for human and 0 for Machine
         
+        print("This {} is the bsz type".format(type(bsz)))
+        print("This {} is the src_sentence type".format(type(src_sentence)))
+        print("This {} is the target type".format(type(target)))
+        print("This {} is the ht_mt_target type".format(type(ht_mt_target)))
+        print("This {} is the ht_mt_label type".format(type(ht_mt_label)))
+
+    
         # disc_out = discriminator(src_sentToBeTranslated, hm_or_mch_translSent)
         disc_out = discriminator(src_sentence, ht_mt_target)
         # If disc_out is 1 -> Human else if disc_out is 0 -> Machine
         print("disc_out ", disc_out)
         d_loss = d_criterion(disc_out.squeeze(1), ht_mt_label.float())
         print("d_loss ", d_loss)
-        acc = torch.sum(torch.round(disc_out).squeeze(1) == ht_mt_label).float() / len(ht_mt_label)
+        # acc = torch.sum(torch.round(disc_out).squeeze(1) == ht_mt_label).float() / len(ht_mt_label)
+        # print("acc: ", acc)
+        
+        #
+        disc_out_rounded = torch.round(disc_out).squeeze(1)
+        print("ht_mt_label ", ht_mt_label.tolist())
+        print("disc_out_rounded ", disc_out_rounded.tolist())
+        y_true.extend(ht_mt_label.tolist())
+        y_pred.extend(disc_out_rounded.tolist())
+        acc = torch.sum(disc_out_rounded == ht_mt_label.float())/ len(ht_mt_label)
         print("acc: ", acc)
+        print("y_true: ", y_true)
+        print("y_pred: ", y_pred)
         
-        d_logging_meters['valid_acc'].update(acc)
-        d_logging_meters['valid_loss'].update(d_loss)
-        logging.debug(f"D dev loss {d_logging_meters['valid_loss'].avg:.3f}, acc {d_logging_meters['valid_acc'].avg:.3f} at batch {i}")
+        d_logging_meters['test_classify_acc'].update(acc)
+        d_logging_meters['test_classify_loss'].update(d_loss)
+        logging.debug(f"D test_classify loss {d_logging_meters['test_classify_loss'].avg:.3f}, acc {d_logging_meters['test_classify_acc'].avg:.3f} at batch {i}")
+        torch.cuda.empty_cache()
         
-    
+    # Once all samples are evaluated, calculate overall metrics
+    precision, recall, f1, accuracy = calculate_metrics(y_true, y_pred)
+    print(f"Overall Precision: {precision:.3f}")
+    print(f"Overall Recall: {recall:.3f}")
+    print(f"Overall F1 Score: {f1:.3f}")
+    print(f"Overall Accuracy: {accuracy:.3f}")
+
     # Machine Translated sentences
     # pip install deep_translator
     # import deep_translator

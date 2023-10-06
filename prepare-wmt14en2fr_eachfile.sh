@@ -116,6 +116,7 @@ echo ""
 BPE_CODE=test_classify_data/wmt14_fr_en_test/code
 # echo "learn_bpe.py on ${TRAIN}..."
 # python $BPEROOT/learn_bpe.py -s $BPE_TOKENS < $TRAIN > $BPE_CODE
+# HERE SHOULD BE USING THE BPE CODE GENERATED DURING THE TRAINING STAGE, PLEASE VERIFY AGAIN
 
 echo "apply_bpe.py to src.fr ..."
 python $BPEROOT/apply_bpe.py -c $BPE_CODE < $tmp/src.fr > $tmp/src.bpe.fr
