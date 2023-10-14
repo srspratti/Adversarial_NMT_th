@@ -231,9 +231,9 @@ def main(args):
         generator_pt.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_pt_oc6_sm_50k_v1'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_pt_oc6_sm_50k_v1')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_pt_oc6_sm_50k_v1/'
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_pt_oc12_sm_50k_v1'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_pt_oc12_sm_50k_v1')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_pt_oc12_sm_50k_v1/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -257,6 +257,7 @@ def main(args):
                                                           momentum=args.momentum,
                                                           nesterov=True)
 
+################################################################## EPOCHS #################################################################
     # start joint training
     best_dev_loss = math.inf
     num_update = 0
@@ -268,7 +269,9 @@ def main(args):
         torch.manual_seed(seed)
 
         max_positions_train = (args.fixed_max_len, args.fixed_max_len)
-
+        
+################################################################## TRAINING #################################################################
+        
         # Initialize dataloader, starting at batch_offset
         trainloader = dataset.train_dataloader(
             'train',
@@ -296,142 +299,89 @@ def main(args):
         discriminator.train()
         update_learning_rate(num_update, 8e4, args.g_learning_rate, args.lr_shrink, g_optimizer)
         
-        # ToDo : 
-        
         generator_pt.eval()
         
-        # translator_pt = SequenceGenerator(
-        # generator_pt, beam_size=args.beam, stop_early=(not args.no_early_stop),
-        # normalize_scores=(not args.unnormalized), len_penalty=args.lenpen,
-        # unk_penalty=args.unkpen)
-
-        """
-        from fairseq.models.transformer import TransformerModel
-        zh2en = TransformerModel.from_pretrained(
-        '/path/to/checkpoints',
-        checkpoint_file='checkpoint_best.pt',
-        data_name_or_path='data-bin/wmt17_zh_en_full',
-        bpe='subword_nmt',
-        bpe_codes='data-bin/wmt17_zh_en_full/zh.code'
-        )
-        """
-
         for i, sample in tqdm(enumerate(trainloader)):
 
             if use_cuda:
                 # wrap input tensors in cuda tensors
                 sample = utils.make_variable(sample, cuda=cuda)
 
-            ## part I: use gradient policy method to train the generator
+            ############# GENERATOR ####################################
+            # MLE training
+            print("MLE Training")
+            
+            ##*****************************************************************************
+            # Generate Translation with Fairseq Model
+            src_tokens = sample['net_input']['src_tokens']
+            # make sure that the tokens are on the right device
+            src_tokens = src_tokens.cuda() if use_cuda else src_tokens
+            print("src_tokens type: ", type(src_tokens))
+            print("src_tokens size() : ", src_tokens.size())
+            print("src_tokens : ", src_tokens)
+            # Generate translations using the Fairseq Model 
+            
+            # src_tokens to be converted to a En sentence ( EN-> FR), remove bpe 
+            
+            sentences = ids_to_sentences(src_tokens, dataset.src_dict)
+            print("sentences :::", sentences)
+            for sentence in sentences:
+                # print("sentence no#  ", n)
+                print(sentence)
+            translations = generator_pt.translate(sentences)
+            # Assuming that your generator model expects a certain format, you might need to convert translation to that format
+            print("translations ", translations)
+            
+            # Applying BPE to translations
+            bpe_translations = [apply_bpe(t) for t in translations]
+            print("translations with BPE:", bpe_translations)
+            
+            # Applying padding to bpe_translations 
+            #  max_len to be 50 for demonstration purposes
+            max_len = 50
+            padded_bpe_translations = pad_sentences(bpe_translations, max_len=max_len)
+            print("Padded translations with BPE:", padded_bpe_translations)
+            
+            # convert bpe_translations to ids 
+            # sys_out_batch = convert_to_expected_format(translation)
+            
+            max_len = 50  # Example maximum length
+            token_ids_tensor = sentences_to_ids(padded_bpe_translations, dataset.dst_dict, max_len)
 
-            # use policy gradient training when random.random() > 50%
-            # if random.random()  >= 0.5:
-            if 0.4  >= 0.5: 
+            # Check shape of the resulting tensor
+            print("token_ids_tensor.shape ", token_ids_tensor.shape)
+            token_ids_tensor_flat = token_ids_tensor.view(-1)
+            print("token_ids_tensor_flat.shape ", token_ids_tensor_flat.shape)
+            
+            ##*****************************************************************************
+            
+            sys_out_batch = generator(sample=sample, args=args)
+            print("sys_out_batch ", sys_out_batch)
+            print("sys_out_batch size: ", sys_out_batch.size())
 
-                print("Policy Gradient Training")
-                
-                # sys_out_batch = generator(sample) # 64 X 50 X 6632
-                sys_out_batch = generator(sample=sample, args=args)
+            out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
+            print("out_batch size: ", out_batch.size())
 
-                out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 * 50) X 6632   
-                 
-                _,prediction = out_batch.topk(1)
-                prediction = prediction.squeeze(1) # 64*50 = 3200
-                src_sentence = sample['net_input']['src_tokens'] # 64 x max-len i.e 64 X 50
-                # prediction = torch.reshape(prediction, sample['net_input']['src_tokens'].shape) # 64 X 50
-                prediction = torch.reshape(prediction, src_sentence.shape) # 64 X 50
-                
-                fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
-                
-                with torch.no_grad():
-                    # reward = discriminator(sample['net_input']['src_tokens'], prediction) # 64 X 1
-                    reward = discriminator(src_sentence, fake_sentence) # 64 X 1
+            train_trg_batch = sample['target'].view(-1) # 64*50 = 3200
 
-                train_trg_batch = sample['target'] # 64 x 50
-                
-                pg_loss = pg_criterion(sys_out_batch, train_trg_batch, reward, use_cuda)
-                sample_size = sample['target'].size(0) if args.sentence_avg else sample['ntokens'] # 64
-                logging_loss = pg_loss / math.log(2)
-                g_logging_meters['train_loss'].update(logging_loss.item(), sample_size)
-                logging.debug(f"G policy gradient loss at batch {i}: {pg_loss.item():.3f}, lr={g_optimizer.param_groups[0]['lr']}")
-                g_optimizer.zero_grad()
-                pg_loss.backward()
-                torch.nn.utils.clip_grad_norm_(generator.parameters(), args.clip_norm)
-                g_optimizer.step()
+            loss = g_criterion(out_batch, train_trg_batch)
 
-            else:
-                # MLE training
-                print("MLE Training")
-                
-                ##*****************************************************************************
-                # Generate Translation with Fairseq Model
-                src_tokens = sample['net_input']['src_tokens']
-                # make sure that the tokens are on the right device
-                src_tokens = src_tokens.cuda() if use_cuda else src_tokens
-                print("src_tokens type: ", type(src_tokens))
-                print("src_tokens size() : ", src_tokens.size())
-                print("src_tokens : ", src_tokens)
-                # Generate translations using the Fairseq Model 
-                
-                # src_tokens to be converted to a En sentence ( EN-> FR), remove bpe 
-                
-                sentences = ids_to_sentences(src_tokens, dataset.src_dict)
-                print("sentences :::", sentences)
-                for sentence in sentences:
-                    # print("sentence no#  ", n)
-                    print(sentence)
-                translations = generator_pt.translate(sentences)
-                # Assuming that your generator model expects a certain format, you might need to convert translation to that format
-                print("translations ", translations)
-                
-                # Applying BPE to translations
-                bpe_translations = [apply_bpe(t) for t in translations]
-                print("translations with BPE:", bpe_translations)
-                
-                # Applying padding to bpe_translations 
-                #  max_len to be 50 for demonstration purposes
-                max_len = 50
-                padded_bpe_translations = pad_sentences(bpe_translations, max_len=max_len)
-                print("Padded translations with BPE:", padded_bpe_translations)
-                
-                # convert bpe_translations to ids 
-                # sys_out_batch = convert_to_expected_format(translation)
-                
-                max_len = 50  # Example maximum length
-                token_ids_tensor = sentences_to_ids(padded_bpe_translations, dataset.dst_dict, max_len)
-
-                # Check shape of the resulting tensor
-                print("token_ids_tensor.shape ", token_ids_tensor.shape)
-                
-                ##*****************************************************************************
-                
-                sys_out_batch = generator(sample=sample, args=args)
-                print("sys_out_batch ", sys_out_batch)
-                print("sys_out_batch size: ", sys_out_batch.size())
-
-                out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
-                print("out_batch size: ", out_batch.size())
-
-                train_trg_batch = sample['target'].view(-1) # 64*50 = 3200
-
-                loss = g_criterion(out_batch, train_trg_batch)
-
-                sample_size = sample['target'].size(0) if args.sentence_avg else sample['ntokens']
-                nsentences = sample['target'].size(0)
-                logging_loss = loss.data / sample_size / math.log(2)
-                g_logging_meters['bsz'].update(nsentences)
-                g_logging_meters['train_loss'].update(logging_loss, sample_size)
-                logging.debug(f"G MLE loss at batch {i}: {g_logging_meters['train_loss'].avg:.3f}, lr={g_optimizer.param_groups[0]['lr']}")
-                g_optimizer.zero_grad()
-                loss.backward()
-                # all-reduce grads and rescale by grad_denom
-                for p in generator.parameters():
-                    if p.requires_grad:
-                        p.grad.data.div_(sample_size)
-                torch.nn.utils.clip_grad_norm_(generator.parameters(), args.clip_norm)
-                g_optimizer.step()
-                
-
+            sample_size = sample['target'].size(0) if args.sentence_avg else sample['ntokens']
+            nsentences = sample['target'].size(0)
+            logging_loss = loss.data / sample_size / math.log(2)
+            g_logging_meters['bsz'].update(nsentences)
+            g_logging_meters['train_loss'].update(logging_loss, sample_size)
+            logging.debug(f"G MLE loss at batch {i}: {g_logging_meters['train_loss'].avg:.3f}, lr={g_optimizer.param_groups[0]['lr']}")
+            g_optimizer.zero_grad()
+            loss.backward()
+            # all-reduce grads and rescale by grad_denom
+            for p in generator.parameters():
+                if p.requires_grad:
+                    p.grad.data.div_(sample_size)
+            torch.nn.utils.clip_grad_norm_(generator.parameters(), args.clip_norm)
+            g_optimizer.step()
+            
+            
             num_update += 1
 
 
@@ -446,6 +396,7 @@ def main(args):
             true_labels = Variable(torch.ones(sample['target'].size(0)).float()) # 64 length vector
 
             ##############
+            
             with torch.no_grad():
                 sys_out_batch = generator(sample=sample, args=args) # 64 X 50 X 6632
                 
@@ -456,17 +407,20 @@ def main(args):
             prediction = prediction.squeeze(1)  #64 * 50 = 6632
             print("prediction after squeeze: ",prediction.size())
             
+            
             #################
+            
+            # prediction = token_ids_tensor_flat
+            
+            # print("prediction after token_ids_tensor_flat: ",prediction.size())
             
             fake_labels = Variable(torch.zeros(sample['target'].size(0)).float()) # 64 length vector
 
+            print("fake_labels after Variable: ",fake_labels.size())
+            
             fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
 
-            
-            # To-Do : Can add ? ? Need to research a bit more on this 
-            # disc_out_humanTranSent = discriminator(src_sentence, true_sentence)
-            # d_loss_human = d_criterion(disc_out_humanTranSent.squeeze(1), true_labels)
-            # then d_loss = Average(d_loss + d_loss_human)
+            print("fake_sentence after torch.reshape(prediction, src_sentence.shape) : ",fake_sentence.size())
             
             if use_cuda:
                 true_labels = true_labels.cuda()
@@ -474,7 +428,6 @@ def main(args):
             true_sentence = torch.reshape(true_sentence, src_sentence.shape) # 64 X 50 
             disc_out_humanTranSent = discriminator(src_sentence, true_sentence)
             d_loss_human = d_criterion(disc_out_humanTranSent.squeeze(1), true_labels)
-            # then d_loss = Average(d_loss + d_loss_human)
             
             if use_cuda:
                 fake_labels = fake_labels.cuda()
@@ -483,7 +436,6 @@ def main(args):
             
             d_loss = d_criterion(disc_out.squeeze(1), fake_labels)
             
-            # 
             # d_loss = 0.5*(d_loss + d_loss_human)
             d_loss = 0.7*d_loss + 0.3*d_loss_human
 
@@ -498,6 +450,7 @@ def main(args):
 
 
 
+ ################################################################## VALIDATION #################################################################
         # validation
         # set validation mode
         generator.eval()
@@ -522,6 +475,7 @@ def main(args):
         for key, val in d_logging_meters.items():
             if val is not None:
                 val.reset()
+
 
         for i, sample in tqdm(enumerate(valloader)):
             
@@ -608,12 +562,6 @@ def main(args):
                 print("This {} is the fake sentence(generated by G)type".format(type(fake_sentence)))
                 print("This {} is the fake sentence(generated by G)size".format(fake_sentence.size()))
                 
-                """
-                This <class 'torch.Tensor'> is the source sentence type
-                This torch.Size([1, 50]) is the source sentence size
-                This <class 'torch.Tensor'> is the fake sentence(generated by G)type
-                This torch.Size([1, 50]) is the fake sentence(generated by G)size
-                """
                 
                 disc_out = discriminator(src_sentence, fake_sentence)
                 
@@ -623,13 +571,6 @@ def main(args):
                 print("This {} is the disc_out.squeeze(1) size".format(disc_out.squeeze(1).size()))
                 print("This {} is the disc_out.squeeze(1) value".format(disc_out.squeeze(1)))
                 
-                """
-                This <class 'torch.Tensor'> is the disc_out type
-                This torch.Size([1, 1]) is the disc_out size
-                This <class 'torch.Tensor'> is the disc_out.squeeze(1) type
-                This torch.Size([1]) is the disc_out.squeeze(1) size
-                This tensor([0.0113], device='cuda:0') is the disc_out.squeeze(1) value
-                """
                 d_loss = d_criterion(disc_out.squeeze(1), fake_labels)
                 
                 if use_cuda:
@@ -660,10 +601,7 @@ def main(args):
             torch.save(generator, open(checkpoints_path + "tf_disc_best_gmodel.pt", 'wb'), pickle_module=dill)
             torch.save(discriminator, open(checkpoints_path + "tf_disc_best_dmodel_at_best_gmodel.pt", 'wb'), pickle_module=dill)
         
-        # if g_logging_meters['valid_loss'].avg < best_dev_loss:
-        #     best_dev_loss = g_logging_meters['valid_loss'].avg
-        #     torch.save(generator, open(checkpoints_path + "best_gmodel.pt", 'wb'), pickle_module=dill)
-
+###############################################################################################################################################
 
 def update_learning_rate(update_times, target_times, init_lr, lr_shrink, optimizer):
 

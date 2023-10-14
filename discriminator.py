@@ -53,7 +53,7 @@ class Discriminator(nn.Module):
     def forward(self, src_sentence, trg_sentence):
         batch_size = src_sentence.size(0)
 
-        
+        print("batch_size ", batch_size)
         src_out = self.embed_src_tokens(src_sentence)
         trg_out = self.embed_trg_tokens(trg_sentence)
 

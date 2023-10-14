@@ -162,9 +162,9 @@ def load_raw_text_dataset_test_classify(path, load_splits, src=None, dst=None, m
     for split in load_splits:
         print("split ",split)
 
-        src_path = os.path.join(path, 'src.fr')
-        dst_path = os.path.join(path, 'target.en')
-        ht_mt_path = os.path.join(path, 'ht_mt_target.en')
+        src_path = os.path.join(path, 'src.en')
+        dst_path = os.path.join(path, 'target.fr')
+        ht_mt_path = os.path.join(path, 'ht_mt_target.fr')
         ht_mt_label_path = os.path.join(path, 'ht_mt_label')
 
         # print("src_path : ", src_path)
@@ -259,7 +259,7 @@ class LanguageDatasets_test_classify(object):
     #         dataset, collate_fn=dataset.collater,
     #         batch_sampler=batch_sampler)
         
-    def eval_dataloader(self, split, num_workers=0, max_tokens=None,
+    def eval_dataloader_test_classify(self, split, num_workers=0, max_tokens=None,
                         max_sentences=None, max_positions=(1024, 1024),
                         skip_invalid_size_inputs_valid_test=False,
                         descending=False, shard_id=0, num_shards=1):
@@ -280,6 +280,7 @@ class LanguageDatasets_test_classify(object):
                     skip_invalid_size_inputs_valid_test=False,
                     descending=False, shard_id=0, num_shards=1):
         dataset = self.splits[split]
+        print("dataset in eval_dataloader : ", type(dataset))
         batch_sampler = batches_by_size(
             dataset.src, dataset.dst, max_tokens, max_sentences,
             max_positions=max_positions,
@@ -639,7 +640,7 @@ def batches_by_size(src, dst, max_tokens=None, max_sentences=None,
         src, dst, indices, max_tokens, max_sentences, max_positions,
         ignore_invalid_inputs, allow_different_src_lens=False))
 
-def batches_by_size_test_classify(src, dst, max_tokens=None, max_sentences=None,
+def batches_by_size_test_classify(src, dst, max_tokens, max_sentences=None,
                     max_positions=(1024, 1024), ignore_invalid_inputs=False,
                     descending=False):
     """Returns batches of indices sorted by size. Sequences with different

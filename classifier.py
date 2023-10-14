@@ -114,7 +114,9 @@ def main(args):
     # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_v3/tf_best_dmodel_at_best_gmodel.pt'
     # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc_v3/tf_disc_best_dmodel_at_best_gmodel.pt'
     # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc_v3/test_joint_d_0.691.epoch_25.pt'
-    d_model_path = '/u/prattisr/phase-2/all_repos/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc7030_s20_v1/tf_disc_best_dmodel_at_best_gmodel.pt'
+    # d_model_path = '/u/prattisr/phase-2/all_repos/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc7030_s20_v1/tf_disc_best_dmodel_at_best_gmodel.pt'
+    # test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1
+    d_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/pretrained_models/checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/tf_disc_best_dmodel_at_best_gmodel.pt'
     print("d_model_path ", d_model_path)
     
     assert os.path.exists(d_model_path)
@@ -156,14 +158,8 @@ def main(args):
     max_positions = int(1e5)
     
     # initialize dataloader
-    # testloader = dataset.eval_dataloader(
-    #     'test',
-    #     max_sentences=args.max_sentences,
-    #     max_positions=max_positions,
-    #     skip_invalid_size_inputs_valid_test=args.skip_invalid_size_inputs_valid_test,
-    # )
     max_positions_test = (args.fixed_max_len, args.fixed_max_len)
-    testloader = dataset.eval_dataloader(
+    testloader = dataset.eval_dataloader_test_classify(
     'test',
     max_tokens=args.max_tokens,
     max_sentences=args.joint_batch_size,
@@ -173,7 +169,7 @@ def main(args):
     shard_id=args.distributed_rank,
     num_shards=args.distributed_world_size
     )
-    ################ TO-DO from here ############
+  
     # discriminator validation
     
     y_true = []
@@ -186,13 +182,22 @@ def main(args):
         if use_cuda:
             sample = utils.make_variable(sample, cuda=cuda)
         print("sample after use_cuda: ", sample)
+        print("sample size() after use_cuda: ", sample.keys())
         print("in testloader")
             
         bsz = sample['target'].size(0)
-        src_sentence = sample['net_input']['src_tokens'] # Fr 
-        target = sample['target'] # En Human Translated
-        ht_mt_target = sample['ht_mt_target_trans']['ht_mt_target'] # En human or Machine
-        ht_mt_label = sample['ht_mt_target_trans']['ht_mt_label'] # En human or Machine labels - 1 for human and 0 for Machine
+        src_sentence = sample['net_input']['src_tokens'] # En
+        print("src_sentence size ", src_sentence.size())
+        print("src_sentence  ", src_sentence)
+        target = sample['target'] # Fr Human Translated
+        print("target size ", target.size())
+        print("target  ", target)
+        ht_mt_target = sample['ht_mt_target_trans']['ht_mt_target'] # Fr Human or Machine
+        print("ht_mt_target size ", ht_mt_target.size())
+        print("ht_mt_target  ", ht_mt_target)
+        ht_mt_label = sample['ht_mt_target_trans']['ht_mt_label'] # Fr human or Machine labels - 1 for human and 0 for Machine
+        print("ht_mt_label size ", ht_mt_label.size())
+        print("ht_mt_label  ", ht_mt_label)
         
         print("This {} is the bsz type".format(type(bsz)))
         print("This {} is the src_sentence type".format(type(src_sentence)))
@@ -224,7 +229,7 @@ def main(args):
         d_logging_meters['test_classify_acc'].update(acc)
         d_logging_meters['test_classify_loss'].update(d_loss)
         logging.debug(f"D test_classify loss {d_logging_meters['test_classify_loss'].avg:.3f}, acc {d_logging_meters['test_classify_acc'].avg:.3f} at batch {i}")
-        torch.cuda.empty_cache()
+        # torch.cuda.empty_cache()
         
     # Once all samples are evaluated, calculate overall metrics
     precision, recall, f1, accuracy = calculate_metrics(y_true, y_pred)
@@ -321,6 +326,7 @@ def main(args):
                     ground_truth_writer.write(target_str.encode('utf-8'))
 
 """
+
 if __name__ == "__main__":
     ret = parser.parse_known_args()
     options = ret[0]
