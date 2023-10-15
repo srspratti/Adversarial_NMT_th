@@ -10,8 +10,10 @@ import numpy as np
 from collections import OrderedDict
 sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
+
+
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1" 
 """
-os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
 torch.cuda.device_count() # result is 2
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -19,7 +21,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from torch import cuda
@@ -29,7 +31,8 @@ import data
 import utils
 from meters import AverageMeter
 from discriminator import Discriminator
-from generator_tf import TransformerModel
+# from generator_tf import TransformerModel
+from generator_tf_ptfseq import TransformerModel_custom
 from train_generator_new import train_g
 from train_discriminator import train_d
 from PGLoss import PGLoss
@@ -54,7 +57,10 @@ options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
 
 def main(args):
-    use_cuda = (len(args.gpuid) >= 1)
+    # print("(len(args.gpuid) >= 1)", (len(args.gpuid) >= 1))
+    # use_cuda = (len(args.gpuid) >= 1)
+    use_cuda = True
+    print("use_cuda: ", use_cuda)
     print("{0} GPU(s) are available".format(cuda.device_count()))
     print("args.fixed_max_len) ", args.fixed_max_len)
     # Load dataset
@@ -108,7 +114,8 @@ def main(args):
     args.decoder_dropout_out = 0
     args.bidirectional = False
 
-    generator = TransformerModel(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
+    # generator = TransformerModel(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
+    generator = TransformerModel_custom(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
     print("Generator TransformerModel loaded successfully!")
     discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
     print("Discriminator loaded successfully!")
@@ -126,9 +133,9 @@ def main(args):
         generator.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_v1'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_v1')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_raw_2023_v1/'
+    if not os.path.exists('checkpoints/joint/test_vastai_wmt14_en_fr_2023_50k_mgpu_v1'):
+        os.makedirs('checkpoints/joint/test_vastai_wmt14_en_fr_2023_50k_mgpu_v1')
+    checkpoints_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_50k_mgpu_v1/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -136,9 +143,9 @@ def main(args):
     pg_criterion = PGLoss(ignore_index=dataset.dst_dict.pad(), size_average=True,reduce=True)
 
     # fix discriminator word embedding (as Wu et al. do)
-    for p in discriminator.embed_src_tokens.parameters():
+    for p in discriminator.module.embed_src_tokens.parameters():
         p.requires_grad = False
-    for p in discriminator.embed_trg_tokens.parameters():
+    for p in discriminator.module.embed_trg_tokens.parameters():
         p.requires_grad = False
 
     # define optimizer
@@ -353,7 +360,7 @@ def main(args):
                     sample = utils.make_variable(sample, cuda=cuda)
 
                 # generator validation
-                sys_out_batch = generator(sample=sample, args=args)
+                sys_out_batch = generator(sample=sample, args=args)                                                                                                                        
                 out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
                 dev_trg_batch = sample['target'].view(-1) # 64*50 = 3200
 
@@ -458,7 +465,8 @@ def main(args):
                 
                 disc_out_humanTranSent = discriminator(src_sentence, true_sentence)
                 d_loss_human = d_criterion(disc_out_humanTranSent.squeeze(1), true_labels)
-                d_loss = 0.5*(d_loss + d_loss_human)
+                # d_loss = 0.5*(d_loss + d_loss_human)
+                d_loss = 0.7*d_loss + 0.3*d_loss_human
 
                 acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
                 d_logging_meters['valid_acc'].update(acc)
