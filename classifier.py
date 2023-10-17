@@ -1,5 +1,7 @@
 import argparse
 import logging
+import re
+import pandas as pd
 
 import torch
 import os
@@ -15,7 +17,7 @@ from collections import OrderedDict
 from meters import AverageMeter
 
 from sequence_generator import SequenceGenerator
-from sklearn.metrics import precision_score, recall_score, f1_score  # for metrics
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix  # for metrics
 
 
 logging.basicConfig(
@@ -39,7 +41,7 @@ options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
 
 # Metric Calculation Functions
-def calculate_metrics(y_true, y_pred):
+def calculate_metrics_old(y_true, y_pred):
     precision = precision_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
@@ -50,6 +52,81 @@ def calculate_metrics(y_true, y_pred):
     y_true = torch.tensor(y_true)
     accuracy = torch.sum((y_pred == y_true).float()) / y_true.numel()
     return precision, recall, f1, accuracy
+
+def calculate_metrics_old_v1(y_true, y_pred):
+    precision_0 = precision_score(y_true, y_pred, pos_label=0)
+    recall_0 = recall_score(y_true, y_pred, pos_label=0)
+    f1_0 = f1_score(y_true, y_pred, pos_label=0)
+    
+    precision_1 = precision_score(y_true, y_pred, pos_label=1)
+    recall_1 = recall_score(y_true, y_pred, pos_label=1)
+    f1_1 = f1_score(y_true, y_pred, pos_label=1)
+    
+    accuracy = accuracy_score(y_true, y_pred)
+    
+    return {
+        'precision_0': precision_0, 'recall_0': recall_0, 'f1_0': f1_0,
+        'precision_1': precision_1, 'recall_1': recall_1, 'f1_1': f1_1,
+        'accuracy': accuracy
+    }
+    
+def calculate_metrics(y_true, y_pred):
+    precision = precision_score(y_true, y_pred, average=None)
+    recall = recall_score(y_true, y_pred, average=None)
+    f1 = f1_score(y_true, y_pred, average=None)
+
+    # Count occurrences for each class in y_true and y_pred
+    true_machine_count = y_true.count(0)
+    true_human_count = y_true.count(1)
+    pred_machine_count = y_pred.count(0)
+    pred_human_count = y_pred.count(1)
+    
+    cm = confusion_matrix(y_true, y_pred)
+    TN, FP, FN, TP = cm.ravel()
+
+    # Calculate accuracy for each class
+    human_accuracy_cm = (TP + TN) / len(y_true)
+    machine_accuracy_cm = (TN + FP) / len(y_true)
+    overall_accuracy_cm = (TP + TN) / len(y_true)
+
+    # Calculate accuracy for each class
+    machine_accuracy = sum([1 for yt, yp in zip(y_true, y_pred) if yt == 0 and yp == 0]) / true_machine_count
+    human_accuracy = sum([1 for yt, yp in zip(y_true, y_pred) if yt == 1 and yp == 1]) / true_human_count
+
+    return human_accuracy_cm, machine_accuracy_cm, overall_accuracy_cm, precision, recall, f1, machine_accuracy, human_accuracy, true_machine_count, true_human_count, pred_machine_count, pred_human_count, TN, FP, FN, TP
+
+
+def unbpe(text):
+    """Un-apply BPE encoding from a text.
+    
+    Args:
+        text (str): BPE-encoded text.
+    
+    Returns:
+        str: Text with BPE encoding removed.
+    """
+        # Using regex to replace instances of "@@ " with an empty string
+    return re.sub(r'@@ ?', '', text)
+
+def ids_to_sentences(src_tokens, dict):
+    # Assuming src_tokens is a 2D tensor, 
+    # convert to list of lists and then convert each list of ids to a sentence.
+    
+    # Ensure src_tokens is on the CPU and then convert to a list of lists
+    src_tokens_list = src_tokens.cpu().numpy().tolist()
+    
+    sentences = []
+    print("dict , ", dict)
+    # print("dict , ", dict.__len__())
+    for ids in src_tokens_list:
+        # words = [dict.__getitem__(idx) for idx in ids if idx != dict.eos_index]
+        words = [dict.__getitem__(idx) for idx in ids if idx not in [dict.eos_index, dict.pad_index]]
+        sentence = ' '.join(words)
+        # Remove padding from the sentences 
+        # Un apply bpe to each sentence
+        sentences.append(unbpe(sentence))    
+    return sentences
+
 
 def main(args):
     
@@ -174,6 +251,9 @@ def main(args):
     
     y_true = []
     y_pred = []
+    src_sentences_converted = []
+    target_converted = []
+    ht_mt_target_converted = []
     
     for i, sample in tqdm(enumerate(testloader)):
         
@@ -183,6 +263,7 @@ def main(args):
             sample = utils.make_variable(sample, cuda=cuda)
         print("sample after use_cuda: ", sample)
         print("sample size() after use_cuda: ", sample.keys())
+        print("sample['id']: ",sample['id'])
         print("in testloader")
             
         bsz = sample['target'].size(0)
@@ -215,6 +296,16 @@ def main(args):
         # acc = torch.sum(torch.round(disc_out).squeeze(1) == ht_mt_label).float() / len(ht_mt_label)
         # print("acc: ", acc)
         
+        # Short-cut : Converting the ids to sentences 
+        
+        src_sentences_converted_temp = ids_to_sentences(src_sentence, dataset.src_dict)
+        target_converted_temp = ids_to_sentences(target, dataset.dst_dict)
+        ht_mt_target_converted_temp = ids_to_sentences(ht_mt_target, dataset.dst_dict)
+        
+        src_sentences_converted.extend(src_sentences_converted_temp)
+        target_converted.extend(target_converted_temp)
+        ht_mt_target_converted.extend(ht_mt_target_converted_temp)
+        
         #
         disc_out_rounded = torch.round(disc_out).squeeze(1)
         print("ht_mt_label ", ht_mt_label.tolist())
@@ -230,14 +321,105 @@ def main(args):
         d_logging_meters['test_classify_loss'].update(d_loss)
         logging.debug(f"D test_classify loss {d_logging_meters['test_classify_loss'].avg:.3f}, acc {d_logging_meters['test_classify_acc'].avg:.3f} at batch {i}")
         # torch.cuda.empty_cache()
-        
+    
+    ##################################################################################
+     
     # Once all samples are evaluated, calculate overall metrics
-    precision, recall, f1, accuracy = calculate_metrics(y_true, y_pred)
-    print(f"Overall Precision: {precision:.3f}")
-    print(f"Overall Recall: {recall:.3f}")
-    print(f"Overall F1 Score: {f1:.3f}")
-    print(f"Overall Accuracy: {accuracy:.3f}")
+    # precision, recall, f1, accuracy = calculate_metrics(y_true, y_pred)
+    # print(f"Overall Precision: {precision:.3f}")
+    # print(f"Overall Recall: {recall:.3f}")
+    # print(f"Overall F1 Score: {f1:.3f}")
+    # print(f"Overall Accuracy: {accuracy:.3f}") 
+    
+    
+    ####################################################################################
+    
+    # Once all samples are evaluated, calculate overall metrics
+    """metrics = calculate_metrics(y_true, y_pred)
+    
+    print(f"Machine Translated (Class 0) - Precision: {metrics['precision_0']:.3f}")
+    print(f"Machine Translated (Class 0) - Recall: {metrics['recall_0']:.3f}")
+    print(f"Machine Translated (Class 0) - F1 Score: {metrics['f1_0']:.3f}")
 
+    print(f"Human Translated (Class 1) - Precision: {metrics['precision_1']:.3f}")
+    print(f"Human Translated (Class 1) - Recall: {metrics['recall_1']:.3f}")
+    print(f"Human Translated (Class 1) - F1 Score: {metrics['f1_1']:.3f}")
+
+    print(f"Overall Accuracy: {metrics['accuracy']:.3f}")"""
+    
+    # print(f"Machine Translated Accuracy: {(1-accuracy):.3f}")
+    # print(f"Human Translated Accuracy: {accuracy:.3f}")
+    
+    #######################################################################################
+    
+    # Once all samples are evaluated, calculate overall metrics
+    # precision, recall, f1, machine_accuracy, human_accuracy, true_machine_count, true_human_count, pred_machine_count, pred_human_count = calculate_metrics(y_true, y_pred)
+
+    
+    #######################################################################################
+    human_accuracy_cm, machine_accuracy_cm, overall_accuracy_cm, precision, recall, f1, machine_accuracy, human_accuracy, true_machine_count, true_human_count, pred_machine_count, pred_human_count, TN, FP, FN, TP = calculate_metrics(y_true, y_pred)
+    
+    print("Confusion Matrix:")
+    print(f"TN: {TN} | FP: {FP}")
+    print(f"FN: {FN} | TP: {TP}\n")
+
+    print("Machine Translated Metrics (Negative Class):*******************")
+    print(f"True Negatives: {TN}")
+    print(f"False Positives: {FP}")
+    
+    print(f"Accuracy machine_accuracy_cm : {machine_accuracy_cm:.3f}\n")
+    
+    print(f"True Machine Translated Count: {true_machine_count}")
+    print(f"Predicted Machine Translated Count: {pred_machine_count}")
+    
+    print(f"Machine Translated Precision: {precision[0]:.3f}")
+    print(f"Machine Translated Recall: {recall[0]:.3f}")
+    print(f"Machine Translated F1 Score: {f1[0]:.3f}")
+    
+    print(f"Machine Translated Accuracy: {machine_accuracy:.3f}")
+
+    print("Human Translated Metrics (Positive Class):********************")
+    print(f"True Positives: {TP}")
+    print(f"False Negatives: {FN}")
+    # print(f"Precision: {precision[1]:.3f}")
+    # print(f"Recall: {recall[1]:.3f}")
+    # print(f"F1 Score: {f1[1]:.3f}")
+    
+    print(f"Accuracy human_accuracy_cm : {human_accuracy_cm:.3f}\n")
+    
+    print(f"True Human Translated Count: {true_human_count}")
+    print(f"Predicted Human Translated Count: {pred_human_count}")
+    
+    print(f"Human Translated Precision: {precision[1]:.3f}")
+    print(f"Human Translated Recall: {recall[1]:.3f}")
+    print(f"Human Translated F1 Score: {f1[1]:.3f}")
+    
+    print(f"Human Translated Accuracy: {human_accuracy:.3f}")
+
+    print(f"Overall Accuracy overall_accuracy_cm : {overall_accuracy_cm:.3f}")
+    
+    ######################################################################################
+
+    print("y_true: ", y_true)
+    print("y_pred: ", y_pred)
+    print("src_sentences_converted: ", src_sentences_converted)
+    print("target_converted: ", target_converted)
+    print("ht_mt_target_converted: ", ht_mt_target_converted)
+    
+    print("y_true: ", len(y_true))
+    print("y_pred: ", len(y_pred))
+    print("src_sentences_converted: ", len(src_sentences_converted))
+    print("target_converted: ", len(target_converted))
+    print("ht_mt_target_converted: ", len(ht_mt_target_converted))
+    
+    # data = {}
+    classify_df = pd.DataFrame(data={"src_sentences_converted":src_sentences_converted, "target_converted": target_converted ,"ht_mt_target_converted": ht_mt_target_converted, "y_true": y_true, "y_pred": y_pred})
+    # classify_df =classify_df.transpose()
+    classify_df['y_true'] = classify_df['y_true'].replace({1: "human", 0: "machine"})
+    classify_df['y_pred'] = classify_df['y_pred'].replace({1: "human", 0: "machine"})
+
+    
+    classify_df.to_excel('classify_df_v2.xlsx', index=False)
     # Machine Translated sentences
     # pip install deep_translator
     # import deep_translator
