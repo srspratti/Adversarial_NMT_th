@@ -210,6 +210,9 @@ class LanguageDatasets(object):
                 max_sentences=max_sentences, epoch=epoch,
                 sample=sample_without_replacement, max_positions=max_positions,
                 sort_by_source_size=sort_by_source_size)
+            # Drop the last batch if it's smaller than the expected size
+            if max_sentences and len(batch_sampler[-1]) < max_sentences:
+                batch_sampler = batch_sampler[:-1]
             batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards)
         return torch.utils.data.DataLoader(
             dataset, collate_fn=dataset.collater,
@@ -226,6 +229,9 @@ class LanguageDatasets(object):
             max_positions=max_positions,
             ignore_invalid_inputs=skip_invalid_size_inputs_valid_test,
             descending=descending)
+        # Drop the last batch if it's smaller than the expected size
+        if max_sentences and len(batch_sampler[-1]) < max_sentences:
+            batch_sampler = batch_sampler[:-1]
         batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards)
         return torch.utils.data.DataLoader(
             dataset, num_workers=num_workers, collate_fn=dataset.collater,

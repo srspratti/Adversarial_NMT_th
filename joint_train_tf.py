@@ -12,7 +12,7 @@ sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-tr
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
 
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0,1" 
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7" 
 """
 torch.cuda.device_count() # result is 2
 
@@ -133,9 +133,9 @@ def main(args):
         generator.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_vastai_wmt14_en_fr_2023_50k_mgpu_v1'):
-        os.makedirs('checkpoints/joint/test_vastai_wmt14_en_fr_2023_50k_mgpu_v1')
-    checkpoints_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_50k_mgpu_v1/'
+    if not os.path.exists('checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2'):
+        os.makedirs('checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2')
+    checkpoints_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -322,7 +322,14 @@ def main(args):
             d_loss.backward()
             d_optimizer.step()
 
-
+        # saving training check-points of generator and discriminator 
+        torch.save(generator,
+                   open(checkpoints_path + f"train_joint_g_{g_logging_meters['train_loss'].avg:.3f}.epoch_{epoch_i}.pt",
+                        'wb'), pickle_module=dill)
+        print("saving discriminator at training: ")
+        torch.save(discriminator,
+                   open(checkpoints_path + f"train_joint_d_{d_logging_meters['train_loss'].avg:.3f}.epoch_{epoch_i}.pt",
+                        'wb'), pickle_module=dill)
 
         # validation
         # set validation mode
