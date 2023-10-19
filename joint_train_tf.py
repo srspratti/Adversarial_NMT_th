@@ -14,7 +14,7 @@ sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-tr
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7" 
 """
-torch.cuda.device_count() # result is 2
+torch.cuda.device_count() # result is 8
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 torch.cuda.device_count() # result is 1, using first GPU
