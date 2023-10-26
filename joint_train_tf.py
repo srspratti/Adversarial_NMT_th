@@ -133,9 +133,9 @@ def main(args):
         generator.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2'):
-        os.makedirs('checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2')
-    checkpoints_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2/'
+    if not os.path.exists('checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3'):
+        os.makedirs('checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3')
+    checkpoints_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -311,7 +311,11 @@ def main(args):
             
             # 
             # d_loss = 0.5*(d_loss + d_loss_human)
-            d_loss = 0.7*d_loss + 0.3*d_loss_human
+            # d_loss = 0.7*d_loss + 0.3*d_loss_human
+            # d_loss = 0.5*d_loss + 0.5*d_loss_human
+            d_loss = 0.3*d_loss + 0.7*d_loss_human
+            # d_loss = d_loss
+            # d_loss = d_loss_human
 
             acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
 
@@ -473,7 +477,11 @@ def main(args):
                 disc_out_humanTranSent = discriminator(src_sentence, true_sentence)
                 d_loss_human = d_criterion(disc_out_humanTranSent.squeeze(1), true_labels)
                 # d_loss = 0.5*(d_loss + d_loss_human)
-                d_loss = 0.7*d_loss + 0.3*d_loss_human
+                # d_loss = 0.7*d_loss + 0.3*d_loss_human
+                # d_loss = 0.5*d_loss + 0.5*d_loss_human
+                d_loss = 0.3*d_loss + 0.7*d_loss_human
+                # d_loss = d_loss
+                # d_loss = d_loss_human
 
                 acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
                 d_logging_meters['valid_acc'].update(acc)
