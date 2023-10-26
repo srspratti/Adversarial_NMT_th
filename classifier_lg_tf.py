@@ -208,7 +208,10 @@ def main(args):
     # d_model_path = '/u/prattisr/phase-2/all_repos/checkpoints/joint/test_wmt14_en_fr_raw_sm_tf_disc7030_s20_v1/tf_disc_best_dmodel_at_best_gmodel.pt'
     # test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1
     # d_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/pretrained_models/checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/tf_disc_best_dmodel_at_best_gmodel.pt'
-    d_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2/train_joint_d_0.017.epoch_1.pt'
+    # d_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2/train_joint_d_0.017.epoch_1.pt' #  8 million 8gpu 70 30 loss v2
+    # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_5050_v2/train_joint_d_0.030.epoch_1.pt' # 8 million 8gpu 50 50 loss v2
+    # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070_v2/train_joint_d_0.026.epoch_1.pt' # 8 million 8gpu 30 70 loss v2
+    d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_nohumanLoss_v2/train_joint_d_0.000.epoch_1.pt'
     print("d_model_path ", d_model_path)
     
     assert os.path.exists(d_model_path)
@@ -243,13 +246,17 @@ def main(args):
     d_criterion = torch.nn.BCELoss()
     
      ### Loading pre-trained generator for analysing the BLEU score and perplexity 
-    
+    g_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_nohumanLoss_v2/train_joint_g_10.347.epoch_1.pt'
+    assert os.path.exists(g_model_path)
      # Load model
     # g_model_path = 'checkpoints/joint/best_gmodel.pt'
     # g_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/pretrained_models/checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/test_disc_best_gmodel.pt'
     # g_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/pretrained_models/checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/tf_disc_best_gmodel.pt'
-    g_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2/train_joint_g_10.353.epoch_1.pt'
-    assert os.path.exists(g_model_path)
+    # g_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2/train_joint_g_10.353.epoch_1.pt' # 8 million 8gpu v2
+    # g_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_5050_v2/train_joint_g_10.346.epoch_1.pt' # 8 million 50 50 8gpu v2
+    # g_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070_v2/train_joint_g_10.355.epoch_1.pt'  # 8 million 30 70 8gpu v2
+    
+    
     generator = TransformerModel_custom(args, 
                 dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)    
     model_dict = generator.state_dict()
@@ -489,7 +496,11 @@ def main(args):
     classify_df['y_pred'] = classify_df['y_pred'].replace({1: "human", 0: "machine"})
 
     
-    classify_df.to_excel('classify_df_8mil_o19_v2.xlsx', index=False)
+    # classify_df.to_excel('classify_df_8mil_o19_v2.xlsx', index=False) # 8 million 8 gpu with 70 30 loss
+    # classify_df.to_excel('classify_df_8mil_o21_v1.xlsx', index=False)   # 8 million 8 gpu with 30 70 loss
+    # classify_df.to_excel('classify_df_8mil_o22_v1.xlsx', index=False)   # 8 million 8 gpu with 30 70 loss
+    classify_df.to_excel('classify_df_8mil_o24_v1.xlsx', index=False)   # 8 million 8 gpu with only D loss Only Fake/Machine
+    
     # Machine Translated sentences
     # pip install deep_translator
     # import deep_translator
