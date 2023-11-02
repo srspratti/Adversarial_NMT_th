@@ -20,6 +20,16 @@ from meters import AverageMeter
 from sequence_generator import SequenceGenerator
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix  # for metrics
 
+import random
+seed = random.randint(0, 2**32 - 1)
+torch.manual_seed(569084360)
+print("seed: ", 569084360)
+
+# torch.manual_seed(3203451255)
+# torch.manual_seed(seed)
+# print("seed: ", seed)
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s: %(message)s',
@@ -41,38 +51,9 @@ options.add_generator_model_args(parser)
 options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
 
-# Metric Calculation Functions
-def calculate_metrics_old(y_true, y_pred):
-    precision = precision_score(y_true, y_pred)
-    recall = recall_score(y_true, y_pred)
-    f1 = f1_score(y_true, y_pred)
-    y_true = [float(i) for i in y_true]
-    print("y_pred ", y_pred)
-    print("y_true ", y_true)
-    y_pred = torch.tensor(y_pred)
-    y_true = torch.tensor(y_true)
-    accuracy = torch.sum((y_pred == y_true).float()) / y_true.numel()
-    return precision, recall, f1, accuracy
-
-def calculate_metrics_old_v1(y_true, y_pred):
-    precision_0 = precision_score(y_true, y_pred, pos_label=0)
-    recall_0 = recall_score(y_true, y_pred, pos_label=0)
-    f1_0 = f1_score(y_true, y_pred, pos_label=0)
-    
-    precision_1 = precision_score(y_true, y_pred, pos_label=1)
-    recall_1 = recall_score(y_true, y_pred, pos_label=1)
-    f1_1 = f1_score(y_true, y_pred, pos_label=1)
-    
-    accuracy = accuracy_score(y_true, y_pred)
-    
-    return {
-        'precision_0': precision_0, 'recall_0': recall_0, 'f1_0': f1_0,
-        'precision_1': precision_1, 'recall_1': recall_1, 'f1_1': f1_1,
-        'accuracy': accuracy
-    }
-    
+# Metric Calculation Functions    
 def calculate_metrics(y_true, y_pred):
-    precision = precision_score(y_true, y_pred, average=None)
+    precision = precision_score(y_true, y_pred, average=None, zero_division=1)
     recall = recall_score(y_true, y_pred, average=None)
     f1 = f1_score(y_true, y_pred, average=None)
 
@@ -137,37 +118,26 @@ def main(args):
 
     # torch.cuda.empty_cache()
     print("args.fixed_max_len) ", args.fixed_max_len)
-    use_cuda = (len(args.gpuid) >= 1)
-    if args.gpuid:
-        cuda.set_device(args.gpuid[0])
-
-        # Load dataset
-        if args.replace_unk is not None:
-            dataset = data.load_dataset(
-                args.data,
-                ['test'],
-                args.src_lang,
-                args.trg_lang,
-            )
-        else:
-            dataset = data.load_raw_text_dataset_test_classify(
+    # use_cuda = (len(args.gpuid) >= 1)
+    use_cuda = True
+    dataset = data.load_raw_text_dataset_test_classify(
                 args.data,
                 ['test'],
                 args.src_lang,
                 args.trg_lang,
                 args.fixed_max_len,
             )
-
-        if args.src_lang is None or args.trg_lang is None:
+    if args.src_lang is None or args.trg_lang is None:
             # record inferred languages in args, so that it's saved in checkpoints
             args.src_lang, args.trg_lang = dataset.src, dataset.dst
 
-        print('| [{}] dictionary: {} types'.format(
-            dataset.src, len(dataset.src_dict)))
-        print('| [{}] dictionary: {} types'.format(
-            dataset.dst, len(dataset.dst_dict)))
-        print('| {} {} {} examples'.format(
-            args.data, 'test', len(dataset.splits['test'])))
+    print("type of dataset: ", type(dataset))
+    print('| [{}] dictionary: {} types'.format(
+        dataset.src, len(dataset.src_dict)))
+    print('| [{}] dictionary: {} types'.format(
+        dataset.dst, len(dataset.dst_dict)))
+    print('| {} {} {} examples'.format(
+        args.data, 'test', len(dataset.splits['test'])))
 
     d_logging_meters = OrderedDict()
     # d_logging_meters['train_loss'] = AverageMeter()
@@ -211,7 +181,9 @@ def main(args):
     # d_model_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_v2/train_joint_d_0.017.epoch_1.pt' #  8 million 8gpu 70 30 loss v2
     # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_5050_v2/train_joint_d_0.030.epoch_1.pt' # 8 million 8gpu 50 50 loss v2
     # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070_v2/train_joint_d_0.026.epoch_1.pt' # 8 million 8gpu 30 70 loss v2
-    d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_nohumanLoss_v2/train_joint_d_0.000.epoch_1.pt'
+    # d_model_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.018.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.048.epoch_1.pt'
+    d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.079.epoch_1.pt'
     print("d_model_path ", d_model_path)
     
     assert os.path.exists(d_model_path)
@@ -246,7 +218,9 @@ def main(args):
     d_criterion = torch.nn.BCELoss()
     
      ### Loading pre-trained generator for analysing the BLEU score and perplexity 
-    g_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_nohumanLoss_v2/train_joint_g_10.347.epoch_1.pt'
+    # g_model_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.497.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.352.epoch_1.pt'
+    g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.570.epoch_1.pt'
     assert os.path.exists(g_model_path)
      # Load model
     # g_model_path = 'checkpoints/joint/best_gmodel.pt'
@@ -276,9 +250,13 @@ def main(args):
     print("Generator loaded successfully!")
     
     
-    if use_cuda > 0:
-        discriminator.cuda()
-        generator.cuda()
+    if use_cuda:
+        if torch.cuda.device_count() > 1:
+            discriminator = torch.nn.DataParallel(discriminator).cuda()
+            generator = torch.nn.DataParallel(generator).cuda()
+        else:
+            generator.cuda()
+            discriminator.cuda()
     else:
         discriminator.cpu()
         generator.cpu()
@@ -288,13 +266,15 @@ def main(args):
     
     # initialize dataloader
     max_positions_test = (args.fixed_max_len, args.fixed_max_len)
+    print("max_positions_test",max_positions_test)
     testloader = dataset.eval_dataloader_test_classify(
     'test',
     max_tokens=args.max_tokens,
     max_sentences=args.joint_batch_size,
     max_positions=max_positions_test,
     skip_invalid_size_inputs_valid_test=True,
-    descending=True,  # largest batch first to warm the caching allocator
+    # sample_without_replacement=args.sample_without_replacement,
+    descending=False,  # largest batch first to warm the caching allocator
     shard_id=args.distributed_rank,
     num_shards=args.distributed_world_size
     )
@@ -307,6 +287,14 @@ def main(args):
     target_converted = []
     ht_mt_target_converted = []
     fake_sentence_generator_converted = []
+    
+    print("type of testloader:", type(testloader))
+    for batch in testloader:
+        print("type of batch:",type(batch))
+
+    print("len of testloader:", len(testloader))
+    print("testloader.dataset:", testloader.dataset)
+    # print("type of testloader:", type(testloader))
     
     for i, sample in tqdm(enumerate(testloader)):
         
@@ -397,34 +385,6 @@ def main(args):
         logging.debug(f"D test_classify loss {d_logging_meters['test_classify_loss'].avg:.3f}, acc {d_logging_meters['test_classify_acc'].avg:.3f} at batch {i}")
         # torch.cuda.empty_cache()
     
-    ##################################################################################
-     
-    # Once all samples are evaluated, calculate overall metrics
-    # precision, recall, f1, accuracy = calculate_metrics(y_true, y_pred)
-    # print(f"Overall Precision: {precision:.3f}")
-    # print(f"Overall Recall: {recall:.3f}")
-    # print(f"Overall F1 Score: {f1:.3f}")
-    # print(f"Overall Accuracy: {accuracy:.3f}") 
-    
-    
-    ####################################################################################
-    
-    # Once all samples are evaluated, calculate overall metrics
-    """metrics = calculate_metrics(y_true, y_pred)
-    
-    print(f"Machine Translated (Class 0) - Precision: {metrics['precision_0']:.3f}")
-    print(f"Machine Translated (Class 0) - Recall: {metrics['recall_0']:.3f}")
-    print(f"Machine Translated (Class 0) - F1 Score: {metrics['f1_0']:.3f}")
-
-    print(f"Human Translated (Class 1) - Precision: {metrics['precision_1']:.3f}")
-    print(f"Human Translated (Class 1) - Recall: {metrics['recall_1']:.3f}")
-    print(f"Human Translated (Class 1) - F1 Score: {metrics['f1_1']:.3f}")
-
-    print(f"Overall Accuracy: {metrics['accuracy']:.3f}")"""
-    
-    # print(f"Machine Translated Accuracy: {(1-accuracy):.3f}")
-    # print(f"Human Translated Accuracy: {accuracy:.3f}")
-    
     #######################################################################################
     
     # Once all samples are evaluated, calculate overall metrics
@@ -476,6 +436,7 @@ def main(args):
     ######################################################################################
 
     print("y_true: ", y_true)
+    y_pred = [int(y_pre) for y_pre in y_pred]
     print("y_pred: ", y_pred)
     print("src_sentences_converted: ", src_sentences_converted)
     print("target_converted: ", target_converted)
@@ -488,6 +449,7 @@ def main(args):
     print("target_converted: ", len(target_converted))
     print("ht_mt_target_converted: ", len(ht_mt_target_converted))
     print("fake_sentence_generator_converted ", len(fake_sentence_generator_converted))
+    print("seed: ", seed)
     
     # data = {}
     classify_df = pd.DataFrame(data={"src_sentences_converted":src_sentences_converted, "target_converted": target_converted ,"ht_mt_target_converted": ht_mt_target_converted, "fake_sentence_generator_converted":fake_sentence_generator_converted, "y_true": y_true, "y_pred": y_pred})
@@ -501,94 +463,6 @@ def main(args):
     # classify_df.to_excel('classify_df_8mil_o22_v1.xlsx', index=False)   # 8 million 8 gpu with 30 70 loss
     classify_df.to_excel('classify_df_8mil_o24_v1.xlsx', index=False)   # 8 million 8 gpu with only D loss Only Fake/Machine
     
-    # Machine Translated sentences
-    # pip install deep_translator
-    # import deep_translator
-    # from deep_translator import deepltranslator 
-    # machineTranslSents = 
-    
-    # disc_out = discriminator(src_sentToBeTranslated, hm_or_mch_translSent)
-    # If disc_out is 1 -> Human else if disc_out is 0 -> Machine
-    
-    """
-    with torch.no_grad():
-                    sys_out_batch = generator(sample)
-
-                out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
-
-                _,prediction = out_batch.topk(1)
-                prediction = prediction.squeeze(1)  #64 * 50 = 6632
-
-                fake_labels = Variable(torch.zeros(sample['target'].size(0)).float())
-
-                fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
-
-                if use_cuda:
-                    fake_labels = fake_labels.cuda()
-
-                disc_out = discriminator(src_sentence, fake_sentence)
-                d_loss = d_criterion(disc_out.squeeze(1), fake_labels)
-                acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
-                d_logging_meters['valid_acc'].update(acc)
-                d_logging_meters['valid_loss'].update(d_loss)
-                logging.debug(f"D dev loss {d_logging_meters['valid_loss'].avg:.3f}, acc {d_logging_meters['valid_acc'].avg:.3f} at batch {i}")
-    """
-    """
-    translator = SequenceDiscriminator(
-    generator, beam_size=args.beam, stop_early=(not args.no_early_stop),
-    normalize_scores=(not args.unnormalized), len_penalty=args.lenpen,
-    unk_penalty=args.unkpen)
-
-    if use_cuda:
-        translator.cuda()
-
-    with torch.no_grad():
-                    sys_out_batch = generator(sample)
-
-                out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
-
-                _,prediction = out_batch.topk(1)
-                prediction = prediction.squeeze(1)  #64 * 50 = 6632
-
-                fake_labels = Variable(torch.zeros(sample['target'].size(0)).float())
-
-                fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
-
-                if use_cuda:
-                    fake_labels = fake_labels.cuda()
-
-                disc_out = discriminator(src_sentence, fake_sentence)
-                d_loss = d_criterion(disc_out.squeeze(1), fake_labels)
-                
-    """
-    #################### Writing predictions to file - If Required ###############
-    """
-    with open('predictions.txt', 'wb') as translation_writer:
-        with open('real.txt', 'wb') as ground_truth_writer:
-
-            translations = translator.generate_batched_itr(
-                testloader, maxlen_a=args.max_len_a, maxlen_b=args.max_len_b, cuda=use_cuda)
-
-            for sample_id, src_tokens, target_tokens, hypos in translations:
-                # Process input and ground truth
-                target_tokens = target_tokens.int().cpu()
-                src_str = dataset.src_dict.string(src_tokens, args.remove_bpe)
-                target_str = dataset.dst_dict.string(
-                    target_tokens, args.remove_bpe, escape_unk=True)
-
-                # Process top predictions
-                for i, hypo in enumerate(hypos[:min(len(hypos), args.nbest)]):
-                    hypo_tokens = hypo['tokens'].int().cpu()
-                    hypo_str = dataset.dst_dict.string(
-                        hypo_tokens, args.remove_bpe)
-
-                    hypo_str += '\n'
-                    target_str += '\n'
-
-                    translation_writer.write(hypo_str.encode('utf-8'))
-                    ground_truth_writer.write(target_str.encode('utf-8'))
-
-"""
 
 if __name__ == "__main__":
     ret = parser.parse_known_args()

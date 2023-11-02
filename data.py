@@ -267,7 +267,7 @@ class LanguageDatasets_test_classify(object):
         
     def eval_dataloader_test_classify(self, split, num_workers=0, max_tokens=None,
                         max_sentences=None, max_positions=(1024, 1024),
-                        skip_invalid_size_inputs_valid_test=False,
+                        skip_invalid_size_inputs_valid_test=True,
                         descending=False, shard_id=0, num_shards=1):
         dataset = self.splits[split]
         print("dataset: ", type(dataset))
@@ -276,6 +276,14 @@ class LanguageDatasets_test_classify(object):
             max_positions=max_positions,
             ignore_invalid_inputs=skip_invalid_size_inputs_valid_test,
             descending=descending)
+        
+        print("type of batch_sampler ",type(batch_sampler))
+        print("len of batch sampler:", len(batch_sampler))
+        # # Drop the last batch if it's smaller than the expected size
+        # if max_sentences and len(batch_sampler[-1]) < max_sentences:
+        #     batch_sampler = batch_sampler[:-1]
+        # batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards)
+        
         batch_sampler = mask_batches_test_classify(batch_sampler, shard_id=shard_id, num_shards=num_shards)
         return torch.utils.data.DataLoader(
             dataset, num_workers=num_workers, collate_fn=dataset.collater,
@@ -573,6 +581,7 @@ def random_split(dataset, lengths):
     return [Subset(dataset, indices[offset - length:offset]) for offset, length in zip(_accumulate(lengths), lengths)]
 
 def _valid_size(src_size, dst_size, max_positions):
+    print("max_positions ",max_positions)
     if isinstance(max_positions, numbers.Number):
         max_src_positions, max_dst_positions = max_positions, max_positions
     else:
@@ -656,9 +665,14 @@ def batches_by_size_test_classify(src, dst, max_tokens, max_sentences=None,
         max_tokens = float('Inf')
     if max_sentences is None:
         max_sentences = float('Inf')
+    # max_positions = (2048,2048)
+    print("src.sizes ", src.sizes)
     indices = np.argsort(src.sizes, kind='mergesort')
     if descending:
         indices = np.flip(indices, 0)
+    print("type of indices:", type(indices))
+    print(" shape of indices",indices.shape)
+    print("indices:", indices)
     return list(_make_batches(
         src, dst, indices, max_tokens, max_sentences, max_positions,
         ignore_invalid_inputs, allow_different_src_lens=False))

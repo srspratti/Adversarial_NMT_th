@@ -10,6 +10,8 @@ import numpy as np
 from collections import OrderedDict
 sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 """
 os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
 torch.cuda.device_count() # result is 2
@@ -19,7 +21,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from torch import cuda
@@ -55,7 +57,8 @@ options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
 
 def main(args):
-    use_cuda = (len(args.gpuid) >= 1)
+    # use_cuda = (len(args.gpuid) >= 1)
+    use_cuda = True
     print("{0} GPU(s) are available".format(cuda.device_count()))
     print("args.fixed_max_len) ", args.fixed_max_len)
     # Load dataset
@@ -111,7 +114,10 @@ def main(args):
 
     # loading n-1 iteration g model 
    # generator = TransformerModel(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
-    g_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/pretrained_models/checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/test_joint_g_9.846.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.352.epoch_1.pt'
+    #g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_to_16mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_9.975.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_16mil_to_24mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.410.epoch_1.pt'
+    g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.497.epoch_1.pt'
     assert os.path.exists(g_model_path)
     generator = TransformerModel_custom(args, 
                 dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)    
@@ -134,7 +140,10 @@ def main(args):
     
     ####################### Discriminator Loading ##################################
     # discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
-    d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/pretrained_models/checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/test_joint_d_0.428.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.048.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_to_16mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.075.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_16mil_to_24mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.021.epoch_1.pt'
+    d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.018.epoch_1.pt'
     print("d_model_path ", d_model_path)
     
     assert os.path.exists(d_model_path)
@@ -177,9 +186,9 @@ def main(args):
         generator.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/'
+    if not os.path.exists('checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3'):
+        os.makedirs('checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3')
+    checkpoints_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -187,9 +196,9 @@ def main(args):
     pg_criterion = PGLoss(ignore_index=dataset.dst_dict.pad(), size_average=True,reduce=True)
 
     # fix discriminator word embedding (as Wu et al. do)
-    for p in discriminator.embed_src_tokens.parameters():
+    for p in discriminator.module.embed_src_tokens.parameters():
         p.requires_grad = False
-    for p in discriminator.embed_trg_tokens.parameters():
+    for p in discriminator.module.embed_trg_tokens.parameters():
         p.requires_grad = False
 
     # define optimizer
@@ -355,7 +364,7 @@ def main(args):
             
             # 
             # d_loss = 0.5*(d_loss + d_loss_human)
-            d_loss = 0.7*d_loss + 0.3*d_loss_human
+            d_loss = 0.3*d_loss + 0.7*d_loss_human
 
             acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
 
@@ -517,7 +526,8 @@ def main(args):
                 
                 disc_out_humanTranSent = discriminator(src_sentence, true_sentence)
                 d_loss_human = d_criterion(disc_out_humanTranSent.squeeze(1), true_labels)
-                d_loss = 0.5*(d_loss + d_loss_human)
+                # d_loss = 0.5*(d_loss + d_loss_human)
+                d_loss = 0.3*d_loss + 0.7*d_loss_human
 
                 acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
                 d_logging_meters['valid_acc'].update(acc)
