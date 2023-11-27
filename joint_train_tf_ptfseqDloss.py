@@ -36,11 +36,12 @@ from train_discriminator import train_d
 from PGLoss import PGLoss
 from tqdm import tqdm
 from sequence_generator import SequenceGenerator
+from dictionary import Dictionary
 
 import re
 import subprocess
 
-
+import cProfile
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s: %(message)s',
@@ -166,26 +167,69 @@ def main(args):
     # converting sentences to ids 'out_batch'
     # import torch
 
-    def sentences_to_ids(padded_bpe_translations, dict, max_len=None):
+    def sentences_to_ids_old(padded_bpe_translations, dict, max_len=None):
         # Determine the maximum length if not provided
         if max_len is None:
             max_len = max(len(sentence.split()) for sentence in padded_bpe_translations)
         
         # Initialize an empty list to store lists of token ids
         all_ids = []
-        for sentence in padded_bpe_translations:
+        print("length of padded_bpe_translations:", len(padded_bpe_translations))
+        for idx, sentence in enumerate(padded_bpe_translations):
+            print("sentence ",sentence)
             words = sentence.split()
             # Convert words to ids, handling the padding
             ids = [dict.index(word) if word in dict else dict.unk_index for word in words]  # Handle unknown words
             # ids += [dict.pad_index] * (max_len - len(ids))  # Pad to max_len
+            print("idx in sentences_to_ids:",idx)
             print(" length of ids: ", len(ids))
             all_ids.append(ids)
         
         # Convert list of lists into a 2D tensor
         print("all_ids ", all_ids)
         return torch.tensor(all_ids, dtype=torch.long)
-
     
+    
+    def sentences_to_ids_nondict(padded_bpe_translations, dict_obj, max_len=None):
+        # Determine the maximum length if not provided
+        if max_len is None:
+            max_len = max(len(sentence.split()) for sentence in padded_bpe_translations)
+
+        # Pre-allocate the tensor
+        all_ids = torch.empty((len(padded_bpe_translations), max_len), dtype=torch.long)
+        all_ids.fill_(dict_obj.pad_index)  # Assuming dict has a pad_index attribute
+
+        print(" dictionary object: length", dict_obj.__len__)
+        word_to_id_map = {word: dict_obj.index(word) for word in dict_obj}
+        print(" word_to_id_map : ", word_to_id_map)
+        
+        for idx, sentence in enumerate(padded_bpe_translations):
+            print("idx in sentences_to_ids:",idx)
+            words = sentence.split()
+            # ids = [dict.get(word, dict.unk_index) for word in words]  # More efficient lookup
+            ids = [word_to_id_map.get(word, dict_obj.unk_index) for word in words]
+            # ids = [dict_obj.index(word) if word in dict_obj else dict_obj.unk_index for word in words]
+            all_ids[idx, :len(ids)] = torch.tensor(ids, dtype=torch.long)
+              
+        # Pre-allocate the tensor
+        # all_ids = torch.full((len(padded_bpe_translations), max_len), dict_obj.pad_index, dtype=torch.long)
+        # print(" length of all_ids: ", len(all_ids))
+        # word_to_id_map = {word: dict_obj.index(word) for word in dict_obj}
+        # print(" word_to_id_map : ", word_to_id_map)
+        
+        # for idx, sentence in enumerate(padded_bpe_translations):
+        
+        #     # words = sentence.split()
+        #     # ids = torch.LongTensor([dict_obj.index(word) if word in dict_obj else dict_obj.unk_index for word in words])
+        #     # print(" length of ids: ", len(ids))
+        #     # all_ids[idx, :ids.size(0)] = ids
+            
+        #     words = sentence.split()
+        #     ids = [word_to_id_map.get(word, dict_obj.unk_index) for word in words]
+        #     ids_tensor = torch.LongTensor(ids[:max_len])  # Truncate if needed
+        #     all_ids[idx, :ids_tensor.size(0)] = ids_tensor
+            
+        return all_ids
     
     def ids_to_sentences(src_tokens, dict):
         # Assuming src_tokens is a 2D tensor, 
@@ -206,8 +250,6 @@ def main(args):
             sentences.append(unbpe(sentence))    
         return sentences
     
-    
-
     # Replace with the path to your learned BPE codes.
     BPE_CODE_PATH = "/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/code"
     # /u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/subword-nmt/subword_nmt/apply_bpe.py
@@ -219,6 +261,13 @@ def main(args):
         # Execute the command and get the output.
         bpe_sentence = subprocess.check_output(cmd, shell=True, text=True).strip()
         return bpe_sentence
+    
+    
+    # def test_function_time():
+    #     # Assume `padded_bpe_translations` and `dict` are defined
+    #     sentences_to_ids(padded_bpe_translations, dict)
+    
+    # cProfile.run('test_function_time()')
         
     if use_cuda:
         if torch.cuda.device_count() > 1:
@@ -235,9 +284,9 @@ def main(args):
         generator_pt.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1/'
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_40mil__ptfseqOnly_v1'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_40mil__ptfseqOnly_v1')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_40mil__ptfseqOnly_v1/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -349,9 +398,13 @@ def main(args):
             # convert bpe_translations to ids 
             # sys_out_batch = convert_to_expected_format(translation)
             
+            
             max_len = 50  # Example maximum length
-            token_ids_tensor = sentences_to_ids(padded_bpe_translations, dataset.dst_dict, max_len)
-
+            #token_ids_tensor = sentences_to_ids(padded_bpe_translations, dataset.dst_dict, max_len) # The dataset.dst_dict ( here FR ) should be from data-bin/, which the GAN train() is used
+            #token_ids_tensor = sentences_to_ids(padded_bpe_translations, dataset.dst_dict, max_len) # The dataset.dst_dict ( here FR ) should be from data-bin/, which the GAN train() is used
+            dict_obj = Dictionary()
+            token_ids_tensor = dict_obj.sentences_to_ids(padded_bpe_translations, max_len=50)
+            
             # Check shape of the resulting tensor
             print("token_ids_tensor.shape ", token_ids_tensor.shape)
             token_ids_tensor_flat = token_ids_tensor.view(-1)
@@ -399,7 +452,7 @@ def main(args):
             
             true_labels = Variable(torch.ones(sample['target'].size(0)).float()) # 64 length vector
 
-            ##############
+            ###########################################################################################################
             
             with torch.no_grad():
                 sys_out_batch = generator(sample=sample, args=args) # 64 X 50 X 6632
@@ -412,11 +465,14 @@ def main(args):
             print("prediction after squeeze: ",prediction.size())
             
             
-            #################
+            ##############################################################################################################################
             
-            prediction = token_ids_tensor_flat
+            # prediction = token_ids_tensor_flat
             
-            print("prediction after token_ids_tensor_flat: ",prediction.size())
+            # print("prediction after token_ids_tensor_flat: ",prediction.size())
+            
+            if use_cuda:
+                token_ids_tensor_flat = token_ids_tensor_flat.cuda()
             
             fake_labels = Variable(torch.zeros(sample['target'].size(0)).float()) # 64 length vector
 
@@ -425,6 +481,14 @@ def main(args):
             fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
 
             print("fake_sentence after torch.reshape(prediction, src_sentence.shape) : ",fake_sentence.size())
+            
+            #############################################################################################################################
+            
+            fake_sentence_gpt = torch.reshape(token_ids_tensor_flat, src_sentence.shape)
+            
+            print("fake_sentence_gpt after torch.resshape(token_ids_tensor_flat, src_sentence.shape) : ",fake_sentence_gpt.size())
+            
+            #############################################################################################################################
             
             if use_cuda:
                 true_labels = true_labels.cuda()
@@ -438,10 +502,21 @@ def main(args):
             
             disc_out = discriminator(src_sentence, fake_sentence) # 64 X 1
             
-            d_loss = d_criterion(disc_out.squeeze(1), fake_labels)
+            d_loss_fakeG = d_criterion(disc_out.squeeze(1), fake_labels)
             
+            ##################### pre-trained loss ########         
+            if use_cuda:
+                src_sentence = src_sentence.cuda()
+                fake_labels = fake_labels.cuda()
+            
+            disc_out_gpt = discriminator(src_sentence, fake_sentence_gpt)
+            
+            d_loss_gpt = d_criterion(disc_out_gpt.squeeze(1), fake_labels)
+            
+            ######################################################################################################
             # d_loss = 0.5*(d_loss + d_loss_human)
-            d_loss = 0.3*d_loss + 0.7*d_loss_human
+            
+            d_loss = 0.15*d_loss_fakeG + + 0.15*d_loss_gpt + 0.7*d_loss_human
 
             acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
 
@@ -453,7 +528,14 @@ def main(args):
             d_optimizer.step()
 
 
-
+        # saving training check-points of generator and discriminator 
+        torch.save(generator,
+                   open(checkpoints_path + f"train_joint_g_{g_logging_meters['train_loss'].avg:.3f}.epoch_{epoch_i}.pt",
+                        'wb'), pickle_module=dill)
+        print("saving discriminator at training: ")
+        torch.save(discriminator,
+                   open(checkpoints_path + f"train_joint_d_{d_logging_meters['train_loss'].avg:.3f}.epoch_{epoch_i}.pt",
+                        'wb'), pickle_module=dill)
  ################################################################## VALIDATION #################################################################
         # validation
         # set validation mode

@@ -105,6 +105,23 @@ class Dictionary(object):
     def unk(self):
         """Helper to get index of unk symbol"""
         return self.unk_index
+    
+    def sentences_to_ids(self, padded_bpe_translations, max_len=None):
+        # Determine the maximum length if not provided
+        if max_len is None:
+            max_len = max(len(sentence.split()) for sentence in padded_bpe_translations)
+
+        # Pre-allocate the tensor
+        all_ids = torch.full((len(padded_bpe_translations), max_len), self.pad_index, dtype=torch.long)
+
+        # Use the internal index mapping of the dictionary
+        for idx, sentence in enumerate(padded_bpe_translations):
+            words = sentence.split()
+            ids = [self.indices.get(word, self.unk_index) for word in words]
+            ids_tensor = torch.LongTensor(ids[:max_len])  # Truncate if needed
+            all_ids[idx, :ids_tensor.size(0)] = ids_tensor
+
+        return all_ids
 
     @staticmethod
     def load(f):

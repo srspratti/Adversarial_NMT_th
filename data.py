@@ -40,7 +40,7 @@ def infer_language_pair(path, splits):
 def load_dictionaries(path, src_lang, dst_lang):
     """Load dictionaries for a given language pair."""
     src_dict = Dictionary.load(os.path.join(path, 'dict.{}.txt'.format(src_lang)))
-    dst_dict = Dictionary.load(os.path.join(path, 'dict.{}.txt'.format(dst_lang)))
+    dst_dict = Dictionary.load(os.path.join(path, 'dict.{}.txt'.format(dst_lang)))    
     return src_dict, dst_dict
 
 from torch._utils import _accumulate

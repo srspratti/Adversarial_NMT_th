@@ -183,7 +183,8 @@ def main(args):
     # d_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070_v2/train_joint_d_0.026.epoch_1.pt' # 8 million 8gpu 30 70 loss v2
     # d_model_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.018.epoch_1.pt'
     # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.048.epoch_1.pt'
-    d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.079.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.079.epoch_1.pt'
+    d_model_path = '/root/Adversarial_NMT_th/pretrained_models/checkpoints/joint/test_vastai_wmt14_en_fr_2023_4mil_8mgpu_3070Dloss_4milDict_v1/train_joint_d_0.036.epoch_1.pt'
     print("d_model_path ", d_model_path)
     
     assert os.path.exists(d_model_path)
@@ -220,7 +221,8 @@ def main(args):
      ### Loading pre-trained generator for analysing the BLEU score and perplexity 
     # g_model_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.497.epoch_1.pt'
     # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.352.epoch_1.pt'
-    g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.570.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.570.epoch_1.pt'
+    g_model_path = '/root/Adversarial_NMT_th/pretrained_models/checkpoints/joint/test_vastai_wmt14_en_fr_2023_4mil_8mgpu_3070Dloss_4milDict_v1/train_joint_g_10.401.epoch_1.pt'
     assert os.path.exists(g_model_path)
      # Load model
     # g_model_path = 'checkpoints/joint/best_gmodel.pt'
