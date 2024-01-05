@@ -20,7 +20,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from torch import cuda
@@ -284,9 +284,9 @@ def main(args):
         generator_pt.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_40mil__ptfseqOnly_v1'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_40mil__ptfseqOnly_v1')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_40mil__ptfseqOnly_v1/'
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -294,9 +294,9 @@ def main(args):
     pg_criterion = PGLoss(ignore_index=dataset.dst_dict.pad(), size_average=True,reduce=True)
 
     # fix discriminator word embedding (as Wu et al. do)
-    for p in discriminator.embed_src_tokens.parameters():
+    for p in discriminator.module.embed_src_tokens.parameters():
         p.requires_grad = False
-    for p in discriminator.embed_trg_tokens.parameters():
+    for p in discriminator.module.embed_trg_tokens.parameters():
         p.requires_grad = False
 
     # define optimizer
@@ -369,31 +369,38 @@ def main(args):
             src_tokens = sample['net_input']['src_tokens']
             # make sure that the tokens are on the right device
             src_tokens = src_tokens.cuda() if use_cuda else src_tokens
-            print("src_tokens type: ", type(src_tokens))
-            print("src_tokens size() : ", src_tokens.size())
-            print("src_tokens : ", src_tokens)
+            # print("src_tokens type: ", type(src_tokens))
+            # print("src_tokens size() : ", src_tokens.size())
+            # print("src_tokens : ", src_tokens)
             # Generate translations using the Fairseq Model 
             
             # src_tokens to be converted to a En sentence ( EN-> FR), remove bpe 
             
             sentences = ids_to_sentences(src_tokens, dataset.src_dict)
-            print("sentences :::", sentences)
-            for sentence in sentences:
-                # print("sentence no#  ", n)
-                print(sentence)
-            translations = generator_pt.translate(sentences)
+            # print("sentences :::", sentences)
+            # for sentence in sentences:
+            #     # print("sentence no#  ", n)
+            #     print(sentence)
+                
+            # Access the original TransformerModel from the DataParallel wrapper
+            original_generator_pt = generator_pt.module if isinstance(generator_pt, torch.nn.DataParallel) else generator_pt
+
+            # Now use the translate method
+            translations = original_generator_pt.translate(sentences)
+
+            #translations = generator_pt.translate(sentences)
             # Assuming that your generator model expects a certain format, you might need to convert translation to that format
-            print("translations ", translations)
+            # print("translations ", translations)
             
             # Applying BPE to translations
             bpe_translations = [apply_bpe(t) for t in translations]
-            print("translations with BPE:", bpe_translations)
+            # print("translations with BPE:", bpe_translations)
             
             # Applying padding to bpe_translations 
             #  max_len to be 50 for demonstration purposes
             max_len = 50
             padded_bpe_translations = pad_sentences(bpe_translations, max_len=max_len)
-            print("Padded translations with BPE:", padded_bpe_translations)
+            # print("Padded translations with BPE:", padded_bpe_translations)
             
             # convert bpe_translations to ids 
             # sys_out_batch = convert_to_expected_format(translation)
@@ -406,18 +413,18 @@ def main(args):
             token_ids_tensor = dict_obj.sentences_to_ids(padded_bpe_translations, max_len=50)
             
             # Check shape of the resulting tensor
-            print("token_ids_tensor.shape ", token_ids_tensor.shape)
+            # print("token_ids_tensor.shape ", token_ids_tensor.shape)
             token_ids_tensor_flat = token_ids_tensor.view(-1)
-            print("token_ids_tensor_flat.shape ", token_ids_tensor_flat.shape)
+            # print("token_ids_tensor_flat.shape ", token_ids_tensor_flat.shape)
             
             ##*****************************************************************************
             
             sys_out_batch = generator(sample=sample, args=args)
-            print("sys_out_batch ", sys_out_batch)
-            print("sys_out_batch size: ", sys_out_batch.size())
+            # print("sys_out_batch ", sys_out_batch)
+            # print("sys_out_batch size: ", sys_out_batch.size())
 
             out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
-            print("out_batch size: ", out_batch.size())
+            # print("out_batch size: ", out_batch.size())
 
             train_trg_batch = sample['target'].view(-1) # 64*50 = 3200
 
@@ -460,9 +467,9 @@ def main(args):
             out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
                 
             _,prediction = out_batch.topk(1)
-            print("prediction before squeeze: ",prediction.size())
+            # print("prediction before squeeze: ",prediction.size())
             prediction = prediction.squeeze(1)  #64 * 50 = 6632
-            print("prediction after squeeze: ",prediction.size())
+            # print("prediction after squeeze: ",prediction.size())
             
             
             ##############################################################################################################################
@@ -476,17 +483,17 @@ def main(args):
             
             fake_labels = Variable(torch.zeros(sample['target'].size(0)).float()) # 64 length vector
 
-            print("fake_labels after Variable: ",fake_labels.size())
+            #print("fake_labels after Variable: ",fake_labels.size())
             
             fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
 
-            print("fake_sentence after torch.reshape(prediction, src_sentence.shape) : ",fake_sentence.size())
+            #print("fake_sentence after torch.reshape(prediction, src_sentence.shape) : ",fake_sentence.size())
             
             #############################################################################################################################
             
             fake_sentence_gpt = torch.reshape(token_ids_tensor_flat, src_sentence.shape)
             
-            print("fake_sentence_gpt after torch.resshape(token_ids_tensor_flat, src_sentence.shape) : ",fake_sentence_gpt.size())
+            #print("fake_sentence_gpt after torch.resshape(token_ids_tensor_flat, src_sentence.shape) : ",fake_sentence_gpt.size())
             
             #############################################################################################################################
             
@@ -516,7 +523,10 @@ def main(args):
             ######################################################################################################
             # d_loss = 0.5*(d_loss + d_loss_human)
             
-            d_loss = 0.15*d_loss_fakeG + + 0.15*d_loss_gpt + 0.7*d_loss_human
+            # d_loss = 0.20*d_loss_fakeG + 0.40*d_loss_gpt + 0.40*d_loss_human
+            # d_loss = 0.50*d_loss_gpt + 0.50*d_loss_human
+            # d_loss = 0.80*d_loss_gpt + 0.20*d_loss_human
+            d_loss = d_loss_gpt
 
             acc = torch.sum(torch.round(disc_out).squeeze(1) == fake_labels).float() / len(fake_labels)
 
@@ -536,6 +546,7 @@ def main(args):
         torch.save(discriminator,
                    open(checkpoints_path + f"train_joint_d_{d_logging_meters['train_loss'].avg:.3f}.epoch_{epoch_i}.pt",
                         'wb'), pickle_module=dill)
+"""
  ################################################################## VALIDATION #################################################################
         # validation
         # set validation mode
@@ -586,7 +597,7 @@ def main(args):
 
                 # discriminator validation
                 bsz = sample['target'].size(0)
-                print("bsz value is {}".format(bsz))
+                # print("bsz value is {}".format(bsz))
                 src_sentence = sample['net_input']['src_tokens']
                 # train with half human-translation and half machine translation
 
@@ -595,46 +606,46 @@ def main(args):
 
                 
                 # print statements for debugging purposes
-                print("sample type is {}".format(type(sample)))
-                print("sample keys are {}".format(sample.keys()))
-                print("sample dict length is {}".format(len(sample)))
+                # print("sample type is {}".format(type(sample)))
+                # print("sample keys are {}".format(sample.keys()))
+                # print("sample dict length is {}".format(len(sample)))
                 
-                print("sample['id] ", type(sample['id']))
-                print("sample['id] size ", sample['id'].size())
+                # print("sample['id] ", type(sample['id']))
+                # print("sample['id] size ", sample['id'].size())
                 
-                print("sample[''ntokens'] ", type(sample['ntokens']))
-                print("sample['ntokens'] ", sample['ntokens'])
+                # print("sample[''ntokens'] ", type(sample['ntokens']))
+                # print("sample['ntokens'] ", sample['ntokens'])
                 
-                print("sample[''net_input'] ", type(sample['net_input']))
-                print("sample['net_input'] ", sample['net_input'].keys())
+                # print("sample[''net_input'] ", type(sample['net_input']))
+                # print("sample['net_input'] ", sample['net_input'].keys())
                 
-                print("sample['target'] ", type(sample['target']))
-                print("sample['target'] ", sample['target'].size())
+                # print("sample['target'] ", type(sample['target']))
+                # print("sample['target'] ", sample['target'].size())
                 
-                print("sample['net_input']['src_tokens'] ", sample['net_input']['src_tokens'])
-                print("sample['net_input']['prev_output_tokens'] ", sample['net_input']['prev_output_tokens'])
+                # print("sample['net_input']['src_tokens'] ", sample['net_input']['src_tokens'])
+                # print("sample['net_input']['prev_output_tokens'] ", sample['net_input']['prev_output_tokens'])
             
                 with torch.no_grad():
                     sys_out_batch = generator(sample=sample, args=args)
                 
                 # print statements for debugging purposes
-                print("sys_out_batch size is {}".format(sys_out_batch.size()))
+                # print("sys_out_batch size is {}".format(sys_out_batch.size()))
 
                 out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
                 
                 # print statements for debugging purposes
-                print("out_batch size is {}".format(out_batch.size()))
+                # print("out_batch size is {}".format(out_batch.size()))
 
                 _,prediction = out_batch.topk(1)
                 
                 # print statements for debugging purposes
-                print("prediction size is {}".format(prediction.size()))
+                # print("prediction size is {}".format(prediction.size()))
                 
                 prediction = prediction.squeeze(1)  #64 * 50 = 6632
                 
                 # print statements for debugging purposes
-                print("prediction.squeeze(1) value  is {}".format(prediction))
-                print("prediction.squeeze(1) type  is {}".format(type(prediction)))
+                # print("prediction.squeeze(1) value  is {}".format(prediction))
+                # print("prediction.squeeze(1) type  is {}".format(type(prediction)))
 
                 fake_labels = Variable(torch.zeros(sample['target'].size(0)).float())
 
@@ -643,19 +654,19 @@ def main(args):
                 if use_cuda:
                     fake_labels = fake_labels.cuda()
                     
-                print("This {} is the source sentence type".format(type(src_sentence)))
-                print("This {} is the source sentence size".format(src_sentence.size()))
-                print("This {} is the fake sentence(generated by G)type".format(type(fake_sentence)))
-                print("This {} is the fake sentence(generated by G)size".format(fake_sentence.size()))
+                # print("This {} is the source sentence type".format(type(src_sentence)))
+                # print("This {} is the source sentence size".format(src_sentence.size()))
+                # print("This {} is the fake sentence(generated by G)type".format(type(fake_sentence)))
+                # print("This {} is the fake sentence(generated by G)size".format(fake_sentence.size()))
                 
                 
                 disc_out = discriminator(src_sentence, fake_sentence)
                 
-                print("This {} is the disc_out type".format(type(disc_out)))
-                print("This {} is the disc_out size".format(disc_out.size()))
-                print("This {} is the disc_out.squeeze(1) type".format(type(disc_out.squeeze(1))))
-                print("This {} is the disc_out.squeeze(1) size".format(disc_out.squeeze(1).size()))
-                print("This {} is the disc_out.squeeze(1) value".format(disc_out.squeeze(1)))
+                # print("This {} is the disc_out type".format(type(disc_out)))
+                # print("This {} is the disc_out size".format(disc_out.size()))
+                # print("This {} is the disc_out.squeeze(1) type".format(type(disc_out.squeeze(1))))
+                # print("This {} is the disc_out.squeeze(1) size".format(disc_out.squeeze(1).size()))
+                # print("This {} is the disc_out.squeeze(1) value".format(disc_out.squeeze(1)))
                 
                 d_loss = d_criterion(disc_out.squeeze(1), fake_labels)
                 
@@ -688,7 +699,7 @@ def main(args):
             torch.save(discriminator, open(checkpoints_path + "tf_disc_best_dmodel_at_best_gmodel.pt", 'wb'), pickle_module=dill)
         
 ###############################################################################################################################################
-
+"""
 def update_learning_rate(update_times, target_times, init_lr, lr_shrink, optimizer):
 
     lr = init_lr * (lr_shrink ** (update_times // target_times))

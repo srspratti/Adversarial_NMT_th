@@ -7,6 +7,7 @@
 
 import math
 import torch
+import re
 
 
 class Dictionary(object):
@@ -105,6 +106,44 @@ class Dictionary(object):
     def unk(self):
         """Helper to get index of unk symbol"""
         return self.unk_index
+    
+    def unbpe(self, text):
+        """
+        Un-apply BPE encoding from a text.
+
+        Args:
+            text (str): BPE-encoded text.
+
+        Returns:
+            str: Text with BPE encoding removed.
+        """
+        # Using regex to replace instances of "@@ " with an empty string
+        # print("before unbpe ", text)
+        # text_unbpe = re.sub(r'@@ ?', '', text)
+        return re.sub(r'@@ ?', '', text)
+        # print("after unbpe ", text_unbpe)
+        # return text_unbpe
+    
+    def ids_to_sentences(self, src_tokens):
+        """
+        Converts a 2D tensor of token IDs into a list of sentences.
+
+        Args:
+            src_tokens (torch.Tensor): A 2D tensor of token IDs.
+
+        Returns:
+            list: A list of sentences represented as strings.
+        """
+        # Ensure src_tokens is on the CPU and then convert to a list of lists
+        src_tokens_list = src_tokens.cpu().numpy().tolist()
+
+        sentences = []
+        for ids in src_tokens_list:
+            words = [self.__getitem__(idx) for idx in ids if idx not in [self.eos_index, self.pad_index]]
+            sentence = ' '.join(words)
+            # Un-apply BPE encoding from each sentence
+            sentences.append(self.unbpe(sentence))
+        return sentences 
     
     def sentences_to_ids(self, padded_bpe_translations, max_len=None):
         # Determine the maximum length if not provided

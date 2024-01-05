@@ -16,13 +16,15 @@ from tqdm import tqdm
 from torch.autograd import Variable
 from collections import OrderedDict
 from meters import AverageMeter
+from dictionary import Dictionary
 
 from sequence_generator import SequenceGenerator
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix  # for metrics
 
 import random
 seed = random.randint(0, 2**32 - 1)
-torch.manual_seed(569084360)
+# torch.manual_seed(569084360)
+torch.manual_seed(seed)
 print("seed: ", 569084360)
 
 # torch.manual_seed(3203451255)
@@ -90,6 +92,7 @@ def unbpe(text):
         # Using regex to replace instances of "@@ " with an empty string
     return re.sub(r'@@ ?', '', text)
 
+dict_obj = Dictionary()
 def ids_to_sentences(src_tokens, dict):
     # Assuming src_tokens is a 2D tensor, 
     # convert to list of lists and then convert each list of ids to a sentence.
@@ -184,7 +187,13 @@ def main(args):
     # d_model_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.018.epoch_1.pt'
     # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.048.epoch_1.pt'
     # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_d_0.079.epoch_1.pt'
-    d_model_path = '/root/Adversarial_NMT_th/pretrained_models/checkpoints/joint/test_vastai_wmt14_en_fr_2023_4mil_8mgpu_3070Dloss_4milDict_v1/train_joint_d_0.036.epoch_1.pt'
+    
+    # d_model_path = '/root/Adversarial_NMT_th/pretrained_models/checkpoints/joint/test_vastai_wmt14_en_fr_2023_4mil_8mgpu_3070Dloss_4milDict_v1/train_joint_d_0.036.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v1/train_joint_d_0.056.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_20_40_40/train_joint_d_0.027.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_50_50/train_joint_d_0.028.epoch_1.pt'
+    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_80_20/train_joint_d_0.021.epoch_6.pt'
+    d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/train_joint_d_0.001.epoch_1.pt'
     print("d_model_path ", d_model_path)
     
     assert os.path.exists(d_model_path)
@@ -222,8 +231,15 @@ def main(args):
     # g_model_path = 'checkpoints/joint/test_vastai_wmt14_en_fr_2023_24mil_to_32mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.497.epoch_1.pt'
     # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_8mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.352.epoch_1.pt'
     # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_vastai_wmt14_en_fr_2023_32mil_to_35mil_8mgpu_3070Dloss_fullDict_v3/train_joint_g_10.570.epoch_1.pt'
-    g_model_path = '/root/Adversarial_NMT_th/pretrained_models/checkpoints/joint/test_vastai_wmt14_en_fr_2023_4mil_8mgpu_3070Dloss_4milDict_v1/train_joint_g_10.401.epoch_1.pt'
+    
+    # g_model_path = '/root/Adversarial_NMT_th/pretrained_models/checkpoints/joint/test_vastai_wmt14_en_fr_2023_4mil_8mgpu_3070Dloss_4milDict_v1/train_joint_g_10.401.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v1/train_joint_g_10.395.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_20_40_40/train_joint_g_10.400.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_50_50/train_joint_g_10.399.epoch_1.pt'
+    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_80_20/train_joint_g_10.339.epoch_6.pt'
+    g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/train_joint_g_10.398.epoch_1.pt'
     assert os.path.exists(g_model_path)
+    print("g_model_path: ", g_model_path)
      # Load model
     # g_model_path = 'checkpoints/joint/best_gmodel.pt'
     # g_model_path = '/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/pretrained_models/checkpoints/joint/test_wmt14_en_fr_2023_pt_oc5_sm_50k_v1/test_disc_best_gmodel.pt'
@@ -289,6 +305,7 @@ def main(args):
     target_converted = []
     ht_mt_target_converted = []
     fake_sentence_generator_converted = []
+    fake_sentence_generator_converted_dict = []
     
     print("type of testloader:", type(testloader))
     for batch in testloader:
@@ -345,6 +362,10 @@ def main(args):
         target_converted_temp = ids_to_sentences(target, dataset.dst_dict)
         ht_mt_target_converted_temp = ids_to_sentences(ht_mt_target, dataset.dst_dict)
         
+        # src_sentences_converted_temp = dict_obj.ids_to_sentences(src_sentence)
+        # target_converted_temp = dict_obj.ids_to_sentences(target)
+        # ht_mt_target_converted_temp = dict_obj.ids_to_sentences(ht_mt_target)
+        
         src_sentences_converted.extend(src_sentences_converted_temp)
         target_converted.extend(target_converted_temp)
         ht_mt_target_converted.extend(ht_mt_target_converted_temp)
@@ -367,8 +388,16 @@ def main(args):
         print("fake_sentence after torch.reshape(prediction, src_sentence.shape) : ",fake_sentence.size())
         
         fake_sentence_generator_converted_temp = ids_to_sentences(fake_sentence, dataset.dst_dict)   
+        # fake_sentence_generator_converted_temp = dict_obj.ids_to_sentences(fake_sentence)
         print("fake_sentence_generator_converted_temp: ", fake_sentence_generator_converted_temp)     
         fake_sentence_generator_converted.extend(fake_sentence_generator_converted_temp)
+        
+        # print("def string from the Dictionary")
+        
+        # fake_sentence_generator_converted_temp_dict = dict_obj.string(fake_sentence, bpe_symbol='@@')
+        # print("fake_sentence_generator_converted_temp_dict: ", fake_sentence_generator_converted_temp_dict)     
+        # fake_sentence_generator_converted_dict.extend(fake_sentence_generator_converted_temp_dict)
+        
         
         
         #############
@@ -444,6 +473,7 @@ def main(args):
     print("target_converted: ", target_converted)
     print("ht_mt_target_converted: ", ht_mt_target_converted)
     print("fake_sentence_generator_converted ", fake_sentence_generator_converted)
+    # print("fake_sentence_generator_converted_dict ", fake_sentence_generator_converted_dict)
     
     print("y_true: ", len(y_true))
     print("y_pred: ", len(y_pred))
@@ -463,8 +493,9 @@ def main(args):
     # classify_df.to_excel('classify_df_8mil_o19_v2.xlsx', index=False) # 8 million 8 gpu with 70 30 loss
     # classify_df.to_excel('classify_df_8mil_o21_v1.xlsx', index=False)   # 8 million 8 gpu with 30 70 loss
     # classify_df.to_excel('classify_df_8mil_o22_v1.xlsx', index=False)   # 8 million 8 gpu with 30 70 loss
-    classify_df.to_excel('classify_df_8mil_o24_v1.xlsx', index=False)   # 8 million 8 gpu with only D loss Only Fake/Machine
-    
+    # classify_df.to_excel('classify_df_8mil_D3_v1.xlsx', index=False)   # 8 million 8 gpu with only D loss Only Fake/Machine
+    # classify_df.to_excel('classify_df_4mil_D10_v1.xlsx', index=False) 
+    classify_df.to_excel('classify_df_4mil_D12_40mil_ptfseqOnly_v2_0_100_0_v1.xlsx', index=False) 
 
 if __name__ == "__main__":
     ret = parser.parse_known_args()
