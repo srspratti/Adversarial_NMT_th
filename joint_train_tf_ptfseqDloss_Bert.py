@@ -8,6 +8,8 @@ import random
 import sys
 import numpy as np
 from collections import OrderedDict
+from transformers import BertTokenizer 
+
 sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
 os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7" 
@@ -29,8 +31,13 @@ from torch.autograd import Variable
 import data
 import utils
 from meters import AverageMeter
-from discriminator import Discriminator
-from generator_tf_ptfseq import TransformerModel_custom
+
+# from discriminator import Discriminator
+# from generator_tf_ptfseq import TransformerModel_custom
+
+from discriminator_bert import Discriminator_bert
+from generator_tf_ptfseq_bert import TransformerModel_custom_bert
+
 from train_generator_new import train_g
 from train_discriminator import train_d
 from PGLoss import PGLoss
@@ -63,6 +70,11 @@ def main(args):
     # use_cuda = (len(args.gpuid) >= 1)
     # print("{0} GPU(s) are available".format(cuda.device_count()))
     # print("args.fixed_max_len) ", args.fixed_max_len)
+    
+    #Initialize BERT Tokenizer
+    bert_model = 'bert-base-uncased'
+    bert_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    
     use_cuda = True
     print("{0} GPU(s) are available".format(cuda.device_count()))
     print("args.fixed_max_len) ", args.fixed_max_len)
@@ -118,9 +130,15 @@ def main(args):
     args.decoder_dropout_out = 0
     args.bidirectional = False
 
-    generator = TransformerModel_custom(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
+    # generator = TransformerModel_custom(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
+    # generator with bert embeddings
+    generator = TransformerModel_custom_bert(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda, bert_tokenizer=bert_tokenizer)
     print("Generator TransformerModel loaded successfully!")
-    discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
+    
+    
+    # discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
+    # Discriminator with bert tokenizer
+    discriminator = Discriminator_bert(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda, bert_tokenizer=bert_tokenizer)
     print("Discriminator loaded successfully!")
     
     path_to_your_pretrained_model = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
@@ -163,33 +181,6 @@ def main(args):
     def ids_to_words(ids, dict):
         words = [dict.get_symbol(idx) for idx in ids if idx != dict.eos_index]
         return ' '.join(words)
-    
-    
-    # converting sentences to ids 'out_batch'
-    # import torch
-
-    def sentences_to_ids_old(padded_bpe_translations, dict, max_len=None):
-        # Determine the maximum length if not provided
-        if max_len is None:
-            max_len = max(len(sentence.split()) for sentence in padded_bpe_translations)
-        
-        # Initialize an empty list to store lists of token ids
-        all_ids = []
-        print("length of padded_bpe_translations:", len(padded_bpe_translations))
-        for idx, sentence in enumerate(padded_bpe_translations):
-            print("sentence ",sentence)
-            words = sentence.split()
-            # Convert words to ids, handling the padding
-            ids = [dict.index(word) if word in dict else dict.unk_index for word in words]  # Handle unknown words
-            # ids += [dict.pad_index] * (max_len - len(ids))  # Pad to max_len
-            print("idx in sentences_to_ids:",idx)
-            print(" length of ids: ", len(ids))
-            all_ids.append(ids)
-        
-        # Convert list of lists into a 2D tensor
-        print("all_ids ", all_ids)
-        return torch.tensor(all_ids, dtype=torch.long)
-    
     
     def sentences_to_ids_nondict(padded_bpe_translations, dict_obj, max_len=None):
         # Determine the maximum length if not provided
@@ -343,66 +334,41 @@ def main(args):
             
             ##*****************************************************************************
             # Generate Translation with Fairseq Model
-            src_tokens = sample['net_input']['src_tokens']
+            # src_tokens = sample['net_input']['src_tokens']
+            src_tokens = bert_tokenizer.batch_encode_plus(sample['net_input']['src_tokens'], return_tensors='pt', padding=True, truncation=True)
+            
             # make sure that the tokens are on the right device
-            src_tokens = src_tokens.cuda() if use_cuda else src_tokens
-            # print("src_tokens type: ", type(src_tokens))
-            # print("src_tokens size() : ", src_tokens.size())
-            # print("src_tokens : ", src_tokens)
-            # Generate translations using the Fairseq Model 
-            
-            # src_tokens to be converted to a En sentence ( EN-> FR), remove bpe 
-            
+            src_tokens = src_tokens.cuda() if use_cuda else src_tokens            
             sentences = ids_to_sentences(src_tokens, dataset.src_dict)
-            # print("sentences :::", sentences)
-            # for sentence in sentences:
-            #     # print("sentence no#  ", n)
-            #     print(sentence)
-                
+            
             # Access the original TransformerModel from the DataParallel wrapper
             original_generator_pt = generator_pt.module if isinstance(generator_pt, torch.nn.DataParallel) else generator_pt
 
             # Now use the translate method
             translations = original_generator_pt.translate(sentences)
-
-            #translations = generator_pt.translate(sentences)
-            # Assuming that your generator model expects a certain format, you might need to convert translation to that format
-            # print("translations ", translations)
-            
+    
             # Applying BPE to translations
             bpe_translations = [apply_bpe(t) for t in translations]
-            # print("translations with BPE:", bpe_translations)
             
             # Applying padding to bpe_translations 
-            #  max_len to be 50 for demonstration purposes
             max_len = 50
             padded_bpe_translations = pad_sentences(bpe_translations, max_len=max_len)
-            # print("Padded translations with BPE:", padded_bpe_translations)
-            
-            # convert bpe_translations to ids 
-            # sys_out_batch = convert_to_expected_format(translation)
-            
             
             max_len = 50  # Example maximum length
-            #token_ids_tensor = sentences_to_ids(padded_bpe_translations, dataset.dst_dict, max_len) # The dataset.dst_dict ( here FR ) should be from data-bin/, which the GAN train() is used
-            #token_ids_tensor = sentences_to_ids(padded_bpe_translations, dataset.dst_dict, max_len) # The dataset.dst_dict ( here FR ) should be from data-bin/, which the GAN train() is used
             dict_obj = Dictionary()
             token_ids_tensor = dict_obj.sentences_to_ids(padded_bpe_translations, max_len=50)
             
             # Check shape of the resulting tensor
-            # print("token_ids_tensor.shape ", token_ids_tensor.shape)
             token_ids_tensor_flat = token_ids_tensor.view(-1)
-            # print("token_ids_tensor_flat.shape ", token_ids_tensor_flat.shape)
-            
+                        
             ##*****************************************************************************
             
             sys_out_batch = generator(sample=sample, args=args)
-            # print("sys_out_batch ", sys_out_batch)
-            # print("sys_out_batch size: ", sys_out_batch.size())
 
             out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
-            # print("out_batch size: ", out_batch.size())
 
+            
+            
             train_trg_batch = sample['target'].view(-1) # 64*50 = 3200
 
             loss = g_criterion(out_batch, train_trg_batch)
@@ -429,7 +395,9 @@ def main(args):
             # part II: train the discriminator
             bsz = sample['target'].size(0) # batch_size = 64
         
-            src_sentence = sample['net_input']['src_tokens'] # 64 x max-len i.e 64 X 50
+            # src_sentence = sample['net_input']['src_tokens'] # 64 x max-len i.e 64 X 50
+            # src_tokens = bert_tokenizer.batch_encode_plus(sample['net_input']['src_tokens'], return_tensors='pt', padding=True, truncation=True)
+            src_sentence = bert_tokenizer.batch_encode_plus(sample['net_input']['src_tokens'], return_tensors='pt', padding=True, truncation=True)
 
             # now train with machine translation output i.e generator output
             true_sentence = sample['target'].view(-1) # 64*50 = 3200
@@ -444,33 +412,22 @@ def main(args):
             out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
                 
             _,prediction = out_batch.topk(1)
-            # print("prediction before squeeze: ",prediction.size())
             prediction = prediction.squeeze(1)  #64 * 50 = 6632
-            # print("prediction after squeeze: ",prediction.size())
-            
             
             ##############################################################################################################################
             
             # prediction = token_ids_tensor_flat
             
-            # print("prediction after token_ids_tensor_flat: ",prediction.size())
-            
             if use_cuda:
                 token_ids_tensor_flat = token_ids_tensor_flat.cuda()
             
             fake_labels = Variable(torch.zeros(sample['target'].size(0)).float()) # 64 length vector
-
-            #print("fake_labels after Variable: ",fake_labels.size())
             
             fake_sentence = torch.reshape(prediction, src_sentence.shape) # 64 X 50 
-
-            #print("fake_sentence after torch.reshape(prediction, src_sentence.shape) : ",fake_sentence.size())
             
             #############################################################################################################################
             
             fake_sentence_gpt = torch.reshape(token_ids_tensor_flat, src_sentence.shape)
-            
-            #print("fake_sentence_gpt after torch.resshape(token_ids_tensor_flat, src_sentence.shape) : ",fake_sentence_gpt.size())
             
             #############################################################################################################################
             
