@@ -93,38 +93,7 @@ def main(args):
     args.decoder_dropout_out = 0
     args.bidirectional = False
 
-    # Loading data using datasets library from the HuggingFace
-    
-    """
-    #get user's home directory
-    home = os.path.expanduser("~")
-    #Define the path of the cache directory
-    cache_dir = ".cache/huggingface/datasets"
-    
-    #Define the name of the dataset
-    dataset_name = "wmt14"
-    
-    # check if the dataset is already downloaded
-    dataset_path = os.path.join(home, cache_dir, dataset_name)
-    print("dataset_path: ", dataset_path)
-    if os.path.exists(dataset_path):
-        print("Dataset already downloaded") # if the dataset is already downloaded
-        dataset = load_dataset("wmt14", "fr-en",  cache_dir=dataset_path)
-    else:
-        print("Downloading the dataset")
-        # Download the dataset
-        dataset = load_dataset("wmt14", "fr-en")
-        # dataset = datasets.load_dataset('wmt14', 'fr-en', cache_dir='path_to_cache_dir', download_mode='force_redownload') # if any error occurs, use this line of code
-        # dataset = load_dataset("wmt14", "en-fr", split='train[:1%]', streaming=True) # Only loading 1% of train dataset for proto-typing purposes
-
-    # Load 50k rows of the train dataset
-    train_dataset = load_dataset("wmt14", "fr-en", split="train[:50000]")
-
-    # Keep the full valid and test datasets
-    valid_dataset = dataset["validation"]
-    test_dataset = dataset["test"]
-    """
-    
+    # Loading data using datasets library from the HuggingFace    
     # Get user's home directory
     home = os.path.expanduser("~")
 
@@ -163,7 +132,7 @@ def main(args):
     bert_model = "bert-base-multilingual-cased"
 
     # Pre-processing the data
-
+    # To-Do : Need to change the max_length to 50 from 128
     def preprocess(data):
         # Initialize the BERT tokenizer
         tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
@@ -210,6 +179,69 @@ def main(args):
         preprocess, batched=True
     )  # Using the bertFaSTtOKENIZER MAp function
 
+    #### --------------------Loading G1 - Pre-Trained fairseq Generator --------------------#####
+    # path_to_your_pretrained_model = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
+    
+    from fairseq.models.transformer import TransformerModel
+    getpwd = os.getcwd()
+    path_to_your_pretrained_model = getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer'
+    generator1_pretrained = TransformerModel.from_pretrained(
+        path_to_your_pretrained_model,
+        checkpoint_file='model.pt',
+        bpe='subword_nmt',
+        # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
+        data_name_or_path = getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer',
+        bpe_codes = getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
+    )
+    print("G1 - Pre-Trained fairseq Generator loaded successfully!")
+    
+    # G1 - Pre-Trained fairseq Generator : Help methods #
+    def ids_to_sentences_bert(input_ids):
+        """
+        Converts lists of token IDs back into sentences using the BERT tokenizer.
+        
+        Args:
+            input_ids (list[list[int]]): A list of lists containing token IDs.
+            tokenizer (BertTokenizerFast): An instance of BertTokenizerFast used for decoding.
+            
+        Returns:
+            list[str]: A list of decoded sentences.
+        """
+        tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        
+        sentences = []
+
+        # Convert each list of token IDs back into a sentence
+        for ids in input_ids:
+            # Decode the token IDs to a sentence, skipping special tokens
+            sentence = tokenizer.decode(ids, skip_special_tokens=True)
+            sentences.append(sentence)
+            
+        return sentences
+
+    
+    def sentences_to_ids(sentences, max_length=128):
+        """
+        Tokenizes sentences and returns their corresponding input IDs and attention masks,
+        suitable for input into a BERT-based discriminator.
+
+        Args:
+            sentences (list[str]): A list of sentences to tokenize.
+            tokenizer (BertTokenizerFast): An instance of BertTokenizerFast for tokenization.
+            max_length (int): Maximum sequence length.
+
+        Returns:
+            dict: A dictionary containing 'input_ids' and 'attention_mask' for the tokenized sentences.
+        """
+        # Tokenize the sentences
+        tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        encoding = tokenizer(sentences, truncation=True, padding="max_length", max_length=max_length, return_tensors="pt")
+
+        return {
+            "input_ids": encoding["input_ids"],
+            "attention_mask": encoding["attention_mask"]
+        }
+    
     #### --------------------Loading G2 - Generator in Train() in GAN--------------------#####
 
     generator2_train = TransformerModel_bert(args, use_cuda=use_cuda)
@@ -224,22 +256,25 @@ def main(args):
         if torch.cuda.device_count() > 1:
             discriminator_cnn = torch.nn.DataParallel(discriminator_cnn).cuda()
             generator2_train = torch.nn.DataParallel(generator2_train).cuda()
+            generator1_pretrained = torch.nn.DataParallel(generator1_pretrained).cuda()
         else:
             generator2_train.cuda()
             discriminator_cnn.cuda()
+            generator1_pretrained.cuda()
     else:
         discriminator_cnn.cpu()
         generator2_train.cpu()
+        generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
     if not os.path.exists(
-        "checkpoints/bert/wmt14_en_fr_20k"
+        "checkpoints/bert_dualG/wmt14_en_fr_20k"
     ):
         os.makedirs(
-            "checkpoints/bert/wmt14_en_fr_20k"
+            "checkpoints/bert_dualG/wmt14_en_fr_20k"
         )
     checkpoints_path = (
-        "checkpoints/bert/wmt14_en_fr_20k/"
+        "checkpoints/bert_dualG/wmt14_en_fr_20k/"
     )
 
     ## Define loss functions for the generator and the Discriminator
@@ -279,6 +314,7 @@ def main(args):
         # set training mode
         generator2_train.train()
         discriminator_cnn.train()
+        generator1_pretrained.eval()
         # update_learning_rate(num_update, 8e4, args.g_learning_rate, args.lr_shrink, g_optimizer)
 
         # Initialize loss for this epoch # Usually, the losses for G and D are not calculated during the training phase, but just the model parameters are updated. However, we are just capturing these metrics for analysis purposes.
@@ -297,20 +333,50 @@ def main(args):
             src_sentences = sample["input_ids"]
             tgt_sentences = sample["target_ids"]
 
-            # Train the generator
+            # ---------------------------------------------------------Train the generator 2 train()
             optimizer_g.zero_grad()
             fake_tgt_sentences_probs = generator2_train(src_sentences, tgt_sentences)
+            print("type of fake_tgt_sentences_probs ", type(fake_tgt_sentences_probs))
+            print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
             
             fake_tgt_sentences_probs = fake_tgt_sentences_probs.view(-1, fake_tgt_sentences_probs.size(-1))  # Shape: [batch_size * seq_len, vocab_size]
             tgt_sentences_flat = tgt_sentences.view(-1)  # Shape: [batch_size * seq_len]
-
+            print("fake_tgt_sentences_probs shape after view", fake_tgt_sentences_probs.shape)
+            print("tgt_sentences_flat shape ", tgt_sentences_flat.shape)
             
             g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
             g_loss.backward()
             optimizer_g.step()
             total_train_g_loss += g_loss.item()
-
-            # Train the discriminator
+            
+            # -------------------------------------Generating translations using the pre-trained generator
+            src_sentences_for_G1 = ids_to_sentences_bert(src_sentences)
+            print("src_sentences_for_G1 ", src_sentences_for_G1)
+            
+            """Just for debugging"""
+            for sentence in src_sentences_for_G1:
+                # print("sentence no#  ", n)
+                print(sentence)
+                
+            translated_sentences_from_G1 = generator1_pretrained.translate(src_sentences_for_G1)
+            print("translated_sentences_from_G1 ", translated_sentences_from_G1)
+            # print("translated_sentences_from_G1 shape ", translated_sentences_from_G1.shape)
+            
+            # Convert the translated sentences back into token IDs and attention masks
+            fake_tgt_sentences_G1_pretrain_probs = sentences_to_ids(translated_sentences_from_G1, max_length=128)
+            
+            print(" type of fake_tgt_sentences_G1_pretrain_probs ", type(fake_tgt_sentences_G1_pretrain_probs))
+            print("fake_tgt_sentences_G1_pretrain_probs dict keys ", fake_tgt_sentences_G1_pretrain_probs.keys())
+            print("size of dict fake_tgt_sentences_G1_pretrain_probs ", len(fake_tgt_sentences_G1_pretrain_probs))
+            print("dict info key input_ids fake_tgt_sentences_G1_pretrain_probs ", fake_tgt_sentences_G1_pretrain_probs.get("input_ids"))
+            print("dict info key input_ids type of fake_tgt_sentences_G1_pretrain_probs ", type(fake_tgt_sentences_G1_pretrain_probs.get("input_ids")))
+            print(" shape of dict keys input_ids fake_tgt_sentences_G1_pretrain_probs ", fake_tgt_sentences_G1_pretrain_probs.get("input_ids").shape)
+            
+            # Now, encoded_translations["input_ids"] and encoded_translations["attention_mask"]
+            # can be fed into the discriminator for further processing.
+            # fake_tgt_sentences_G1_pretrain_probs = fake_tgt_sentences_G1_pretrain_probs.view(-1, fake_tgt_sentences_G1_pretrain_probs.size(-1)) 
+            
+            # -------------------------------------------------Train the discriminator
             optimizer_d.zero_grad()
             print("src_sentences shape ", src_sentences.shape)
             print("tgt_sentences shape ", tgt_sentences.shape)
@@ -320,11 +386,13 @@ def main(args):
             fake_targets = torch.zeros(src_sentences.size(0), 1).to(device)  # Fake
             # disc_out_humanTranSent = discriminator_cnn(src_sentences, tgt_sentences)
             
+            # --------------------------------Real loss of the discriminator --------------
             real_loss = d_criterion(
                 discriminator_cnn(src_sentences, tgt_sentences),
                 real_targets,
             )
             
+            #-----------------------------------------------------Generator 2 Train()-----------------------------------------
             # preparing the fake sentence probs output from the generator to feed to the discriminator
             print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
             _, prediction = fake_tgt_sentences_probs.topk(1)
@@ -335,11 +403,38 @@ def main(args):
             print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
             print("src_sentences shape ", src_sentences.shape)
             
+            #----------------------------------------- Generator 1 Pre-Trained ---------------------------------------------
+            # preparing the fake sentence probs output from the generator 1 Pre-Trained to feed to the discriminator
+            # We don't need the below processing because we are using the sentences_to_ids() method to convert the translated sentences from G1 to token IDs and attention masks
+            """
+            print("fake_tgt_sentences_G1_pretrain_probs shape ", fake_tgt_sentences_G1_pretrain_probs.shape)
+            _, prediction_pretrain = fake_tgt_sentences_G1_pretrain_probs.topk(1)
+            print("prediction_pretrain shape ", prediction_pretrain.shape)
+            prediction_pretrain = prediction_pretrain.squeeze(1)
+            print("prediction_pretrain shape after squeeze ", prediction_pretrain.shape)
+            fake_tgt_sentences_G1_pretrain = torch.reshape(prediction_pretrain, src_sentences.shape)
+            print("fake_tgt_sentences_G1_pretrain shape ", fake_tgt_sentences_G1_pretrain.shape)
+            """
+            print("src_sentences shape ", src_sentences.shape)
+            
+            #---------------------------------------- fake loss from Generator 2 Train()--------------------------
             fake_loss = d_criterion(
                 discriminator_cnn(src_sentences, fake_tgt_sentences.detach()),
                 fake_targets,
             )
-            d_loss = (real_loss + fake_loss) / 2
+            
+            # --------------------------------------- fake loss from Generator 1 Pre-Trained--------------------------
+            fake_tgt_sentences_G1_pretrain = fake_tgt_sentences_G1_pretrain_probs.get("input_ids")
+            fake_loss_pretrain = d_criterion(
+                discriminator_cnn(src_sentences, fake_tgt_sentences_G1_pretrain.detach()),
+                fake_targets,
+            )
+            
+            
+            #d_loss = (real_loss + fake_loss) / 2
+            # combining the real and fake loss from the two generators
+            d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
+            
             d_loss.backward()
             optimizer_d.step()
             total_train_d_loss += d_loss.item()
@@ -359,11 +454,12 @@ def main(args):
     }, checkpoints_path + f'train_checkpoint_{epoch_i}.pt')
 
 
-    #### ----------------------------------VALIDATION --------------------#####
-
+    #### -----------------------------------------VALIDATION --------------------------------------------#####
+    print(".........................................Validation block......................................................................")
     # After training, switch to evaluation mode
     generator2_train.eval()
     discriminator_cnn.eval()
+    generator1_pretrained.eval()
 
     # Initialize loss for this epoch
     total_valid_g_loss = 0
@@ -379,9 +475,7 @@ def main(args):
     with torch.no_grad():
         for i, sample in enumerate(valid_dataloader):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            # sample = sample.to(device)
-            
-            # sample = sample.to(device)
+
             # Move all tensors in the batch to the device
             sample = {key: tensor.to(device) for key, tensor in sample.items()}
 
@@ -390,7 +484,6 @@ def main(args):
             tgt_sentences = sample["target_ids"]
 
             # Generate sentences
-            # fake_tgt_sentences = generator2_train(src_sentences)
             fake_tgt_sentences_probs = generator2_train(src_sentences, tgt_sentences)
 
             fake_tgt_sentences_probs = fake_tgt_sentences_probs.view(-1, fake_tgt_sentences_probs.size(-1))  # Shape: [batch_size * seq_len, vocab_size]
@@ -400,26 +493,7 @@ def main(args):
             g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
             total_valid_g_loss += g_loss.item()
 
-            # Calculate discriminator loss
-            # real_loss = d_criterion(
-            #     discriminator_cnn(src_sentences, tgt_sentences),
-            #     torch.ones_like(tgt_sentences),
-            # )
-            # fake_loss = d_criterion(
-            #     discriminator_cnn(src_sentences, fake_tgt_sentences),
-            #     torch.zeros_like(fake_tgt_sentences),
-            # )
             
-            real_targets = torch.ones(src_sentences.size(0), 1).to(device)  # Real
-            fake_targets = torch.zeros(src_sentences.size(0), 1).to(device)  # Fake
-            # disc_out_humanTranSent = discriminator_cnn(src_sentences, tgt_sentences)
-            
-            real_loss = d_criterion(
-                discriminator_cnn(src_sentences, tgt_sentences),
-                real_targets,
-            )
-            
-            print("Validation block......................................................................")
             print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
             _, prediction = fake_tgt_sentences_probs.topk(1)
             print("prediction shape ", prediction.shape)
@@ -429,12 +503,61 @@ def main(args):
             print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
             print("src_sentences shape ", src_sentences.shape)
             
+            # -------------------------------------Generating translations using the pre-trained generator
+            src_sentences_for_G1 = ids_to_sentences_bert(src_sentences)
+            print("src_sentences_for_G1 ", src_sentences_for_G1)
+            
+            """Just for debugging"""
+            for sentence in src_sentences_for_G1:
+                # print("sentence no#  ", n)
+                print(sentence)
+                
+            translated_sentences_from_G1 = generator1_pretrained.translate(src_sentences_for_G1)
+            #print("translated_sentences_from_G1 ", translated_sentences_from_G1)
+            
+            # Convert the translated sentences back into token IDs and attention masks
+            fake_tgt_sentences_G1_pretrain_probs = sentences_to_ids(translated_sentences_from_G1, max_length=128)
+
+            # fake_tgt_sentences_G1_pretrain_probs = fake_tgt_sentences_G1_pretrain_probs.view(-1, fake_tgt_sentences_G1_pretrain_probs.size(-1)) 
+            
+            # preparing the fake sentence probs output from the generator 1 Pre-Trained to feed to the discriminator
+            # We don't need the below processing because we are using the sentences_to_ids() method to convert the translated sentences from G1 to token IDs and attention masks
+            """
+            #print("fake_tgt_sentences_G1_pretrain_probs shape ", fake_tgt_sentences_G1_pretrain_probs.shape)
+            _, prediction_pretrain = fake_tgt_sentences_G1_pretrain_probs.topk(1)
+            #print("prediction_pretrain shape ", prediction_pretrain.shape)
+            prediction_pretrain = prediction_pretrain.squeeze(1)
+            print("prediction_pretrain shape after squeeze ", prediction_pretrain.shape)
+            fake_tgt_sentences_G1_pretrain = torch.reshape(prediction_pretrain, src_sentences.shape)
+            print("fake_tgt_sentences_G1_pretrain shape ", fake_tgt_sentences_G1_pretrain.shape)
+            """
+            print("src_sentences shape ", src_sentences.shape)
+            
+            # -------------------------------------------------Discriminator Validation ------------------------
+            real_targets = torch.ones(src_sentences.size(0), 1).to(device)  # Real
+            fake_targets = torch.zeros(src_sentences.size(0), 1).to(device)  # Fake
+            
+            #-----------------------------------------Real loss of the discriminator --------------
+            real_loss = d_criterion(
+                discriminator_cnn(src_sentences, tgt_sentences),
+                real_targets,
+            )
+            # ---------------------------------------------fake loss from Generator 1 Pre-Trained--------------------------
+            fake_tgt_sentences_G1_pretrain = fake_tgt_sentences_G1_pretrain_probs.get("input_ids")
+         
+            fake_loss_pretrain = d_criterion(
+                discriminator_cnn(src_sentences, fake_tgt_sentences_G1_pretrain.detach()),
+                fake_targets,
+            )
+            
+            # ---------------------------------------fake loss from the Generator 2 now in eval() mode --------------------------
             fake_loss = d_criterion(
                 discriminator_cnn(src_sentences, fake_tgt_sentences.detach()),
                 fake_targets,
             )
             
-            d_loss = (real_loss + fake_loss) / 2
+            # combining the real and fake loss from the two generators
+            d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
             total_valid_d_loss += d_loss.item()
 
     # Print validation losses
