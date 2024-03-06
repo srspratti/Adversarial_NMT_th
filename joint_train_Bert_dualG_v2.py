@@ -268,13 +268,13 @@ def main(args):
 
     # adversarial training checkpoints saving path
     if not os.path.exists(
-        "checkpoints/bert_dualG/wmt14_en_fr_20k"
+        "checkpoints/bert_dualG/wmt14_en_fr_10sent"
     ):
         os.makedirs(
-            "checkpoints/bert_dualG/wmt14_en_fr_20k"
+            "checkpoints/bert_dualG/wmt14_en_fr_10sent"
         )
     checkpoints_path = (
-        "checkpoints/bert_dualG/wmt14_en_fr_20k/"
+        "checkpoints/bert_dualG/wmt14_en_fr_10sent/"
     )
 
     ## Define loss functions for the generator and the Discriminator
