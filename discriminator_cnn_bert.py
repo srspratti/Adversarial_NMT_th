@@ -260,7 +260,11 @@ class Discriminator_cnn_bert(nn.Module):
             print("out size after out.continguous", out.size())
         
             out = torch.sigmoid(self.classifier(out))
-
+            
+            print("out shape returning from the discriminator:" , out.shape)
+            print("out type returning from the discriminator:" , type(out))
+            print("out returning from the discriminator:" , out)
+            
             return out
 
 def Conv1d(in_channels, out_channels, kernel_size, stride=1, padding=0, **kwargs):
