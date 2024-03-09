@@ -28,6 +28,7 @@ from tqdm import tqdm
 from dictionary import Dictionary
 import re
 import subprocess
+import os
 
 # Importing Generator and Discriminator class methods
 from generator_tf_bert import TransformerModel_bert
@@ -36,10 +37,10 @@ from discriminator_cnn_bert import Discriminator_cnn_bert
 # CUDA multiple-GPU configuration
 
 getpwd = os.getcwd()
-sys.path.append(
-    "/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master"
-)
-# sys.path.append(getpwd)
+# sys.path.append(
+#     "/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master"
+# )
+sys.path.append(getpwd)
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 """
@@ -96,6 +97,7 @@ def main(args):
 
     # Loading data using datasets library from the HuggingFace
     # Get user's home directory
+    import os
     home = os.path.expanduser("~")
 
     # Define the path of the cache directory
@@ -290,6 +292,27 @@ def main(args):
 
     best_loss = math.inf
     # Start the training loop
+    import os
+
+    def remove_db_if_exists(db_path):
+        """
+        Checks if a SQLite database file exists at the specified path and removes it if it does.
+
+        Args:
+        db_path (str): The file path to the SQLite database.
+        """
+        if os.path.exists(db_path):
+            os.remove(db_path)
+            print(f"Database at '{db_path}' has been removed.")
+        else:
+            print(f"No database found at '{db_path}' to remove.")
+
+    # Example usage
+    getpwd = os.getcwd()
+    db_name = "translations.db"
+    db_path = getpwd + "/" + db_name
+    remove_db_if_exists(db_path)
+    
     for epoch_i in tqdm(range(1, args.epochs + 1)):
         logging.info("At {0}-th epoch.".format(epoch_i))
 
@@ -464,7 +487,7 @@ def main(args):
 
             ####---LOGGING TRANSLATIONS --------------------------------####
 
-            print("logging translations\n")
+            print("logging translations train\n")
             print("src_sentences shape English Source", src_sentences.shape)
             print("tgt_sentences shape French Human", tgt_sentences.shape)
             print(
@@ -496,17 +519,14 @@ def main(args):
             
             
             import sqlite3
-
-            #  c.execute('''CREATE TABLE IF NOT EXISTS translations
-            #      (id INTEGER PRIMARY KEY,
-
-            def init_db():
+            
+            def init_db_train():
                 try:
-                    conn = sqlite3.connect("translations.db")
+                    conn = sqlite3.connect(db_name)
                     c = conn.cursor()    
                     c.execute(
-                        """CREATE TABLE IF NOT EXISTS translations
-                                    (id INTEGER PRIMARY KEY, src_sentences_converted_logging_org TEXT, tgt_sentences_converted_logging_org TEXT, fake_tgt_sentences_converted_logging_G2_train TEXT, fake_tgt_sentences_G1_pretrain_converted_logging TEXT, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT)"""
+                        """CREATE TABLE IF NOT EXISTS translations_train
+                                    (id INTEGER PRIMARY KEY, epoch INTEGER NOT NULL, src_sentences_converted_logging_org TEXT NOT NULL, tgt_sentences_converted_logging_org TEXT NOT NULL, fake_tgt_sentences_converted_logging_G2_train TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_converted_logging TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT NOT NULL)"""
                     )
                     conn.commit()
                 except sqlite3.Error as e:
@@ -514,7 +534,10 @@ def main(args):
                 finally:
                     conn.close()
 
-            def log_translation_db(
+            print("epoch_i ", epoch_i)
+            
+            def log_translation_db_train(
+                epoch_i,
                 src_sentences_converted_logging_org,
                 tgt_sentences_converted_logging_org,
                 fake_tgt_sentences_converted_logging_G2_train,
@@ -522,19 +545,23 @@ def main(args):
                 fake_tgt_sentences_G1_pretrain_org_translated_sent,
             ):
                 try:
-                    conn = sqlite3.connect("translations.db")
+                    conn = sqlite3.connect(db_name)
                     c = conn.cursor()
-                    for src, tgt, fake_tgt_G2, fake_tgt_G1, fake_tgt_G1_org in zip(
-                        src_sentences_converted_logging_org,
+                    size_of_src_sentences_converted_logging_org = len(src_sentences_converted_logging_org)
+                    epoch_i_list = [epoch_i] * size_of_src_sentences_converted_logging_org
+                    print("epoch_i_list ", epoch_i_list)
+                    print("size of epoch_i_list ", len(epoch_i_list))
+                    for epoch_i_list, src, tgt, fake_tgt_G2, fake_tgt_G1, fake_tgt_G1_org in zip(
+                        epoch_i_list ,src_sentences_converted_logging_org,
                         tgt_sentences_converted_logging_org,
                         fake_tgt_sentences_converted_logging_G2_train,
                         fake_tgt_sentences_G1_pretrain_converted_logging,
                         fake_tgt_sentences_G1_pretrain_org_translated_sent):    
                         c.execute(
-                            """INSERT INTO translations (src_sentences_converted_logging_org, tgt_sentences_converted_logging_org, fake_tgt_sentences_converted_logging_G2_train, fake_tgt_sentences_G1_pretrain_converted_logging, fake_tgt_sentences_G1_pretrain_org_translated_sent)
-                                        VALUES (?, ?, ?, ?, ?)""",
+                            """INSERT INTO translations_train (epoch_i_list, src_sentences_converted_logging_org, epoch_i, tgt_sentences_converted_logging_org, fake_tgt_sentences_converted_logging_G2_train, fake_tgt_sentences_G1_pretrain_converted_logging, fake_tgt_sentences_G1_pretrain_org_translated_sent)
+                                        VALUES (?, ?, ?, ?, ?, ?)""",
                             (
-                               src, tgt, fake_tgt_G2, fake_tgt_G1, fake_tgt_G1_org
+                               epoch_i_list, src, tgt, fake_tgt_G2, fake_tgt_G1, fake_tgt_G1_org
                             ),
                         )
                     conn.commit()
@@ -545,9 +572,10 @@ def main(args):
 
             # Executing DB logging statements
             
-            init_db()  # Initialize the database and table
+            init_db_train()  # Initialize the database and table
 
-            log_translation_db(
+            log_translation_db_train(
+                epoch_i,
                 src_sentences_converted_logging_org,
                 tgt_sentences_converted_logging_org,
                 fake_tgt_sentences_converted_logging_G2_train,
@@ -692,7 +720,99 @@ def main(args):
                 discriminator_cnn(src_sentences, fake_tgt_sentences.detach()),
                 fake_targets,
             )
+            #### logging validation translations into DB ----------############
+            print("logging translations valid\n")
+            print("src_sentences shape English Source", src_sentences.shape)
+            print("tgt_sentences shape French Human", tgt_sentences.shape)
+            print(
+                "fake_tgt_sentences from Generator 2 Train() shape ",
+                fake_tgt_sentences.shape,
+            )
+            print(
+                "fake_tgt_sentences_G1_pretrain shape from Generator 1 Pre-Trained ",
+                fake_tgt_sentences_G1_pretrain.shape,
+            )
 
+            # converting these into sentences from ID's using the BERT tokenizer
+            src_sentences_converted_logging_org = ids_to_sentences_bert(src_sentences)
+            tgt_sentences_converted_logging_org = ids_to_sentences_bert(tgt_sentences)
+            fake_tgt_sentences_converted_logging_G2_train = ids_to_sentences_bert(
+                fake_tgt_sentences
+            )
+            fake_tgt_sentences_G1_pretrain_converted_logging = ids_to_sentences_bert(
+                fake_tgt_sentences_G1_pretrain
+            )
+            fake_tgt_sentences_G1_pretrain_org_translated_sent = translated_sentences_from_G1
+            
+
+            print("type of src_sentences_converted_logging_org ", type(src_sentences_converted_logging_org))
+            print("type of tgt_sentences_converted_logging_org ", type(tgt_sentences_converted_logging_org))
+            print("type of fake_tgt_sentences_converted_logging_G2_train ", type(fake_tgt_sentences_converted_logging_G2_train))
+            print("type of fake_tgt_sentences_G1_pretrain_converted_logging ", type(fake_tgt_sentences_G1_pretrain_converted_logging))
+            print("type of fake_tgt_sentences_G1_pretrain_org_translated_sent ", type(translated_sentences_from_G1))
+            
+            def init_db_valid():
+                try:
+                    conn = sqlite3.connect(db_name)
+                    c = conn.cursor()    
+                    c.execute(
+                        """CREATE TABLE IF NOT EXISTS translations_valid
+                                    (id INTEGER PRIMARY KEY, epoch INTEGER NOT NULL, src_sentences_converted_logging_org TEXT NOT NULL, tgt_sentences_converted_logging_org TEXT NOT NULL, fake_tgt_sentences_converted_logging_G2_train TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_converted_logging TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT NOT NULL)"""
+                    )
+                    conn.commit()
+                except sqlite3.Error as e:
+                    print("sqlite3 error: ", e)
+                finally:
+                    conn.close()
+
+            def log_translation_db_valid(
+                epoch_i,
+                src_sentences_converted_logging_org,
+                tgt_sentences_converted_logging_org,
+                fake_tgt_sentences_converted_logging_G2_train,
+                fake_tgt_sentences_G1_pretrain_converted_logging,
+                fake_tgt_sentences_G1_pretrain_org_translated_sent,
+            ):
+                try:
+                    conn = sqlite3.connect(db_name)
+                    c = conn.cursor()
+                    size_of_src_sentences_converted_logging_org = len(src_sentences_converted_logging_org)
+                    epoch_i_list = [epoch_i] * size_of_src_sentences_converted_logging_org
+                    print("epoch_i_list ", epoch_i_list)
+                    for epoch_i_list, src, tgt, fake_tgt_G2, fake_tgt_G1, fake_tgt_G1_org in zip(
+                        epoch_i_list, src_sentences_converted_logging_org,
+                        tgt_sentences_converted_logging_org,
+                        fake_tgt_sentences_converted_logging_G2_train,
+                        fake_tgt_sentences_G1_pretrain_converted_logging,
+                        fake_tgt_sentences_G1_pretrain_org_translated_sent):    
+                        c.execute(
+                            """INSERT INTO translations_valid (epoch_i_list, src_sentences_converted_logging_org, tgt_sentences_converted_logging_org, fake_tgt_sentences_converted_logging_G2_train, fake_tgt_sentences_G1_pretrain_converted_logging, fake_tgt_sentences_G1_pretrain_org_translated_sent)
+                                        VALUES (?, ?, ?, ?, ?, ?)""",
+                            (
+                               epoch_i_list, src, tgt, fake_tgt_G2, fake_tgt_G1, fake_tgt_G1_org
+                            ),
+                        )
+                    conn.commit()
+                except sqlite3.Error as e:
+                    print("sqlite3 error: ", e)
+                finally:
+                    conn.close()
+
+            # Executing DB logging statements
+            
+            init_db_valid()  # Initialize the database and table
+
+            log_translation_db_valid(
+                epoch_i,
+                src_sentences_converted_logging_org,
+                tgt_sentences_converted_logging_org,
+                fake_tgt_sentences_converted_logging_G2_train,
+                fake_tgt_sentences_G1_pretrain_converted_logging,
+                fake_tgt_sentences_G1_pretrain_org_translated_sent,
+            )
+            
+            ######---------------------------------############################
+            
             # combining the real and fake loss from the two generators
             d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
             total_valid_d_loss += d_loss.item()
