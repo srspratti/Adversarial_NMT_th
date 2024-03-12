@@ -538,6 +538,13 @@ def main(args):
                     conn.close()
 
             print("epoch_i ", epoch_i)
+
+            #
+            def clean_text(text):
+                import html
+                text = html.unescape(text)  # Decode HTML entities
+                text = text.replace('@-@', '')  # Remove '@-@'
+                return text
             
             def log_translation_db_train(
                 epoch_i,
@@ -561,7 +568,7 @@ def main(args):
                         fake_tgt_sentences_G1_pretrain_converted_logging,
                         fake_tgt_sentences_G1_pretrain_org_translated_sent):    
                         c.execute(
-                            """INSERT INTO translations_train (epoch_i_list, src_sentences_converted_logging_org, epoch_i, tgt_sentences_converted_logging_org, fake_tgt_sentences_converted_logging_G2_train, fake_tgt_sentences_G1_pretrain_converted_logging, fake_tgt_sentences_G1_pretrain_org_translated_sent)
+                            """INSERT INTO translations_train (epoch_i_list, src_sentences_converted_logging_org, tgt_sentences_converted_logging_org, fake_tgt_sentences_converted_logging_G2_train, fake_tgt_sentences_G1_pretrain_converted_logging, fake_tgt_sentences_G1_pretrain_org_translated_sent)
                                         VALUES (?, ?, ?, ?, ?, ?)""",
                             (
                                epoch_i_list, src, tgt, fake_tgt_G2, fake_tgt_G1, fake_tgt_G1_org
@@ -576,6 +583,13 @@ def main(args):
             # Executing DB logging statements
             
             init_db_train()  # Initialize the database and table
+
+            # cleaned_list - remove the '@-@' from the sentences and other html entities
+            src_sentences_converted_logging_org = list(map(clean_text, src_sentences_converted_logging_org))
+            tgt_sentences_converted_logging_org = list(map(clean_text, tgt_sentences_converted_logging_org))
+            fake_tgt_sentences_converted_logging_G2_train = list(map(clean_text, fake_tgt_sentences_converted_logging_G2_train))
+            fake_tgt_sentences_G1_pretrain_converted_logging = list(map(clean_text, fake_tgt_sentences_G1_pretrain_converted_logging))
+            fake_tgt_sentences_G1_pretrain_org_translated_sent = list(map(clean_text, fake_tgt_sentences_G1_pretrain_org_translated_sent))
 
             log_translation_db_train(
                 epoch_i,
@@ -805,6 +819,13 @@ def main(args):
             # Executing DB logging statements
             
             init_db_valid()  # Initialize the database and table
+
+            # cleaned_list - remove the '@-@' from the sentences and other html entities
+            src_sentences_converted_logging_org = list(map(clean_text, src_sentences_converted_logging_org))
+            tgt_sentences_converted_logging_org = list(map(clean_text, tgt_sentences_converted_logging_org))
+            fake_tgt_sentences_converted_logging_G2_train = list(map(clean_text, fake_tgt_sentences_converted_logging_G2_train))
+            fake_tgt_sentences_G1_pretrain_converted_logging = list(map(clean_text, fake_tgt_sentences_G1_pretrain_converted_logging))
+            fake_tgt_sentences_G1_pretrain_org_translated_sent = list(map(clean_text, fake_tgt_sentences_G1_pretrain_org_translated_sent))
 
             log_translation_db_valid(
                 epoch_i,
