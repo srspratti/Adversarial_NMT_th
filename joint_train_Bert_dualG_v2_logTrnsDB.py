@@ -531,7 +531,7 @@ def main(args):
                         """CREATE TABLE IF NOT EXISTS translations_train
                                     (id INTEGER PRIMARY KEY, epoch_i_list INTEGER NOT NULL, src_sentences_converted_logging_org TEXT NOT NULL, tgt_sentences_converted_logging_org TEXT NOT NULL, fake_tgt_sentences_converted_logging_G2_train TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_converted_logging TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT NOT NULL)"""
                     )
-                    conn.commit()
+                    conn.commit() #
                 except sqlite3.Error as e:
                     print("sqlite3 error: ", e)
                 finally:
