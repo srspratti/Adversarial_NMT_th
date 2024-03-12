@@ -52,7 +52,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
@@ -469,6 +469,8 @@ def main(args):
             print("src_sentences shape ", src_sentences.shape)
 
             # ---------------------------------------- fake loss from Generator 2 Train()--------------------------
+            fake_tgt_sentences = fake_tgt_sentences.to(device)
+            print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
             fake_loss = d_criterion(
                 discriminator_cnn(src_sentences, fake_tgt_sentences.detach()),
                 fake_targets,
@@ -478,6 +480,7 @@ def main(args):
             fake_tgt_sentences_G1_pretrain = fake_tgt_sentences_G1_pretrain_probs.get(
                 "input_ids"
             )
+            fake_tgt_sentences_G1_pretrain = fake_tgt_sentences_G1_pretrain.to(device)
             fake_loss_pretrain = d_criterion(
                 discriminator_cnn(
                     src_sentences, fake_tgt_sentences_G1_pretrain.detach()
@@ -526,7 +529,7 @@ def main(args):
                     c = conn.cursor()    
                     c.execute(
                         """CREATE TABLE IF NOT EXISTS translations_train
-                                    (id INTEGER PRIMARY KEY, epoch INTEGER NOT NULL, src_sentences_converted_logging_org TEXT NOT NULL, tgt_sentences_converted_logging_org TEXT NOT NULL, fake_tgt_sentences_converted_logging_G2_train TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_converted_logging TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT NOT NULL)"""
+                                    (id INTEGER PRIMARY KEY, epoch_i_list INTEGER NOT NULL, src_sentences_converted_logging_org TEXT NOT NULL, tgt_sentences_converted_logging_org TEXT NOT NULL, fake_tgt_sentences_converted_logging_G2_train TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_converted_logging TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT NOT NULL)"""
                     )
                     conn.commit()
                 except sqlite3.Error as e:
@@ -707,7 +710,7 @@ def main(args):
             fake_tgt_sentences_G1_pretrain = fake_tgt_sentences_G1_pretrain_probs.get(
                 "input_ids"
             )
-
+            fake_tgt_sentences_G1_pretrain = fake_tgt_sentences_G1_pretrain.to(device)
             fake_loss_pretrain = d_criterion(
                 discriminator_cnn(
                     src_sentences, fake_tgt_sentences_G1_pretrain.detach()
@@ -716,6 +719,7 @@ def main(args):
             )
 
             # ---------------------------------------fake loss from the Generator 2 now in eval() mode --------------------------
+            fake_tgt_sentences = fake_tgt_sentences.to(device)
             fake_loss = d_criterion(
                 discriminator_cnn(src_sentences, fake_tgt_sentences.detach()),
                 fake_targets,
@@ -757,7 +761,7 @@ def main(args):
                     c = conn.cursor()    
                     c.execute(
                         """CREATE TABLE IF NOT EXISTS translations_valid
-                                    (id INTEGER PRIMARY KEY, epoch INTEGER NOT NULL, src_sentences_converted_logging_org TEXT NOT NULL, tgt_sentences_converted_logging_org TEXT NOT NULL, fake_tgt_sentences_converted_logging_G2_train TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_converted_logging TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT NOT NULL)"""
+                                    (id INTEGER PRIMARY KEY, epoch_i_list INTEGER NOT NULL, src_sentences_converted_logging_org TEXT NOT NULL, tgt_sentences_converted_logging_org TEXT NOT NULL, fake_tgt_sentences_converted_logging_G2_train TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_converted_logging TEXT NOT NULL, fake_tgt_sentences_G1_pretrain_org_translated_sent TEXT NOT NULL)"""
                     )
                     conn.commit()
                 except sqlite3.Error as e:
