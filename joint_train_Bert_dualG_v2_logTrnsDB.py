@@ -124,10 +124,10 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(50))
+    train_dataset = dataset["train"].select(range(10))
 
     # Keep the full valid and test datasets
-    valid_dataset = dataset["validation"]
+    valid_dataset = dataset["validation"].select(range(10))
     test_dataset = dataset["test"]
 
     # Loading Bert Model
