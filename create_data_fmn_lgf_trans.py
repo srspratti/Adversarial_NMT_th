@@ -5,6 +5,36 @@ import pandas as pd
 import sqlite3
 import os
 
+def write_df_to_db(db_name, df):
+    # Connect to the database
+    conn = sqlite3.connect(db_name)
+
+    # Create a cursor object
+    cur = conn.cursor()
+
+    # Drop the table if it already exists
+    cur.execute("DROP TABLE IF EXISTS balanced_data")
+
+    # Create the table
+    cur.execute("""CREATE TABLE balanced_data (
+        epoch INTEGER,
+        src_sentence TEXT,
+        translation TEXT,
+        ht_or_mt_target INTEGER
+    )""")
+
+    # Insert the data into the table
+    for row in df.itertuples():
+        cur.execute("""INSERT INTO balanced_data (epoch, src_sentence, translation, ht_or_mt_target)
+        VALUES (?, ?, ?, ?)""",
+        (row.epoch, row.src_sentence, row.translation, row.ht_or_mt_target))
+
+    # Commit the changes to the database
+    conn.commit()
+
+    # Close the connection
+    conn.close()
+
 def fetch_balanced_data_train(db_name, epochs):
     """
     Fetches a balanced dataset from the database, with an equal number of human and machine translations.
@@ -104,6 +134,11 @@ def main():
     print("df: ", df)
     df.to_csv('data_train.csv', index=False)
     print("df shape: ", df.shape)
+
+    # writing the df to db
+    db_name_train_data = os.getcwd() + '/balanced_data_train.db'
+    write_df_to_db(db_name_train_data, df)
+
 
 if __name__ == "__main__":
     main()
