@@ -44,4 +44,4 @@ class TransformerModel_bert(nn.Module):
         output = self.out(decoder_out)
         log_probs = F.log_softmax(output, dim=-1)
 
-        return log_probs
+        return log_probs, decoder_out
