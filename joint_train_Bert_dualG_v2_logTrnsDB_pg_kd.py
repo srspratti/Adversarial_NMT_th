@@ -322,6 +322,7 @@ def main(args):
         """
         bert_model = BertModel.from_pretrained('bert-base-multilingual-cased')
         tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+        bert_model = bert_model.to(device)
         
         encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt', max_length=128)
         input_ids = encoded_input['input_ids'].to(device)
@@ -540,7 +541,7 @@ def main(args):
             # Optional: Incorporate discriminator feedback directly into G2's loss
             # Assume discriminator provides a reward signal for PG training
             rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach()).detach()
-            pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences_probs, rewards)
+            pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
 
 
             # Including soft-Knowledge distillation loss
