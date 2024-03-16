@@ -324,13 +324,20 @@ def main(args):
         tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
         bert_model = bert_model.to(device)
         
-        encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt', max_length=128)
+        # tokenizer(en, truncation=True, padding="max_length", max_length=128)
+        encoded_input = tokenizer(sentences, padding="max_length", truncation=True, return_tensors='pt', max_length=128)
+        # print("shape of encoded_input ", encoded_input.shape)
+        print(" type of encoded_input ", type(encoded_input))
         input_ids = encoded_input['input_ids'].to(device)
+        print("input_ids shape ", input_ids.shape)
         attention_mask = encoded_input['attention_mask'].to(device)
+        print("attention_mask shape ", attention_mask.shape)
 
         with torch.no_grad():
             outputs = bert_model(input_ids, attention_mask=attention_mask)
+            print("type outputs ", type(outputs))
         embeddings = outputs.last_hidden_state
+        print("type embeddings ", type(embeddings))
         return embeddings
 
     def soft_target_distillation_loss(g2_output, g1_translated_embeddings):
@@ -546,7 +553,8 @@ def main(args):
 
             # Including soft-Knowledge distillation loss
             
-            g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)    
+            g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)   
+            print("g1_translated_embeddings ", g1_translated_embeddings) 
             soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
 
 
@@ -554,7 +562,7 @@ def main(args):
             total_g_loss = g_loss + pg_loss  + soft_target_loss # You can adjust the weighting of these components as needed
 
             total_g_loss.backward()
-            total_g_loss.backward()
+            # total_g_loss.backward()
             optimizer_g.step()
             total_train_g_loss += total_g_loss.item() # 
 

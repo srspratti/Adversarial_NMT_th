@@ -38,10 +38,14 @@ class TransformerModel_bert(nn.Module):
 
         # Pass embeddings through Transformer encoder and decoder
         encoder_out = self.encoder(encoded_src)
+        print("encoder_out shape: ", encoder_out.shape)
         decoder_out = self.decoder(encoded_tgt, encoder_out)
+        print("decoder_out shape: ", decoder_out.shape)
 
         # Pass decoder output through final layer
         output = self.out(decoder_out)
+        print("output shape: ", output.shape)
         log_probs = F.log_softmax(output, dim=-1)
+        print("log_probs shape: ", log_probs.shape)
 
         return log_probs, decoder_out
