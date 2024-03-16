@@ -276,9 +276,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_10sent"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_10sent")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_10sent/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_10sent_pg_kd_loss"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_10sent_pg_kd_loss")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_10sent_pg_kd_loss/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -427,6 +427,7 @@ def main(args):
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             # sample = sample.to(device)
             # Move all tensors in the batch to the device
+            print("device ", device)
             sample = {key: tensor.to(device) for key, tensor in sample.items()}
 
             # Get the source and target sentences from the batch
@@ -755,7 +756,8 @@ def main(args):
             tgt_sentences = sample["target_ids"]
 
             # Generate sentences
-            fake_tgt_sentences_probs = generator2_train(src_sentences, tgt_sentences)
+            # fake_tgt_sentences_probs = generator2_train(src_sentences, tgt_sentences)
+            fake_tgt_sentences_probs, decoder_out = generator2_train(src_sentences, tgt_sentences)
 
             fake_tgt_sentences_probs = fake_tgt_sentences_probs.view(
                 -1, fake_tgt_sentences_probs.size(-1)
@@ -764,16 +766,6 @@ def main(args):
 
             # Calculate generator loss
             g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
-            total_valid_g_loss += g_loss.item()
-
-            print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
-            _, prediction = fake_tgt_sentences_probs.topk(1)
-            print("prediction shape ", prediction.shape)
-            prediction = prediction.squeeze(1)
-            print("prediction shape after squeeze ", prediction.shape)
-            fake_tgt_sentences = torch.reshape(prediction, src_sentences.shape)
-            print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
-            print("src_sentences shape ", src_sentences.shape)
 
             # -------------------------------------Generating translations using the pre-trained generator
             src_sentences_for_G1 = ids_to_sentences_bert(src_sentences)
@@ -796,7 +788,30 @@ def main(args):
 
             # fake_tgt_sentences_G1_pretrain_probs = fake_tgt_sentences_G1_pretrain_probs.view(-1, fake_tgt_sentences_G1_pretrain_probs.size(-1))
 
-            # preparing the fake sentence probs output from the generator 1 Pre-Trained to feed to the discriminator
+            # -------------------------------------------------Discriminator Validation ------------------------
+            real_targets = torch.ones(src_sentences.size(0), 1).to(device)  # Real
+            fake_targets = torch.zeros(src_sentences.size(0), 1).to(device)  # Fake
+
+            # -----------------------------------------Real loss of the discriminator --------------
+            real_loss = d_criterion(
+                discriminator_cnn(src_sentences, tgt_sentences),
+                real_targets,
+            )
+
+            # preparing the fake sentence probs output to feed to discriminator -------
+
+
+            print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
+            _, prediction = fake_tgt_sentences_probs.topk(1)
+            print("prediction shape ", prediction.shape)
+            prediction = prediction.squeeze(1)
+            print("prediction shape after squeeze ", prediction.shape)
+            fake_tgt_sentences = torch.reshape(prediction, src_sentences.shape)
+            print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
+            print("src_sentences shape ", src_sentences.shape)
+
+            #---------
+             # preparing the fake sentence probs output from the generator 1 Pre-Trained to feed to the discriminator
             # We don't need the below processing because we are using the sentences_to_ids() method to convert the translated sentences from G1 to token IDs and attention masks
             """
             #print("fake_tgt_sentences_G1_pretrain_probs shape ", fake_tgt_sentences_G1_pretrain_probs.shape)
@@ -809,16 +824,34 @@ def main(args):
             """
             print("src_sentences shape ", src_sentences.shape)
 
-            # -------------------------------------------------Discriminator Validation ------------------------
-            real_targets = torch.ones(src_sentences.size(0), 1).to(device)  # Real
-            fake_targets = torch.zeros(src_sentences.size(0), 1).to(device)  # Fake
+            ###################################### Modified Generator loss 
+            # Including policy gradient loss
 
-            # -----------------------------------------Real loss of the discriminator --------------
-            real_loss = d_criterion(
-                discriminator_cnn(src_sentences, tgt_sentences),
-                real_targets,
+            # Optional: Incorporate discriminator feedback directly into G2's loss
+            # Assume discriminator provides a reward signal for PG training
+            rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach()).detach()
+            pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
+
+
+            # Including soft-Knowledge distillation loss
+            
+            g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)   
+            print("g1_translated_embeddings ", g1_translated_embeddings) 
+            soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
+
+            #-------------------------------
+            total_g_loss = g_loss + pg_loss  + soft_target_loss
+            
+            total_valid_g_loss += total_g_loss.item()
+
+            # ---------------------------------------fake loss from the Generator 2 now in eval() mode --------------------------
+            fake_tgt_sentences = fake_tgt_sentences.to(device)
+            fake_loss = d_criterion(
+                discriminator_cnn(src_sentences, fake_tgt_sentences.detach()),
+                fake_targets,
             )
-            # ---------------------------------------------fake loss from Generator 1 Pre-Trained--------------------------
+
+             # ---------------------------------------------fake loss from Generator 1 Pre-Trained--------------------------
             fake_tgt_sentences_G1_pretrain = fake_tgt_sentences_G1_pretrain_probs.get(
                 "input_ids"
             )
@@ -830,12 +863,6 @@ def main(args):
                 fake_targets,
             )
 
-            # ---------------------------------------fake loss from the Generator 2 now in eval() mode --------------------------
-            fake_tgt_sentences = fake_tgt_sentences.to(device)
-            fake_loss = d_criterion(
-                discriminator_cnn(src_sentences, fake_tgt_sentences.detach()),
-                fake_targets,
-            )
             #### logging validation translations into DB ----------############
             print("logging translations valid\n")
             print("src_sentences shape English Source", src_sentences.shape)
