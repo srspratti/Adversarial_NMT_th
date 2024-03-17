@@ -1,5 +1,6 @@
 import pandas as pd
 from joblib import load
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
 def load_test_data(csv_file_path):
     """
@@ -25,7 +26,8 @@ def preprocess_test_data(test_df):
     The preprocessed test data.
     """
     # Assuming the model was trained on combined source and translation text
-    test_df['combined_text'] = test_df['src_sentence'] + " " + test_df['translation']
+    # test_df['combined_text'] = test_df['src_sentence'] + " " + test_df['translation']
+    test_df['combined_text'] = test_df['src'] + " " + test_df['target']
     return test_df['combined_text']
 
 def predict_with_saved_model(model_path, test_data):
@@ -44,11 +46,14 @@ def predict_with_saved_model(model_path, test_data):
     return predictions
 
 def main():
-    model_path = "path/to/your/saved/svm_model_sm_grid.joblib"  # Update with the actual path to your saved model
-    csv_file_path = "path/to/your/test_data.csv"  # Update with the actual path to your test data CSV file
+
+    getpwd = os.getcwd()
+    testdata_folder = "/test_data/wmt14_en_fr_test/standard_classifiers"
+    model_path = getpwd + "/svm_model_sm_grid.joblib"  # Update with the actual path to your saved model
+    test_data = getpwd + testdata_folder + "wmt14_en_fr_test_std_classifiers.csv"  # Update with the actual path to your test data CSV file
     
     # Load and preprocess the test data
-    test_df = load_test_data(csv_file_path)
+    test_df = load_test_data(test_data)
     preprocessed_test_data = preprocess_test_data(test_df)
     
     # Predict with the saved model
@@ -56,6 +61,14 @@ def main():
     
     # Output the predictions
     print("Predictions:", predictions)
+
+     # Extract the true labels
+    true_labels = test_df['ht_mt_label'].values  # Ensure 'true_label' matches the column name in your CSV
+    
+    # Calculate and print the metrics
+    print("Accuracy Score:", accuracy_score(true_labels, predictions))
+    print("\nClassification Report:\n", classification_report(true_labels, predictions))
+    print("\nConfusion Matrix:\n", confusion_matrix(true_labels, predictions))
 
 if __name__ == "__main__":
     main()
