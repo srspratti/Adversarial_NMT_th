@@ -121,17 +121,32 @@ def main(args):
     discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
     print("Discriminator loaded successfully!")
     
-    path_to_your_pretrained_model = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
+    # path_to_your_pretrained_model = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
+    # from fairseq.models.transformer import TransformerModel
+    # generator_pt = TransformerModel.from_pretrained(
+    # model_name_or_path=path_to_your_pretrained_model,
+    # checkpoint_file='model.pt',
+    # bpe='subword_nmt',
+    # # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
+    # data_name_or_path='/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer',
+    # bpe_codes = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
+    # )
+    # print("Pretrained Generator loaded successfully!")
+    
+    getpwd = os.getcwd()
+     
+    path_to_your_pretrained_model = getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer'
     from fairseq.models.transformer import TransformerModel
     generator_pt = TransformerModel.from_pretrained(
     model_name_or_path=path_to_your_pretrained_model,
     checkpoint_file='model.pt',
     bpe='subword_nmt',
     # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
-    data_name_or_path='/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer',
-    bpe_codes = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
+    data_name_or_path= getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer',
+    bpe_codes = getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
     )
     print("Pretrained Generator loaded successfully!")
+    
     
     def pad_sentences(sentences, pad_token='<pad>', max_len=None):
         if max_len is None:
@@ -208,18 +223,32 @@ def main(args):
     
     
 
-    # Replace with the path to your learned BPE codes.
-    BPE_CODE_PATH = "/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/code"
+    # # Replace with the path to your learned BPE codes.
+    # BPE_CODE_PATH = "/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/code"
+    # # /u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/subword-nmt/subword_nmt/apply_bpe.py
+    # def apply_bpe(sentence):
+    #     """Apply BPE encoding to a sentence using a subprocess call to apply_bpe.py."""
+    #     # Construct the shell command to execute apply_bpe.py.
+    #     # cmd = f"echo '{sentence}' | python /path/to/apply_bpe.py -c {BPE_CODE_PATH}"
+    #     cmd = f"echo '{sentence}' | python /root/Adversarial_NMT_th/subword-nmt/subword_nmt/apply_bpe.py -c {BPE_CODE_PATH}"
+    #     # Execute the command and get the output.
+    #     bpe_sentence = subprocess.check_output(cmd, shell=True, text=True).strip()
+    #     return bpe_sentence
+    
+     # Replace with the path to your learned BPE codes.
+    getpwd = os.getcwd()
+    BPE_CODE_PATH = getpwd + "/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes"
     # /u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/subword-nmt/subword_nmt/apply_bpe.py
     def apply_bpe(sentence):
         """Apply BPE encoding to a sentence using a subprocess call to apply_bpe.py."""
         # Construct the shell command to execute apply_bpe.py.
         # cmd = f"echo '{sentence}' | python /path/to/apply_bpe.py -c {BPE_CODE_PATH}"
-        cmd = f"echo '{sentence}' | python /root/Adversarial_NMT_th/subword-nmt/subword_nmt/apply_bpe.py -c {BPE_CODE_PATH}"
+        cmd = f"echo '{sentence}' | python {getpwd}/subword-nmt/subword_nmt/apply_bpe.py -c {BPE_CODE_PATH}"
         # Execute the command and get the output.
         bpe_sentence = subprocess.check_output(cmd, shell=True, text=True).strip()
         return bpe_sentence
-        
+    
+    
     if use_cuda:
         if torch.cuda.device_count() > 1:
             discriminator = torch.nn.DataParallel(discriminator).cuda()
@@ -234,10 +263,16 @@ def main(args):
         generator.cpu()
         generator_pt.cpu()
 
-    # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1/'
+    # # adversarial training checkpoints saving path
+    # if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1'):
+    #     os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1')
+    # checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1/'
+    
+     # adversarial training checkpoints saving path
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_200_epch_20'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_200_epch_20')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_200_epch_20/'
+
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')

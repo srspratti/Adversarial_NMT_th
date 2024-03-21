@@ -8,7 +8,12 @@ import random
 import sys
 import numpy as np
 from collections import OrderedDict
-sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
+getpwd = os.getcwd()
+# sys.path.append(
+#     "/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master"
+# )
+sys.path.append(getpwd)
+# sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
 os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7" 
 """
@@ -20,7 +25,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from torch import cuda
@@ -123,15 +128,17 @@ def main(args):
     discriminator = Discriminator(args, dataset.src_dict, dataset.dst_dict, use_cuda=use_cuda)
     print("Discriminator loaded successfully!")
     
-    path_to_your_pretrained_model = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
+    getpwd = os.getcwd()
+     
+    path_to_your_pretrained_model = getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer'
     from fairseq.models.transformer import TransformerModel
     generator_pt = TransformerModel.from_pretrained(
     model_name_or_path=path_to_your_pretrained_model,
     checkpoint_file='model.pt',
     bpe='subword_nmt',
     # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
-    data_name_or_path='/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer',
-    bpe_codes = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
+    data_name_or_path= getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer',
+    bpe_codes = getpwd + '/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
     )
     print("Pretrained Generator loaded successfully!")
     
@@ -234,13 +241,14 @@ def main(args):
         return sentences
     
     # Replace with the path to your learned BPE codes.
-    BPE_CODE_PATH = "/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/code"
+    getpwd = os.getcwd()
+    BPE_CODE_PATH = getpwd + "/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes"
     # /u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/subword-nmt/subword_nmt/apply_bpe.py
     def apply_bpe(sentence):
         """Apply BPE encoding to a sentence using a subprocess call to apply_bpe.py."""
         # Construct the shell command to execute apply_bpe.py.
         # cmd = f"echo '{sentence}' | python /path/to/apply_bpe.py -c {BPE_CODE_PATH}"
-        cmd = f"echo '{sentence}' | python /root/Adversarial_NMT_th/subword-nmt/subword_nmt/apply_bpe.py -c {BPE_CODE_PATH}"
+        cmd = f"echo '{sentence}' | python {getpwd}/subword-nmt/subword_nmt/apply_bpe.py -c {BPE_CODE_PATH}"
         # Execute the command and get the output.
         bpe_sentence = subprocess.check_output(cmd, shell=True, text=True).strip()
         return bpe_sentence
@@ -261,9 +269,9 @@ def main(args):
         generator_pt.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/'
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_20'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_20')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_20/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
