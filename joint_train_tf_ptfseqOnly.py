@@ -8,7 +8,12 @@ import random
 import sys
 import numpy as np
 from collections import OrderedDict
-sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
+getpwd = os.getcwd()
+# sys.path.append(
+#     "/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master"
+# )
+sys.path.append(getpwd)
+# sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
 os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7" 
 """
@@ -20,7 +25,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from torch import cuda
@@ -269,9 +274,9 @@ def main(args):
     # checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2023_50k__ptfseqOnly_v1/'
     
      # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_200_epch_20'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_200_epch_20')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_200_epch_20/'
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2024_50k_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_2'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2024_50k_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_2')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2024_50k_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_2/'
 
 
     # define loss function
@@ -280,9 +285,9 @@ def main(args):
     pg_criterion = PGLoss(ignore_index=dataset.dst_dict.pad(), size_average=True,reduce=True)
 
     # fix discriminator word embedding (as Wu et al. do)
-    for p in discriminator.embed_src_tokens.parameters():
+    for p in discriminator.module.embed_src_tokens.parameters():
         p.requires_grad = False
-    for p in discriminator.embed_trg_tokens.parameters():
+    for p in discriminator.module.embed_trg_tokens.parameters():
         p.requires_grad = False
 
     # define optimizer
@@ -367,9 +372,15 @@ def main(args):
             for sentence in sentences:
                 # print("sentence no#  ", n)
                 print(sentence)
-            translations = generator_pt.translate(sentences)
-            # Assuming that your generator model expects a certain format, you might need to convert translation to that format
-            print("translations ", translations)
+            # translations = generator_pt.translate(sentences)
+            # # Assuming that your generator model expects a certain format, you might need to convert translation to that format
+            # print("translations ", translations)
+            
+             # Access the original TransformerModel from the DataParallel wrapper
+            original_generator_pt = generator_pt.module if isinstance(generator_pt, torch.nn.DataParallel) else generator_pt
+
+            # Now use the translate method
+            translations = original_generator_pt.translate(sentences)
             
             # Applying BPE to translations
             bpe_translations = [apply_bpe(t) for t in translations]
