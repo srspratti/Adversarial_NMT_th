@@ -42,7 +42,7 @@ getpwd = os.getcwd()
 # )
 sys.path.append(getpwd)
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 """
 os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
 torch.cuda.device_count() # result is 2
@@ -52,7 +52,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
@@ -275,9 +275,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_10sent"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_10sent")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_10sent/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_10sent_mgpu"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_10sent_mgpu")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_10sent_mgpu/"
 
     ## Define loss functions for the generator and the Discriminator
     g_criterion = torch.nn.NLLLoss(reduction="sum", ignore_index=0)

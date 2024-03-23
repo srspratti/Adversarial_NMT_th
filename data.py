@@ -4,7 +4,13 @@ This code is adapted from Facebook Fairseq-py
 Visit https://github.com/facebookresearch/fairseq-py for more information
 
 '''
-
+import os
+import sys
+getpwd = os.getcwd()
+# sys.path.append(
+#     "/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master"
+# )
+sys.path.append(getpwd)
 import contextlib
 import itertools
 import glob
@@ -204,6 +210,7 @@ class LanguageDatasets(object):
                          seed=None, epoch=1, sample_without_replacement=0,
                          sort_by_source_size=False, shard_id=0, num_shards=1):
         dataset = self.splits[split]
+        print("dataset in train dataloader", dataset)
         with numpy_seed(seed):
             batch_sampler = shuffled_batches_by_size(
                 dataset.src, dataset.dst, max_tokens=max_tokens,
@@ -213,10 +220,37 @@ class LanguageDatasets(object):
             # Drop the last batch if it's smaller than the expected size
             if max_sentences and len(batch_sampler[-1]) < max_sentences:
                 batch_sampler = batch_sampler[:-1]
-            batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards)
+            # batch_sampler = mask_batches(batch_sampler, shard_id=shard_id, num_shards=num_shards) 
+            # When setting up your DataLoader
+            batch_sampler = mask_batches(
+                batch_sampler=batch_sampler, 
+                shard_id=shard_id, 
+                num_shards=num_shards, 
+                drop_last=True  # Ensure the last incomplete batch is dropped
+            )
+
         return torch.utils.data.DataLoader(
             dataset, collate_fn=dataset.collater,
             batch_sampler=batch_sampler)
+
+    # Customized train_dataloader
+    # from torch.utils.data import BatchSampler, SequentialSampler
+
+    # def train_dataloader(self, split, batch_size, max_positions=(1024, 1024), seed=None, epoch=1, 
+    #                     sample_without_replacement=0, sort_by_source_size=False, shard_id=0, num_shards=1):
+    #     dataset = self.splits[split]
+        
+    #     # Create a sequential sampler
+    #     sequential_sampler = torch.utils.data.SequentialSampler(dataset)
+        
+    #     # Create a batch sampler that extracts batches of fixed size from the sequential sampler
+    #     fixed_size_batch_sampler = torch.utils.data.BatchSampler(sequential_sampler, batch_size=batch_size, drop_last=True)
+        
+    #     # You don't need to modify the batches for different GPUs as each will independently
+    #     # iterate over the dataset using this fixed-size batch sampler.
+    #     return torch.utils.data.DataLoader(dataset, 
+    #                                     collate_fn=dataset.collater, batch_sampler=fixed_size_batch_sampler)
+
 
 
     def eval_dataloader(self, split, num_workers=0, max_tokens=None,
@@ -724,7 +758,24 @@ def shuffled_batches_by_size(src, dst, max_tokens=None, max_sentences=None,
     return batches
 
 
-def mask_batches(batch_sampler, shard_id, num_shards):
+# def mask_batches(batch_sampler, shard_id, num_shards):
+#     if num_shards == 1:
+#         return batch_sampler
+#     res = [
+#         batch
+#         for i, batch in enumerate(batch_sampler)
+#         if i % num_shards == shard_id
+#     ]
+#     expected_length = int(math.ceil(len(batch_sampler) / num_shards))
+#     return res + [[]] * (expected_length - len(res))
+
+# Custom mask_batches function to handle multi-gpu inconsistent batch sizes situation
+import math
+
+def mask_batches(batch_sampler, shard_id, num_shards, drop_last=True):
+    print("batch_sampler: ", batch_sampler)
+    print("type of batch_sampler: ", type(batch_sampler))
+    print("drop_last: ", drop_last)
     if num_shards == 1:
         return batch_sampler
     res = [
@@ -732,8 +783,10 @@ def mask_batches(batch_sampler, shard_id, num_shards):
         for i, batch in enumerate(batch_sampler)
         if i % num_shards == shard_id
     ]
-    expected_length = int(math.ceil(len(batch_sampler) / num_shards))
-    return res + [[]] * (expected_length - len(res))
+    if drop_last and len(res) > 0 and len(res[-1]) < num_shards:
+        res = res[:-1]  # Drop the last batch if it's incomplete
+    return res
+
 
 def mask_batches_test_classify(batch_sampler, shard_id, num_shards):
     if num_shards == 1:

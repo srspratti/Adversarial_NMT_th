@@ -15,7 +15,7 @@ getpwd = os.getcwd()
 sys.path.append(getpwd)
 # sys.path.append("/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master")
 # https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
-os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7" 
+# os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7" 
 """
 os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
 torch.cuda.device_count() # result is 2
@@ -26,7 +26,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 from torch import cuda
 from torch.autograd import Variable
@@ -268,10 +268,10 @@ def main(args):
         generator.cpu()
         generator_pt.cpu()
 
-    # adversarial training checkpoints saving path
-    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_20'):
-        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_20')
-    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2024_1mil_mgpu_ptfseqOnly_v2_0_100_0_btch_125_epch_20/'
+    # adversarial training checkpoints saving path # test_wmt14_en_fr_2024_1mil_sgpu_ptfseqOnly_v2_0_100_0_btch_50_epch_20
+    if not os.path.exists('checkpoints/joint/test_wmt14_en_fr_2024_1mil_gpu_ptfseqOnly_v2_0_100_0_btch_50_epch_20_ignore'):
+        os.makedirs('checkpoints/joint/test_wmt14_en_fr_2024_1mil_gpu_ptfseqOnly_v2_0_100_0_btch_50_epch_20_ignore')
+    checkpoints_path = 'checkpoints/joint/test_wmt14_en_fr_2024_1mil_gpu_ptfseqOnly_v2_0_100_0_btch_50_epch_20_ignore/'
 
     # define loss function
     g_criterion = torch.nn.NLLLoss(ignore_index=dataset.dst_dict.pad(),reduction='sum')
@@ -279,10 +279,17 @@ def main(args):
     pg_criterion = PGLoss(ignore_index=dataset.dst_dict.pad(), size_average=True,reduce=True)
 
     # fix discriminator word embedding (as Wu et al. do)
-    for p in discriminator.module.embed_src_tokens.parameters():
-        p.requires_grad = False
-    for p in discriminator.module.embed_trg_tokens.parameters():
-        p.requires_grad = False
+    
+    if torch.cuda.device_count() > 1:
+        for p in discriminator.module.embed_src_tokens.parameters():
+            p.requires_grad = False
+        for p in discriminator.module.embed_trg_tokens.parameters():
+            p.requires_grad = False
+    else:          
+        for p in discriminator.embed_src_tokens.parameters():
+            p.requires_grad = False
+        for p in discriminator.embed_trg_tokens.parameters():
+            p.requires_grad = False
 
     # define optimizer
     g_optimizer = eval("torch.optim." + args.g_optimizer)(filter(lambda x: x.requires_grad,
@@ -323,6 +330,22 @@ def main(args):
             shard_id=args.distributed_rank,
             num_shards=args.distributed_world_size,
         )
+        
+        
+        # Custom train_loader
+        # When calling train_dataloader(), specify the desired fixed batch size directly
+        # fixed_batch_size = 80
+        # trainloader = dataset.train_dataloader(
+        #     'train',
+        #     batch_size=fixed_batch_size,  # Specify your desired batch size here
+        #     max_positions=max_positions_train,
+        #     epoch=epoch_i,
+        #     sample_without_replacement=args.sample_without_replacement,
+        #     sort_by_source_size=(epoch_i <= args.curriculum),
+        #     shard_id=args.distributed_rank,
+        #     num_shards=args.distributed_world_size,
+        # )
+
 
         # reset meters
         for key, val in g_logging_meters.items():
@@ -340,6 +363,10 @@ def main(args):
         generator_pt.eval()
         
         for i, sample in tqdm(enumerate(trainloader)):
+            
+            print("type of sample: ", type(sample))
+            print("keys of sample: ", sample.keys())
+            print("dictionary sample size : ", len(sample))
 
             if use_cuda:
                 # wrap input tensors in cuda tensors
@@ -405,11 +432,11 @@ def main(args):
             ##*****************************************************************************
             
             sys_out_batch = generator(sample=sample, args=args)
-            # print("sys_out_batch ", sys_out_batch)
-            # print("sys_out_batch size: ", sys_out_batch.size())
+            print("sys_out_batch ", sys_out_batch)
+            print("sys_out_batch size: ", sys_out_batch.size())
 
             out_batch = sys_out_batch.contiguous().view(-1, sys_out_batch.size(-1)) # (64 X 50) X 6632  
-            # print("out_batch size: ", out_batch.size())
+            print("out_batch size: ", out_batch.size())
 
             train_trg_batch = sample['target'].view(-1) # 64*50 = 3200
 
