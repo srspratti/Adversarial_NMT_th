@@ -253,7 +253,7 @@ def main(args):
         bpe_sentence = subprocess.check_output(cmd, shell=True, text=True).strip()
         return bpe_sentence
     
-        
+    # Chnages from vastai_114_8gpu    
     if use_cuda:
         if torch.cuda.device_count() > 1:
             discriminator = torch.nn.DataParallel(discriminator).cuda()
