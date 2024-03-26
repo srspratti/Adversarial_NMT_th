@@ -35,6 +35,8 @@ import os
 from generator_tf_bert import TransformerModel_bert
 from discriminator_cnn_bert import Discriminator_cnn_bert
 
+torch.cuda.empty_cache()
+
 # CUDA multiple-GPU configuration
 
 getpwd = os.getcwd()
@@ -53,8 +55,8 @@ torch.cuda.device_count() # result is 1, using first GPU
 
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
 
@@ -125,10 +127,10 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(10))
+    train_dataset = dataset["train"].select(range(1000000))
 
     # Keep the full valid and test datasets
-    valid_dataset = dataset["validation"].select(range(10))
+    valid_dataset = dataset["validation"]
     test_dataset = dataset["test"]
 
     # Loading Bert Model
@@ -276,9 +278,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_10sent_pg_kd_loss"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_10sent_pg_kd_loss")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_10sent_pg_kd_loss/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -385,7 +387,7 @@ def main(args):
 
     # Example usage
     getpwd = os.getcwd()
-    db_name = "translations.db"
+    db_name = "translations_1mil.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -462,7 +464,13 @@ def main(args):
                 # print("sentence no#  ", n)
                 print(sentence)
 
-            translated_sentences_from_G1 = generator1_pretrained.translate(
+             # Access the original TransformerModel from the DataParallel wrapper
+            original_generator_pt = generator1_pretrained.module if isinstance(generator1_pretrained, torch.nn.DataParallel) else generator_pt
+
+            # Now use the translate method
+            # translations = original_generator_pt.translate(sentences)
+
+            translated_sentences_from_G1 = original_generator_pt.translate(
                 src_sentences_for_G1
             )
             print("translated_sentences_from_G1 ", translated_sentences_from_G1)
@@ -775,10 +783,20 @@ def main(args):
             for sentence in src_sentences_for_G1:
                 # print("sentence no#  ", n)
                 print(sentence)
+            
+            # Access the original TransformerModel from the DataParallel wrapper
+            original_generator_pt = generator1_pretrained.module if isinstance(generator1_pretrained, torch.nn.DataParallel) else generator_pt
 
-            translated_sentences_from_G1 = generator1_pretrained.translate(
+            # Now use the translate method
+            # translations = original_generator_pt.translate(sentences)
+
+            translated_sentences_from_G1 = original_generator_pt.translate(
                 src_sentences_for_G1
             )
+
+            # translated_sentences_from_G1 = generator1_pretrained.translate(
+            #     src_sentences_for_G1
+            # )
             # print("translated_sentences_from_G1 ", translated_sentences_from_G1)
 
             # Convert the translated sentences back into token IDs and attention masks
