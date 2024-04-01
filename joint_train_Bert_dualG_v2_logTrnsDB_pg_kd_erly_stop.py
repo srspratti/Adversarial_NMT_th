@@ -279,9 +279,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs_erly_stop"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs_erly_stop")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs_erly_stop/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -391,6 +391,11 @@ def main(args):
     db_name = "translations_1mil_20epochs.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
+
+    # Initializing Early Stopping Variables 
+    best_valid_loss = float("inf")
+    epochs_no_improve = 0
+    patience = 3
     
     for epoch_i in tqdm(range(1, args.epochs + 1)):
         logging.info("At {0}-th epoch.".format(epoch_i))
@@ -1033,8 +1038,22 @@ def main(args):
         )
 
         # If the validation loss improved, save the entire model
-        if avg_val_loss < best_loss:
-            best_loss = avg_val_loss
+        # if avg_val_loss < best_loss:
+        #     best_loss = avg_val_loss
+        #     torch.save(
+        #         generator2_train,
+        #         open(checkpoints_path + f"best_generator.pt", "wb"),
+        #         pickle_module=dill,
+        #     )
+        #     torch.save(
+        #         discriminator_cnn,
+        #         open(checkpoints_path + f"best_discriminator.pt", "wb"),
+        #         pickle_module=dill,
+        #     )
+
+        if avg_val_loss < best_valid_loss:
+            best_valid_loss = avg_val_loss
+            epochs_no_improve = 0
             torch.save(
                 generator2_train,
                 open(checkpoints_path + f"best_generator.pt", "wb"),
@@ -1045,7 +1064,12 @@ def main(args):
                 open(checkpoints_path + f"best_discriminator.pt", "wb"),
                 pickle_module=dill,
             )
-
+        else:
+            epochs_no_improve += 1
+        
+        if epochs_no_improve >= patience:
+            print(f"Early stopping triggered after epoch {epoch_i} epochs")
+            break
 
 if __name__ == "__main__":
     ret = parser.parse_known_args()
