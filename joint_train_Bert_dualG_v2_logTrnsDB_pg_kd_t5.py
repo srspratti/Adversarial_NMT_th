@@ -32,7 +32,8 @@ import subprocess
 import os
 
 # Importing Generator and Discriminator class methods
-from generator_tf_bert import TransformerModel_bert
+# from generator_tf_bert import TransformerModel_bert
+from generator_tf_bert_t5 import TransformerModel_t5
 from discriminator_cnn_bert import Discriminator_cnn_bert
 
 torch.cuda.empty_cache()
@@ -127,8 +128,8 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(100020))
-    # train_dataset = dataset["train"].select(range(600))
+    # train_dataset = dataset["train"].select(range(100020))
+    train_dataset = dataset["train"].select(range(600))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -139,13 +140,21 @@ def main(args):
 
     # Pre-processing the data
     # To-Do : Need to change the max_length to 50 from 128
-    def preprocess(data):
+    source_lang = "en"
+    target_lang = "fr"
+    prefix = "translate English to French: "
+
+    def preprocess_t5(examples):
         # Initialize the BERT tokenizer
-        tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        from transformers import AutoTokenizer
+
+        checkpoint = "google-t5/t5-small"
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
         en = list()
         fr = list()
-        for element in data["translation"]:
+        for element in examples["translation"]:
             # print("element: ", element)
             en.append(element["en"])
             fr.append(element["fr"])
@@ -172,13 +181,13 @@ def main(args):
     # print(train_dataset[0])
     # tokenized_datasets = dataset.map(tokenize_function, batched=True) # using the other berttokenizer map function
     tokenized_train_datasets = train_dataset.map(
-        preprocess, batched=True
+        preprocess_t5, batched=True
     )  # Using the bertFaSTtOKENIZER MAp function
     tokenized_valid_datasets = valid_dataset.map(
-        preprocess, batched=True
+        preprocess_t5, batched=True
     )  # Using the bertFaSTtOKENIZER MAp function
     tokenized_test_datasets = test_dataset.map(
-        preprocess, batched=True
+        preprocess_t5, batched=True
     )  # Using the bertFaSTtOKENIZER MAp function
 
     #### --------------------Loading G1 - Pre-Trained fairseq Generator --------------------#####
@@ -214,7 +223,11 @@ def main(args):
         Returns:
             list[str]: A list of decoded sentences.
         """
-        tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        from transformers import AutoTokenizer
+
+        checkpoint = "google-t5/t5-small"
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
         sentences = []
 
@@ -240,7 +253,11 @@ def main(args):
             dict: A dictionary containing 'input_ids' and 'attention_mask' for the tokenized sentences.
         """
         # Tokenize the sentences
-        tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        from transformers import AutoTokenizer
+
+        checkpoint = "google-t5/t5-small"
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         encoding = tokenizer(
             sentences,
             truncation=True,
@@ -256,7 +273,7 @@ def main(args):
 
     #### --------------------Loading G2 - Generator in Train() in GAN--------------------#####
 
-    generator2_train = TransformerModel_bert(args, use_cuda=use_cuda)
+    generator2_train = TransformerModel_t5(args, use_cuda=use_cuda)
 
     #### --------------------Loading D - Discriminator in Train() in GAN --------------------#####
 
@@ -279,9 +296,12 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs/"
+    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs"):
+    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs")
+    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_test"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_test")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_test/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -323,8 +343,18 @@ def main(args):
         Returns:
             torch.Tensor: The BERT embeddings for the sentences.
         """
-        bert_model = BertModel.from_pretrained('bert-base-multilingual-cased')
-        tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+        # bert_model = BertModel.from_pretrained('bert-base-multilingual-cased')
+        from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer, T5EncoderModel
+
+        # bert_model = AutoModelForSeq2SeqLM.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
+        bert_model = T5EncoderModel.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
+
+        # tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+        from transformers import AutoTokenizer
+
+        checkpoint = "google-t5/t5-small"
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        
         bert_model = bert_model.to(device)
         
         # tokenizer(en, truncation=True, padding="max_length", max_length=128)
@@ -343,6 +373,8 @@ def main(args):
         # print("type embeddings ", type(embeddings))
         return embeddings
 
+    
+
     def soft_target_distillation_loss(g2_output, g1_translated_embeddings):
         """
         Compute a soft target distillation loss between G2's output embeddings and G1's translated embeddings.
@@ -354,7 +386,16 @@ def main(args):
         Returns:
             torch.Tensor: The computed loss.
         """
-        loss = F.mse_loss(g2_output, g1_translated_embeddings)
+        resize_layer = nn.Linear(512, 768)  # Resize from 512 to 768 dimensions
+        # Move resize layer to the correct device
+        resize_layer = resize_layer.to(device)
+        print("g2_output shape ", g2_output.shape)
+        print("g1_translated_embeddings shape ", g1_translated_embeddings.shape)
+        # Resize G1's embeddings to match G2's output size
+        resized_g1_embeddings = resize_layer(g1_translated_embeddings)
+        print("g2_output shape ", g2_output.shape)
+        print("resized_g1_embeddings shape ", resized_g1_embeddings.shape)
+        loss = F.mse_loss(g2_output, resized_g1_embeddings)
         return loss
 
 
@@ -388,7 +429,8 @@ def main(args):
 
     # Example usage
     getpwd = os.getcwd()
-    db_name = "translations_1mil_20epochs.db"
+    # db_name = "translations_1mil_20epochs.db"
+    db_name = "translations_test_t5_2.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
