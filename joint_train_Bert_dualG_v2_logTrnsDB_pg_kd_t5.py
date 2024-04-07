@@ -128,15 +128,15 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    # train_dataset = dataset["train"].select(range(100020))
-    train_dataset = dataset["train"].select(range(600))
+    train_dataset = dataset["train"].select(range(100020))
+    # train_dataset = dataset["train"].select(range(600))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
     test_dataset = dataset["test"]
 
     # Loading Bert Model
-    bert_model = "bert-base-multilingual-cased"
+    # bert_model = "bert-base-multilingual-cased"
 
     # Pre-processing the data
     # To-Do : Need to change the max_length to 50 from 128
@@ -149,7 +149,8 @@ def main(args):
         # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
         from transformers import AutoTokenizer
 
-        checkpoint = "google-t5/t5-small"
+        # checkpoint = "google-t5/t5-small"
+        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
         tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
         en = list()
@@ -158,6 +159,8 @@ def main(args):
             # print("element: ", element)
             en.append(element["en"])
             fr.append(element["fr"])
+        
+        en = [prefix + text for text in en]
 
         # Tokenize the data
         inputs = tokenizer(en, truncation=True, padding="max_length", max_length=128)
@@ -226,7 +229,8 @@ def main(args):
         # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
         from transformers import AutoTokenizer
 
-        checkpoint = "google-t5/t5-small"
+        # checkpoint = "google-t5/t5-small"
+        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
         tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
         sentences = []
@@ -256,7 +260,8 @@ def main(args):
         # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
         from transformers import AutoTokenizer
 
-        checkpoint = "google-t5/t5-small"
+        # checkpoint = "google-t5/t5-small"
+        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
         tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         encoding = tokenizer(
             sentences,
@@ -299,9 +304,9 @@ def main(args):
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs")
     # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs/"
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_test"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_test")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_test/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_base_1mil_20epochs"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_base_1mil_20epochs")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_base_1mil_20epochs/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -347,12 +352,13 @@ def main(args):
         from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer, T5EncoderModel
 
         # bert_model = AutoModelForSeq2SeqLM.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
-        bert_model = T5EncoderModel.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
+        bert_model = T5EncoderModel.from_pretrained('sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million')
 
         # tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
         from transformers import AutoTokenizer
 
-        checkpoint = "google-t5/t5-small"
+        # checkpoint = "google-t5/t5-small"
+        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
         tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         
         bert_model = bert_model.to(device)
@@ -386,16 +392,19 @@ def main(args):
         Returns:
             torch.Tensor: The computed loss.
         """
-        resize_layer = nn.Linear(512, 768)  # Resize from 512 to 768 dimensions
-        # Move resize layer to the correct device
-        resize_layer = resize_layer.to(device)
+        # resize_layer = nn.Linear(512, 768)  # Resize from 512 to 768 dimensions
+        # # Move resize layer to the correct device
+        # resize_layer = resize_layer.to(device)
+
         print("g2_output shape ", g2_output.shape)
         print("g1_translated_embeddings shape ", g1_translated_embeddings.shape)
+
         # Resize G1's embeddings to match G2's output size
-        resized_g1_embeddings = resize_layer(g1_translated_embeddings)
-        print("g2_output shape ", g2_output.shape)
-        print("resized_g1_embeddings shape ", resized_g1_embeddings.shape)
-        loss = F.mse_loss(g2_output, resized_g1_embeddings)
+        # resized_g1_embeddings = resize_layer(g1_translated_embeddings)
+        # print("g2_output shape ", g2_output.shape)
+        # print("resized_g1_embeddings shape ", resized_g1_embeddings.shape)
+
+        loss = F.mse_loss(g2_output, g1_translated_embeddings)
         return loss
 
 
@@ -430,7 +439,7 @@ def main(args):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_1mil_20epochs.db"
-    db_name = "translations_test_t5_2.db"
+    db_name = "translations_test_t5_base_1mil_20epochs.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -454,6 +463,12 @@ def main(args):
 
         # Create a DataLoader for the train data
         train_dataloader = DataLoader(tokenized_train_datasets, batch_size=batch_size)
+
+        # from transformers import DataCollatorForSeq2Seq, AutoTokenizer
+        # checkpoint = "sriram-sanjeev9s/T5_wmt14_En_Fr_1million"
+        # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+
+        # train_dataloader = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=checkpoint, max_length=128)
 
         # set training mode
         generator2_train.train()
@@ -812,6 +827,12 @@ def main(args):
         )
         valid_dataloader = DataLoader(tokenized_valid_datasets, batch_size=batch_size)
 
+        # from transformers import DataCollatorForSeq2Seq
+        # checkpoint = "sriram-sanjeev9s/T5_wmt14_En_Fr_1million"
+        # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+
+        # valid_dataloader = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=checkpoint, max_length=128)
+
         with torch.no_grad():
             for i, sample in enumerate(valid_dataloader):
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -971,6 +992,7 @@ def main(args):
                 # print("type of src_sentences_converted_logging_org ", type(src_sentences_converted_logging_org))
                 # print("type of tgt_sentences_converted_logging_org ", type(tgt_sentences_converted_logging_org))
                 # print("type of fake_tgt_sentences_converted_logging_G2_train ", type(fake_tgt_sentences_converted_logging_G2_train))
+                print("fake_tgt_sentences_converted_logging_G2_train ", fake_tgt_sentences_converted_logging_G2_train)
                 # print("type of fake_tgt_sentences_G1_pretrain_converted_logging ", type(fake_tgt_sentences_G1_pretrain_converted_logging))
                 # print("type of fake_tgt_sentences_G1_pretrain_org_translated_sent ", type(translated_sentences_from_G1))
                 
