@@ -17,8 +17,11 @@ class TransformerModel_t5(nn.Module):
         # self.tgt_bert_embed = BertModel.from_pretrained(bert_model)
          # Load BERT model for source (English) and target (French) embeddings
         # self.src_bert_embed = BertModel.from_pretrained('bert-base-uncased')
-        self.src_bert_embed = BertModel.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
-        self.tgt_bert_embed = BertModel.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
+        # self.src_bert_embed = BertModel.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
+        # self.tgt_bert_embed = BertModel.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
+
+        self.src_bert_embed = BertModel.from_pretrained('sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million')
+        self.tgt_bert_embed = BertModel.from_pretrained('sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million')
         
         # Define Transformer encoder and decoder
         self.encoder = nn.TransformerEncoder(nn.TransformerEncoderLayer(d_model=args.encoder_embed_dim, nhead=args.encoder_heads, dim_feedforward=args.encoder_ffn_embed_dim, dropout=args.dropout), args.encoder_layers)
