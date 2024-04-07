@@ -4,6 +4,57 @@ from queue import PriorityQueue
 from generator_tf_bert import TransformerModel_bert
 from transformers import BertTokenizerFast, BertModel
 from datasets import load_dataset
+import logging
+import argparse
+import os
+import sys
+import options
+
+
+torch.cuda.empty_cache()
+
+# CUDA multiple-GPU configuration
+
+getpwd = os.getcwd()
+# sys.path.append(
+#     "/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master"
+# )
+sys.path.append(getpwd)
+# https://stackoverflow.com/questions/67311527/how-to-set-gpu-count-to-0-using-os-environcuda-visible-devices
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+"""
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
+torch.cuda.device_count() # result is 2
+
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+torch.cuda.device_count() # result is 1, using first GPU
+
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+torch.cuda.device_count() # result is 1, using second GPU"""
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+
+
+parser = argparse.ArgumentParser(description="Adversarial-NMT-BERT")
+
+# Load args
+options.add_general_args(parser)
+options.add_dataset_args(parser)
+options.add_distributed_training_args(parser)
+options.add_optimization_args(parser)
+options.add_checkpoint_args(parser)
+options.add_generator_model_args(parser)
+options.add_discriminator_model_args(parser)
+options.add_generation_args(parser)
+
+#### Logging ####
+
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.DEBUG,
+)
+
 
 class BeamSearchNode(object):
     def __init__(self, hiddenstate, previousNode, wordId, logProb, length):
@@ -215,7 +266,7 @@ def main(args):
 
 
     # # Setup CUDA if available
-    use_cuda = torch.cuda.is_available() and len(args.gpuid) >= 1
+    use_cuda = torch.cuda.is_available()
     # if use_cuda and args.gpuid:
     #     cuda.set_device(args.gpuid[0])
 
@@ -223,6 +274,26 @@ def main(args):
     # Initialize the model
     # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
     # bert_model = BertModel.from_pretrained("bert-base-multilingual-cased")
+
+    # loeading the pre-trained model 
+
+    # generator2_trained_saved.load_state_dict(torch.load(args.model_checkpoint_path))
+    g_model_path = '/home/paperspace/google_drive_v4/Research_Thesis/2024/Adversarial_NMT_th/checkpoints/bert_dualG/wmt14_en_fr_10sent/best_generator.pt'
+    assert os.path.exists(g_model_path)
+    generator2_trained_saved = TransformerModel_bert(args, use_cuda=use_cuda)  
+    model_dict = generator2_trained_saved.state_dict()
+    model = torch.load(g_model_path)
+    pretrained_dict = model.state_dict()
+    print("pretrained_dict type: ", type(pretrained_dict))
+    print("model : ",model)
+    # 1. filter out unnecessary keys
+    pretrained_dict = {k: v for k,
+                       v in pretrained_dict.items() if k in model_dict}
+    # 2. overwrite entries in the existing state dict
+    model_dict.update(pretrained_dict)
+    # 3. load the new state dict
+    generator2_trained_saved.load_state_dict(model_dict)
+
     if use_cuda:
         if torch.cuda.device_count() > 1:
             generator2_trained_saved = torch.nn.DataParallel(generator2_trained_saved).cuda()
@@ -233,8 +304,8 @@ def main(args):
 
 
     # Load model checkpoint if specified
-    if args.model_checkpoint_path:
-        generator2_trained_saved.load_state_dict(torch.load(args.model_checkpoint_path))
+    # if args.model_checkpoint_path:
+    #     generator2_trained_saved.load_state_dict(torch.load(args.model_checkpoint_path))
 
     if use_cuda:
         generator2_trained_saved.cuda()
@@ -255,9 +326,15 @@ def main(args):
             # Process and format the translation output as needed
             f.write(str(translation) + '\n')
 
-if __name__ == "__main__":
-    args, unknown = parser.parse_known_args()
-    if unknown:
-        logging.warning("Unknown arguments: {}".format(unknown))
+# if __name__ == "__main__":
+#     args, unknown = parser.parse_known_args()
+#     if unknown:
+#         logging.warning("Unknown arguments: {}".format(unknown))
     
-    main(args)
+#     main(args)
+if __name__ == "__main__":
+    ret = parser.parse_known_args()
+    options = ret[0]
+    if ret[1]:
+        logging.warning(f"unknown arguments: {parser.parse_known_args()[1]}")
+    main(options)
