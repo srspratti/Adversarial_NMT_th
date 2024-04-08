@@ -142,16 +142,21 @@ def main(args):
     # To-Do : Need to change the max_length to 50 from 128
     source_lang = "en"
     target_lang = "fr"
-    prefix = "translate English to French: "
+    prefix = ""
 
-    def preprocess_t5(examples):
+    from transformers import AutoTokenizer
+
+    checkpoint = 'Helsinki-NLP/opus-mt-en-fr'
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+
+    def preprocess_MarianMT(examples):
         # Initialize the BERT tokenizer
         # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
-        from transformers import AutoTokenizer
+        
 
         # checkpoint = "google-t5/t5-small"
-        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
-        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        # checkpoint = 'Helsinki-NLP/opus-mt-en-fr'
+        # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
         en = list()
         fr = list()
@@ -164,7 +169,8 @@ def main(args):
 
         # Tokenize the data
         inputs = tokenizer(en, truncation=True, padding="max_length", max_length=128)
-        targets = tokenizer(fr, truncation=True, padding="max_length", max_length=128)
+        with tokenizer.as_target_tokenizer():
+            targets = tokenizer(fr, truncation=True, padding="max_length", max_length=128)
 
         # Convert tokens to their corresponding IDs
         input_ids = inputs.input_ids
@@ -184,13 +190,13 @@ def main(args):
     # print(train_dataset[0])
     # tokenized_datasets = dataset.map(tokenize_function, batched=True) # using the other berttokenizer map function
     tokenized_train_datasets = train_dataset.map(
-        preprocess_t5, batched=True
+        preprocess_MarianMT, batched=True
     )  # Using the bertFaSTtOKENIZER MAp function
     tokenized_valid_datasets = valid_dataset.map(
-        preprocess_t5, batched=True
+        preprocess_MarianMT, batched=True
     )  # Using the bertFaSTtOKENIZER MAp function
     tokenized_test_datasets = test_dataset.map(
-        preprocess_t5, batched=True
+        preprocess_MarianMT, batched=True
     )  # Using the bertFaSTtOKENIZER MAp function
 
     #### --------------------Loading G1 - Pre-Trained fairseq Generator --------------------#####
@@ -226,12 +232,12 @@ def main(args):
         Returns:
             list[str]: A list of decoded sentences.
         """
-        # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
-        from transformers import AutoTokenizer
+        # # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
+        # from transformers import AutoTokenizer
 
-        # checkpoint = "google-t5/t5-small"
-        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
-        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        # # checkpoint = "google-t5/t5-small"
+        # # checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
+        # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
         sentences = []
 
@@ -258,11 +264,11 @@ def main(args):
         """
         # Tokenize the sentences
         # tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
-        from transformers import AutoTokenizer
+        # from transformers import AutoTokenizer
 
-        # checkpoint = "google-t5/t5-small"
-        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
-        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        # # checkpoint = "google-t5/t5-small"
+        # # checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
+        # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         encoding = tokenizer(
             sentences,
             truncation=True,
@@ -278,7 +284,12 @@ def main(args):
 
     #### --------------------Loading G2 - Generator in Train() in GAN--------------------#####
 
-    generator2_train = TransformerModel_t5(args, use_cuda=use_cuda)
+    # generator2_train = TransformerModel_t5(args, use_cuda=use_cuda)
+    # tokenizer =  .from_pretrained(model_name)
+    # generator2_train = MarianMTModel.from_pretrained(model_name)
+    from transformers import AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, Seq2SeqTrainer
+    generator2_train = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
+
 
     #### --------------------Loading D - Discriminator in Train() in GAN --------------------#####
 
@@ -301,12 +312,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs"):
-    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs")
-    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_translations_1mil_20epochs/"
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_base_1mil_20epochs_debug"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_base_1mil_20epochs_debug")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_t5_base_1mil_20epochs_debug/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_1mil_20epochs"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_1mil_20epochs")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_1mil_20epochs/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -335,6 +343,7 @@ def main(args):
         return loss
 
     # Define knowledge distillation loss function
+    # from transformers import AutoTokenizer
     def encode_with_bert(sentences, device):
         """
         Encode sentences using BERT to obtain embeddings.
@@ -349,33 +358,36 @@ def main(args):
             torch.Tensor: The BERT embeddings for the sentences.
         """
         # bert_model = BertModel.from_pretrained('bert-base-multilingual-cased')
-        from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer, T5EncoderModel
+        # from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer, T5EncoderModel
 
         # bert_model = AutoModelForSeq2SeqLM.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
-        bert_model = T5EncoderModel.from_pretrained('sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million')
+        # bert_model = T5EncoderModel.from_pretrained('sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million')
+        bert_model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
 
         # tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
-        from transformers import AutoTokenizer
+        
 
         # checkpoint = "google-t5/t5-small"
-        checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
-        tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        # checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
+        # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         
         bert_model = bert_model.to(device)
         
         # tokenizer(en, truncation=True, padding="max_length", max_length=128)
         encoded_input = tokenizer(sentences, padding="max_length", truncation=True, return_tensors='pt', max_length=128)
-        print(" type of encoded_input ", type(encoded_input))
+        # print("shape of encoded_input ", encoded_input.shape)
+        # print(" type of encoded_input ", type(encoded_input))
         input_ids = encoded_input['input_ids'].to(device)
-        print("input_ids shape ", input_ids.shape)
+        # print("input_ids shape ", input_ids.shape)
         attention_mask = encoded_input['attention_mask'].to(device)
-        print("attention_mask shape ", attention_mask.shape)
+        # print("attention_mask shape ", attention_mask.shape)
 
         with torch.no_grad():
-            outputs = bert_model(input_ids, attention_mask=attention_mask)
-            print("type outputs ", type(outputs))
-        embeddings = outputs.last_hidden_state
+            outputs = bert_model(input_ids, attention_mask=attention_mask, output_hidden_states=True, return_dict=True)
+            # print("type outputs ", type(outputs))
+        embeddings = outputs.decoder_hidden_states
         print("type embeddings ", type(embeddings))
+        print("outputs.decoder_hidden_states shape", embeddings.shape)
         return embeddings
 
     
@@ -438,7 +450,7 @@ def main(args):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_1mil_20epochs.db"
-    db_name = "translations_test_t5_base_1mil_20epochs_debug.db"
+    db_name = "translations_test_t5_base_1mil_20epochs.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -494,22 +506,52 @@ def main(args):
             # Get the source and target sentences from the batch
             src_sentences = sample["input_ids"]
             tgt_sentences = sample["target_ids"]
+            attention_mask = sample["attention_mask"]
+
+            print("src_sentences ", src_sentences.shape)
 
             # ---------------------------------------------------------Train the generator 2 train()
             optimizer_g.zero_grad()
-            fake_tgt_sentences_probs, decoder_out = generator2_train(src_sentences, tgt_sentences)
-            print("type of fake_tgt_sentences_probs ", type(fake_tgt_sentences_probs))
-            print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
+            # fake_tgt_sentences_probs, decoder_out = generator2_train(src_sentences, tgt_sentences)
+            # print("type of fake_tgt_sentences_probs ", type(fake_tgt_sentences_probs))
+            # print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
+
+             # Access the original TransformerModel from the DataParallel wrapper
+            generator2_train_dp = generator2_train.module if isinstance(generator2_train, torch.nn.DataParallel) else generator2_train
+
+            generator2_train_out = generator2_train_dp(input_ids=src_sentences, attention_mask=attention_mask, decoder_input_ids=tgt_sentences , output_hidden_states=True, return_dict=True)
+            # print("generator2_train_out shape ", generator2_train_out.shape)
+            print("type of generator2_train_out", type(generator2_train_out))
+            print(" generator2_train_keys() ", generator2_train_out.keys())
+            # print("generator2_train_out to_tuple", generator2_train_out.to_tuple())
+            # dict_keys(['logits', 'past_key_values', 'decoder_hidden_states', 'encoder_last_hidden_state', 'encoder_hidden_states'])
+            print("generator2_train_out logits shape ", generator2_train_out.logits.shape)
+            print("generator2_train_out decoder_hidden_states shape ", generator2_train_out.decoder_hidden_states)
+            print("generator2_train_out encoder_last_hidden_state shape ", generator2_train_out.encoder_last_hidden_state.shape)
+            print("generator2_train_out encoder_hidden_states shape ", generator2_train_out.encoder_hidden_states)
+            print("generator2_train_out past_key_values shape ", generator2_train_out.past_key_values)
+
+
+            """
+            output_ids = generator2_train_dp.generate(input_ids=src_sentences, attention_mask=attention_mask, return_dict=True)
+            print("output_ids shape ", output_ids.shape)
+            print("type of output_ids", type(output_ids))
+            print("output_ids ", output_ids)
+            """
+            
+            # translated_texts = [tokenizer_g2.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in output_ids]
+
+            fake_tgt_sentences_probs = F.log_softmax(generator2_train_out.logits, dim=-1)
 
             fake_tgt_sentences_probs = fake_tgt_sentences_probs.view(
                 -1, fake_tgt_sentences_probs.size(-1)
             )  # Shape: [batch_size * seq_len, vocab_size]
             tgt_sentences_flat = tgt_sentences.view(-1)  # Shape: [batch_size * seq_len]
-            print(
-                "fake_tgt_sentences_probs shape after view",
-                fake_tgt_sentences_probs.shape,
-            )
-            print("tgt_sentences_flat shape ", tgt_sentences_flat.shape)
+            # print(
+            #     "fake_tgt_sentences_probs shape after view",
+            #     fake_tgt_sentences_probs.shape,
+            # )
+            # print("tgt_sentences_flat shape ", tgt_sentences_flat.shape)
 
             g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
 
@@ -535,7 +577,7 @@ def main(args):
             translated_sentences_from_G1 = original_generator_pt.translate(
                 src_sentences_for_G1
             )
-            print("translated_sentences_from_G1 ", translated_sentences_from_G1)
+            # print("translated_sentences_from_G1 ", translated_sentences_from_G1)
             # print("translated_sentences_from_G1 shape ", translated_sentences_from_G1.shape)
             print("sentences translated from G1 ")
             print("At epoch_i ", epoch_i)
@@ -545,30 +587,30 @@ def main(args):
                 translated_sentences_from_G1, max_length=128
             )
 
-            print(
-                " type of fake_tgt_sentences_G1_pretrain_probs ",
-                type(fake_tgt_sentences_G1_pretrain_probs),
-            )
-            print(
-                "fake_tgt_sentences_G1_pretrain_probs dict keys ",
-                fake_tgt_sentences_G1_pretrain_probs.keys(),
-            )
-            print(
-                "size of dict fake_tgt_sentences_G1_pretrain_probs ",
-                len(fake_tgt_sentences_G1_pretrain_probs),
-            )
-            print(
-                "dict info key input_ids fake_tgt_sentences_G1_pretrain_probs ",
-                fake_tgt_sentences_G1_pretrain_probs.get("input_ids"),
-            )
-            print(
-                "dict info key input_ids type of fake_tgt_sentences_G1_pretrain_probs ",
-                type(fake_tgt_sentences_G1_pretrain_probs.get("input_ids")),
-            )
-            print(
-                " shape of dict keys input_ids fake_tgt_sentences_G1_pretrain_probs ",
-                fake_tgt_sentences_G1_pretrain_probs.get("input_ids").shape,
-            )
+            # print(
+            #     " type of fake_tgt_sentences_G1_pretrain_probs ",
+            #     type(fake_tgt_sentences_G1_pretrain_probs),
+            # )
+            # print(
+            #     "fake_tgt_sentences_G1_pretrain_probs dict keys ",
+            #     fake_tgt_sentences_G1_pretrain_probs.keys(),
+            # )
+            # print(
+            #     "size of dict fake_tgt_sentences_G1_pretrain_probs ",
+            #     len(fake_tgt_sentences_G1_pretrain_probs),
+            # )
+            # print(
+            #     "dict info key input_ids fake_tgt_sentences_G1_pretrain_probs ",
+            #     fake_tgt_sentences_G1_pretrain_probs.get("input_ids"),
+            # )
+            # print(
+            #     "dict info key input_ids type of fake_tgt_sentences_G1_pretrain_probs ",
+            #     type(fake_tgt_sentences_G1_pretrain_probs.get("input_ids")),
+            # )
+            # print(
+            #     " shape of dict keys input_ids fake_tgt_sentences_G1_pretrain_probs ",
+            #     fake_tgt_sentences_G1_pretrain_probs.get("input_ids").shape,
+            # )
 
             # Now, encoded_translations["input_ids"] and encoded_translations["attention_mask"]
             # can be fed into the discriminator for further processing.
@@ -579,8 +621,8 @@ def main(args):
             print("At epoch_i ", epoch_i)
             print("At batch no# ", i)
             optimizer_d.zero_grad()
-            print("src_sentences shape ", src_sentences.shape)
-            print("tgt_sentences shape ", tgt_sentences.shape)
+            # print("src_sentences shape ", src_sentences.shape)
+            # print("tgt_sentences shape ", tgt_sentences.shape)
 
             # Ensure targets for real and fake are correctly shaped
             real_targets = torch.ones(src_sentences.size(0), 1).to(device)  # Real
@@ -598,27 +640,27 @@ def main(args):
             print("At batch no# ", i)
             print("training generator 2")
             # preparing the fake sentence probs output from the generator to feed to the discriminator
-            print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
+            # print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
             _, prediction = fake_tgt_sentences_probs.topk(1)
-            print("prediction shape ", prediction.shape)
+            # print("prediction shape ", prediction.shape)
             prediction = prediction.squeeze(1)
-            print("prediction shape after squeeze ", prediction.shape)
+            # print("prediction shape after squeeze ", prediction.shape)
             fake_tgt_sentences = torch.reshape(prediction, src_sentences.shape)
-            print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
-            print("src_sentences shape ", src_sentences.shape)
+            # print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
+            # print("src_sentences shape ", src_sentences.shape)
 
             # ----------------------------------------- Generator 1 Pre-Trained ---------------------------------------------
             # preparing the fake sentence probs output from the generator 1 Pre-Trained to feed to the discriminator
             # We don't need the below processing because we are using the sentences_to_ids() method to convert the translated sentences from G1 to token IDs and attention masks
-            
-            # print("fake_tgt_sentences_G1_pretrain_probs shape ", fake_tgt_sentences_G1_pretrain_probs.shape)
-            # _, prediction_pretrain = fake_tgt_sentences_G1_pretrain_probs.topk(1)
-            # print("prediction_pretrain shape ", prediction_pretrain.shape)
-            # prediction_pretrain = prediction_pretrain.squeeze(1)
-            # print("prediction_pretrain shape after squeeze ", prediction_pretrain.shape)
-            # fake_tgt_sentences_G1_pretrain = torch.reshape(prediction_pretrain, src_sentences.shape)
-            # print("fake_tgt_sentences_G1_pretrain shape ", fake_tgt_sentences_G1_pretrain.shape)
-            
+            """
+            print("fake_tgt_sentences_G1_pretrain_probs shape ", fake_tgt_sentences_G1_pretrain_probs.shape)
+            _, prediction_pretrain = fake_tgt_sentences_G1_pretrain_probs.topk(1)
+            print("prediction_pretrain shape ", prediction_pretrain.shape)
+            prediction_pretrain = prediction_pretrain.squeeze(1)
+            print("prediction_pretrain shape after squeeze ", prediction_pretrain.shape)
+            fake_tgt_sentences_G1_pretrain = torch.reshape(prediction_pretrain, src_sentences.shape)
+            print("fake_tgt_sentences_G1_pretrain shape ", fake_tgt_sentences_G1_pretrain.shape)
+            """
             print("src_sentences shape ", src_sentences.shape)
 
             ###################################### Modified Generator loss 
@@ -672,14 +714,14 @@ def main(args):
             print("At batch no# ", i)
             print("src_sentences shape English Source", src_sentences.shape)
             print("tgt_sentences shape French Human", tgt_sentences.shape)
-            print(
-                "fake_tgt_sentences from Generator 2 Train() shape ",
-                fake_tgt_sentences.shape,
-            )
-            print(
-                "fake_tgt_sentences_G1_pretrain shape from Generator 1 Pre-Trained ",
-                fake_tgt_sentences_G1_pretrain.shape,
-            )
+            # print(
+            #     "fake_tgt_sentences from Generator 2 Train() shape ",
+            #     fake_tgt_sentences.shape,
+            # )
+            # print(
+            #     "fake_tgt_sentences_G1_pretrain shape from Generator 1 Pre-Trained ",
+            #     fake_tgt_sentences_G1_pretrain.shape,
+            # )
 
             # converting these into sentences from ID's using the BERT tokenizer
             src_sentences_converted_logging_org = ids_to_sentences_bert(src_sentences)
@@ -693,11 +735,11 @@ def main(args):
             fake_tgt_sentences_G1_pretrain_org_translated_sent = translated_sentences_from_G1
             
 
-            print("type of src_sentences_converted_logging_org ", type(src_sentences_converted_logging_org))
-            print("type of tgt_sentences_converted_logging_org ", type(tgt_sentences_converted_logging_org))
-            print("type of fake_tgt_sentences_converted_logging_G2_train ", type(fake_tgt_sentences_converted_logging_G2_train))
-            print("type of fake_tgt_sentences_G1_pretrain_converted_logging ", type(fake_tgt_sentences_G1_pretrain_converted_logging))
-            print("type of fake_tgt_sentences_G1_pretrain_org_translated_sent ", type(translated_sentences_from_G1))
+            # print("type of src_sentences_converted_logging_org ", type(src_sentences_converted_logging_org))
+            # print("type of tgt_sentences_converted_logging_org ", type(tgt_sentences_converted_logging_org))
+            # print("type of fake_tgt_sentences_converted_logging_G2_train ", type(fake_tgt_sentences_converted_logging_G2_train))
+            # print("type of fake_tgt_sentences_G1_pretrain_converted_logging ", type(fake_tgt_sentences_G1_pretrain_converted_logging))
+            # print("type of fake_tgt_sentences_G1_pretrain_org_translated_sent ", type(translated_sentences_from_G1))
             
             
             import sqlite3
@@ -877,7 +919,7 @@ def main(args):
                 # translated_sentences_from_G1 = generator1_pretrained.translate(
                 #     src_sentences_for_G1
                 # )
-                print("translated_sentences_from_G1 ", translated_sentences_from_G1)
+                # print("translated_sentences_from_G1 ", translated_sentences_from_G1)
 
                 # Convert the translated sentences back into token IDs and attention masks
                 fake_tgt_sentences_G1_pretrain_probs = sentences_to_ids(
@@ -901,20 +943,20 @@ def main(args):
 
                 # print("fake_tgt_sentences_probs shape ", fake_tgt_sentences_probs.shape)
                 _, prediction = fake_tgt_sentences_probs.topk(1)
-                print("prediction shape ", prediction.shape)
+                # print("prediction shape ", prediction.shape)
                 prediction = prediction.squeeze(1)
-                print("prediction shape after squeeze ", prediction.shape)
-                # fake_tgt_sentences = torch.reshape(prediction, src_sentences.shape)
-                print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
-                print("src_sentences shape ", src_sentences.shape)
+                # print("prediction shape after squeeze ", prediction.shape)
+                fake_tgt_sentences = torch.reshape(prediction, src_sentences.shape)
+                # print("fake_tgt_sentences shape ", fake_tgt_sentences.shape)
+                # print("src_sentences shape ", src_sentences.shape)
 
                 #---------
                 # preparing the fake sentence probs output from the generator 1 Pre-Trained to feed to the discriminator
                 # We don't need the below processing because we are using the sentences_to_ids() method to convert the translated sentences from G1 to token IDs and attention masks
                 """
-                # print("fake_tgt_sentences_G1_pretrain_probs shape ", fake_tgt_sentences_G1_pretrain_probs.shape)
+                #print("fake_tgt_sentences_G1_pretrain_probs shape ", fake_tgt_sentences_G1_pretrain_probs.shape)
                 _, prediction_pretrain = fake_tgt_sentences_G1_pretrain_probs.topk(1)
-                print("prediction_pretrain shape ", prediction_pretrain.shape)
+                #print("prediction_pretrain shape ", prediction_pretrain.shape)
                 prediction_pretrain = prediction_pretrain.squeeze(1)
                 print("prediction_pretrain shape after squeeze ", prediction_pretrain.shape)
                 fake_tgt_sentences_G1_pretrain = torch.reshape(prediction_pretrain, src_sentences.shape)
@@ -934,7 +976,7 @@ def main(args):
                 # Including soft-Knowledge distillation loss
                 
                 g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)   
-                print("g1_translated_embeddings ", g1_translated_embeddings) 
+                # print("g1_translated_embeddings ", g1_translated_embeddings) 
                 soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
 
                 #-------------------------------
@@ -967,14 +1009,14 @@ def main(args):
                 print("At batch no# ", i)
                 print("src_sentences shape English Source", src_sentences.shape)
                 print("tgt_sentences shape French Human", tgt_sentences.shape)
-                print(
-                    "fake_tgt_sentences from Generator 2 Train() shape ",
-                    fake_tgt_sentences.shape,
-                )
-                print(
-                    "fake_tgt_sentences_G1_pretrain shape from Generator 1 Pre-Trained ",
-                    fake_tgt_sentences_G1_pretrain.shape,
-                )
+                # print(
+                #     "fake_tgt_sentences from Generator 2 Train() shape ",
+                #     fake_tgt_sentences.shape,
+                # )
+                # print(
+                #     "fake_tgt_sentences_G1_pretrain shape from Generator 1 Pre-Trained ",
+                #     fake_tgt_sentences_G1_pretrain.shape,
+                # )
 
                 # converting these into sentences from ID's using the BERT tokenizer
                 src_sentences_converted_logging_org = ids_to_sentences_bert(src_sentences)
@@ -988,12 +1030,12 @@ def main(args):
                 fake_tgt_sentences_G1_pretrain_org_translated_sent = translated_sentences_from_G1
                 
 
-                print("type of src_sentences_converted_logging_org ", type(src_sentences_converted_logging_org))
-                print("type of tgt_sentences_converted_logging_org ", type(tgt_sentences_converted_logging_org))
-                print("type of fake_tgt_sentences_converted_logging_G2_train ", type(fake_tgt_sentences_converted_logging_G2_train))
+                # print("type of src_sentences_converted_logging_org ", type(src_sentences_converted_logging_org))
+                # print("type of tgt_sentences_converted_logging_org ", type(tgt_sentences_converted_logging_org))
+                # print("type of fake_tgt_sentences_converted_logging_G2_train ", type(fake_tgt_sentences_converted_logging_G2_train))
                 print("fake_tgt_sentences_converted_logging_G2_train ", fake_tgt_sentences_converted_logging_G2_train)
-                print("type of fake_tgt_sentences_G1_pretrain_converted_logging ", type(fake_tgt_sentences_G1_pretrain_converted_logging))
-                print("type of fake_tgt_sentences_G1_pretrain_org_translated_sent ", type(translated_sentences_from_G1))
+                # print("type of fake_tgt_sentences_G1_pretrain_converted_logging ", type(fake_tgt_sentences_G1_pretrain_converted_logging))
+                # print("type of fake_tgt_sentences_G1_pretrain_org_translated_sent ", type(translated_sentences_from_G1))
                 
                 def init_db_valid():
                     try:
