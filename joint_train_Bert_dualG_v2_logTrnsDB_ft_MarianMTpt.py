@@ -85,10 +85,10 @@ def main(args):
     use_cuda = torch.cuda.is_available()
 
     # Set model parameters
-    args.encoder_embed_dim = 768  # 1000 # changed to 768 to match the BERT model
+    args.encoder_embed_dim = 512 #768  # 1000 # changed to 768 to match the BERT model
     args.encoder_layers = 2  # 4
     args.encoder_dropout_out = 0
-    args.decoder_embed_dim = 768  # 1000 #changed to 768 to match the BERT model
+    args.decoder_embed_dim = 512 #768  # 1000 #changed to 768 to match the BERT model
     args.encoder_heads = 2
     args.encoder_ffn_embed_dim = 1000
 
@@ -128,8 +128,8 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    # train_dataset = dataset["train"].select(range(100020))
-    train_dataset = dataset["train"].select(range(600))
+    train_dataset = dataset["train"].select(range(100020))
+    # train_dataset = dataset["train"].select(range(600))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -312,111 +312,111 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_1mil_20epochs"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_1mil_20epochs")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_1mil_20epochs/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs/"
 
     # Definining loss function methods for generator - Additional 
 
     # Define the policy gradient loss function
-    def policy_gradient_loss(discriminator, src_sentences, fake_tgt_sentences,rewards):
-        """
-        Calculate the policy gradient loss for the generator, aligning with the Discriminator_cnn_bert's requirements.
+    # def policy_gradient_loss(discriminator, src_sentences, fake_tgt_sentences,rewards):
+    #     """
+    #     Calculate the policy gradient loss for the generator, aligning with the Discriminator_cnn_bert's requirements.
         
-        Args:
-            discriminator: The Discriminator_cnn_bert model.
-            src_sentences: Tensor of real source sentences.
-            fake_tgt_sentences: Tensor of generated target sentences by the generator.
-            rewards: Tensor of rewards from the discriminator for each generated sentence pair.
+    #     Args:
+    #         discriminator: The Discriminator_cnn_bert model.
+    #         src_sentences: Tensor of real source sentences.
+    #         fake_tgt_sentences: Tensor of generated target sentences by the generator.
+    #         rewards: Tensor of rewards from the discriminator for each generated sentence pair.
         
-        Returns:
-            loss: The computed policy gradient loss.
-        """
-        # Here we call the discriminator with both the source and fake target sentences
-        # It's assumed that rewards are the discriminator's output for these pairs
-        discriminator_scores = discriminator(src_sentences, fake_tgt_sentences).squeeze()
+    #     Returns:
+    #         loss: The computed policy gradient loss.
+    #     """
+    #     # Here we call the discriminator with both the source and fake target sentences
+    #     # It's assumed that rewards are the discriminator's output for these pairs
+    #     discriminator_scores = discriminator(src_sentences, fake_tgt_sentences).squeeze()
         
-        # Assuming the discriminator_scores are probabilities (after sigmoid in the discriminator),
-        # directly use them for calculating the loss. If they're logits, apply sigmoid here.
-        loss = -torch.mean(rewards * torch.log(discriminator_scores + 1e-8))
+    #     # Assuming the discriminator_scores are probabilities (after sigmoid in the discriminator),
+    #     # directly use them for calculating the loss. If they're logits, apply sigmoid here.
+    #     loss = -torch.mean(rewards * torch.log(discriminator_scores + 1e-8))
         
-        return loss
+    #     return loss
 
     # Define knowledge distillation loss function
     # from transformers import AutoTokenizer
-    def encode_with_bert(sentences, device):
-        """
-        Encode sentences using BERT to obtain embeddings.
+    # def encode_with_bert(sentences, device):
+    #     """
+    #     Encode sentences using BERT to obtain embeddings.
 
-        Args:
-            sentences (list of str): The sentences to encode.
-            tokenizer: The BERT tokenizer.
-            bert_model: The BERT model.
-            device: The torch device.
+    #     Args:
+    #         sentences (list of str): The sentences to encode.
+    #         tokenizer: The BERT tokenizer.
+    #         bert_model: The BERT model.
+    #         device: The torch device.
 
-        Returns:
-            torch.Tensor: The BERT embeddings for the sentences.
-        """
-        # bert_model = BertModel.from_pretrained('bert-base-multilingual-cased')
-        # from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer, T5EncoderModel
+    #     Returns:
+    #         torch.Tensor: The BERT embeddings for the sentences.
+    #     """
+    #     # bert_model = BertModel.from_pretrained('bert-base-multilingual-cased')
+    #     # from transformers import AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer, T5EncoderModel
 
-        # bert_model = AutoModelForSeq2SeqLM.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
-        # bert_model = T5EncoderModel.from_pretrained('sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million')
-        bert_model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
+    #     # bert_model = AutoModelForSeq2SeqLM.from_pretrained('sriram-sanjeev9s/T5_wmt14_En_Fr_1million')
+    #     # bert_model = T5EncoderModel.from_pretrained('sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million')
+    #     bert_model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
 
-        # tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
-        #
-
-        # checkpoint = "google-t5/t5-small"
-        # checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
-        # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    #     # tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
         
-        bert_model = bert_model.to(device)
-        
-        # tokenizer(en, truncation=True, padding="max_length", max_length=128)
-        encoded_input = tokenizer(sentences, padding="max_length", truncation=True, return_tensors='pt', max_length=128)
-        # print("shape of encoded_input ", encoded_input.shape)
-        # print(" type of encoded_input ", type(encoded_input))
-        input_ids = encoded_input['input_ids'].to(device)
-        # print("input_ids shape ", input_ids.shape)
-        attention_mask = encoded_input['attention_mask'].to(device)
-        # print("attention_mask shape ", attention_mask.shape)
 
-        with torch.no_grad():
-            outputs = bert_model(input_ids, attention_mask=attention_mask, output_hidden_states=True, return_dict=True)
-            # print("type outputs ", type(outputs))
-        embeddings = outputs.decoder_hidden_states
-        print("type embeddings ", type(embeddings))
-        print("outputs.decoder_hidden_states shape", embeddings.shape)
-        return embeddings
+    #     # checkpoint = "google-t5/t5-small"
+    #     # checkpoint = 'sriram-sanjeev9s/T5_base_wmt14_En_Fr_1million'
+    #     # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+        
+    #     bert_model = bert_model.to(device)
+        
+    #     # tokenizer(en, truncation=True, padding="max_length", max_length=128)
+    #     encoded_input = tokenizer(sentences, padding="max_length", truncation=True, return_tensors='pt', max_length=128)
+    #     # print("shape of encoded_input ", encoded_input.shape)
+    #     # print(" type of encoded_input ", type(encoded_input))
+    #     input_ids = encoded_input['input_ids'].to(device)
+    #     # print("input_ids shape ", input_ids.shape)
+    #     attention_mask = encoded_input['attention_mask'].to(device)
+    #     # print("attention_mask shape ", attention_mask.shape)
+
+    #     with torch.no_grad():
+    #         outputs = bert_model(input_ids, attention_mask=attention_mask, output_hidden_states=True, return_dict=True)
+    #         # print("type outputs ", type(outputs))
+    #     embeddings = outputs.decoder_hidden_states
+    #     print("type embeddings ", type(embeddings))
+    #     print("outputs.decoder_hidden_states shape", embeddings.shape)
+    #     return embeddings
 
     
 
-    def soft_target_distillation_loss(g2_output, g1_translated_embeddings):
-        """
-        Compute a soft target distillation loss between G2's output embeddings and G1's translated embeddings.
+    # def soft_target_distillation_loss(g2_output, g1_translated_embeddings):
+    #     """
+    #     Compute a soft target distillation loss between G2's output embeddings and G1's translated embeddings.
 
-        Args:
-            g2_output (torch.Tensor): The output from G2.
-            g1_translated_embeddings (torch.Tensor): The BERT embeddings of G1's translations.
+    #     Args:
+    #         g2_output (torch.Tensor): The output from G2.
+    #         g1_translated_embeddings (torch.Tensor): The BERT embeddings of G1's translations.
 
-        Returns:
-            torch.Tensor: The computed loss.
-        """
-        # resize_layer = nn.Linear(512, 768)  # Resize from 512 to 768 dimensions
-        # # Move resize layer to the correct device
-        # resize_layer = resize_layer.to(device)
+    #     Returns:
+    #         torch.Tensor: The computed loss.
+    #     """
+    #     # resize_layer = nn.Linear(512, 768)  # Resize from 512 to 768 dimensions
+    #     # # Move resize layer to the correct device
+    #     # resize_layer = resize_layer.to(device)
 
-        print("g2_output shape ", g2_output.shape)
-        print("g1_translated_embeddings shape ", g1_translated_embeddings.shape)
+    #     print("g2_output shape ", g2_output.shape)
+    #     print("g1_translated_embeddings shape ", g1_translated_embeddings.shape)
 
-        # Resize G1's embeddings to match G2's output size
-        # resized_g1_embeddings = resize_layer(g1_translated_embeddings)
-        # print("g2_output shape ", g2_output.shape)
-        # print("resized_g1_embeddings shape ", resized_g1_embeddings.shape)
+    #     # Resize G1's embeddings to match G2's output size
+    #     # resized_g1_embeddings = resize_layer(g1_translated_embeddings)
+    #     # print("g2_output shape ", g2_output.shape)
+    #     # print("resized_g1_embeddings shape ", resized_g1_embeddings.shape)
 
-        loss = F.mse_loss(g2_output, g1_translated_embeddings)
-        return loss
+    #     loss = F.mse_loss(g2_output, g1_translated_embeddings)
+    #     return loss
 
 
     ## Define loss functions for the generator and the Discriminator
@@ -427,10 +427,15 @@ def main(args):
     #### ----------------------------------JOINT TRAINING --------------------#####
 
     # Define the optimizers
-    optimizer_g = torch.optim.Adam(generator2_train.parameters(), lr=0.001)
+    # optimizer_g = torch.optim.Adam(generator2_train.parameters(), lr=0.001)
+    optimizer_g = torch.optim.Adam(
+    filter(lambda p: p.requires_grad, generator2_train.parameters()), 
+    lr=0.001
+    )
+
     optimizer_d = torch.optim.Adam(discriminator_cnn.parameters(), lr=0.001)
 
-    best_loss = math.inf
+    
     # Start the training loop
     import os
 
@@ -450,10 +455,16 @@ def main(args):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_1mil_20epochs.db"
-    db_name = "translations_test_t5_base_1mil_20epochs.db"
+    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
+    # Early stopping parameters
+    # best_val_loss = float('inf')
+    best_loss = math.inf
+    patience_counter = 0
+    patience_threshold = 3  # Example value, adjust as needed
+
     for epoch_i in tqdm(range(1, args.epochs + 1)):
         logging.info("At {0}-th epoch.".format(epoch_i))
 
@@ -491,6 +502,49 @@ def main(args):
 
         total_train_g_loss = 0
         total_train_d_loss = 0
+
+
+        # Freeze embedding layers 
+        #Access the underlying MarianMT model from DataParallel wrapper if necessary
+        generator2_train = generator2_train.module if hasattr(generator2_train, 'module') else generator2_train
+
+        """
+        # Freeze embedding layers
+        for param in generator2_train.model.shared.parameters():
+            param.requires_grad = False
+
+        for param in generator2_train.model.encoder.embed_tokens.parameters():
+            param.requires_grad = False
+
+        for param in generator2_train.model.encoder.embed_positions.parameters():
+            param.requires_grad = False
+
+        for param in generator2_train.model.decoder.embed_tokens.parameters():
+            param.requires_grad = False
+
+        for param in generator2_train.model.decoder.embed_positions.parameters():
+            param.requires_grad = False
+
+        # Freeze early encoder layers (for example, the first 2 layers)
+        for layer in generator2_train.model.encoder.layers[:2]:
+            for param in layer.parameters():
+                param.requires_grad = False
+        
+        # Similarly, you might consider freezing early decoder layers if needed
+        # for layer in generator2_train.model.decoder.layers[:2]:
+        #     for param in layer.parameters():
+        #         param.requires_grad = False
+                
+        """
+        print("generator2_train ", generator2_train)
+        # writer = SummaryWriter()
+        # generator2_train.to_text_file("generator2_train.txt")
+        for param in generator2_train.model.parameters():
+            param.requires_grad = False
+
+        # Unfreeze the lm_head
+        for param in generator2_train.lm_head.parameters():
+            param.requires_grad = True
 
         ######-------------------------------------TRAINING --------------------------------------------#####
         for i, sample in enumerate(train_dataloader):
@@ -668,22 +722,22 @@ def main(args):
 
             # Optional: Incorporate discriminator feedback directly into G2's loss
             # Assume discriminator provides a reward signal for PG training
-            rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach()).detach()
-            pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
+            # rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach()).detach()
+            # pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
 
 
             # Including soft-Knowledge distillation loss
             
-            g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)   
-            # print("g1_translated_embeddings ", g1_translated_embeddings) 
-            soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
+            # g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)   
+            # # print("g1_translated_embeddings ", g1_translated_embeddings) 
+            # soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
 
 
             # #################################################   Total G2 loss
-            total_g_loss = g_loss + pg_loss  + soft_target_loss # You can adjust the weighting of these components as needed
+            # total_g_loss = g_loss + pg_loss  + soft_target_loss # You can adjust the weighting of these components as needed
+            total_g_loss = g_loss
 
             total_g_loss.backward()
-            # total_g_loss.backward()
             optimizer_g.step()
             total_train_g_loss += total_g_loss.item() # 
 
@@ -833,18 +887,30 @@ def main(args):
         print(f"Training Generator Loss: {total_train_g_loss / len(train_dataloader)}")
         print(f"Training Discriminator Loss: {total_train_d_loss / len(train_dataloader)}")
 
+        # torch.save(
+        #     {
+        #         "epoch": epoch_i,
+        #         "generator_state_dict": generator2_train.state_dict(),
+        #         "discriminator_state_dict": discriminator_cnn.state_dict(),
+        #         "optimizer_g_state_dict": optimizer_g.state_dict(),
+        #         "optimizer_d_state_dict": optimizer_d.state_dict(),
+        #         "g_loss": total_train_g_loss/ len(train_dataloader),
+        #         "d_loss": total_train_d_loss / len(train_dataloader),
+        #     },
+        #     checkpoints_path + f"train_checkpoint_{epoch_i}.pt",
+        # )
+
         torch.save(
-            {
-                "epoch": epoch_i,
-                "generator_state_dict": generator2_train.state_dict(),
-                "discriminator_state_dict": discriminator_cnn.state_dict(),
-                "optimizer_g_state_dict": optimizer_g.state_dict(),
-                "optimizer_d_state_dict": optimizer_d.state_dict(),
-                "g_loss": total_train_g_loss/ len(train_dataloader),
-                "d_loss": total_train_d_loss / len(train_dataloader),
-            },
-            checkpoints_path + f"train_checkpoint_{epoch_i}.pt",
-        )
+                generator2_train,
+                open(checkpoints_path + f"train_checkpoint__generator{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
+        torch.save(
+                discriminator_cnn,
+                open(checkpoints_path + f"train_checkpoint__discriminator{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
+        
 
         #### -----------------------------------------VALIDATION --------------------------------------------#####
         print(
@@ -884,11 +950,28 @@ def main(args):
                 # Get the source and target sentences from the batch
                 src_sentences = sample["input_ids"]
                 tgt_sentences = sample["target_ids"]
+                attention_mask = sample["attention_mask"]
 
                 # Generate sentences
                 # fake_tgt_sentences_probs = generator2_train(src_sentences, tgt_sentences)
-                fake_tgt_sentences_probs, decoder_out = generator2_train(src_sentences, tgt_sentences)
+                # fake_tgt_sentences_probs, decoder_out = generator2_train(src_sentences, tgt_sentences)
 
+                 # Access the original TransformerModel from the DataParallel wrapper
+                generator2_train_dp = generator2_train.module if isinstance(generator2_train, torch.nn.DataParallel) else generator2_train
+
+                generator2_train_out = generator2_train_dp(input_ids=src_sentences, attention_mask=attention_mask, decoder_input_ids=tgt_sentences , output_hidden_states=True, return_dict=True)
+                # print("generator2_train_out shape ", generator2_train_out.shape)
+                print("type of generator2_train_out", type(generator2_train_out))
+                print(" generator2_train_keys() ", generator2_train_out.keys())
+                # print("generator2_train_out to_tuple", generator2_train_out.to_tuple())
+                # dict_keys(['logits', 'past_key_values', 'decoder_hidden_states', 'encoder_last_hidden_state', 'encoder_hidden_states'])
+                print("generator2_train_out logits shape ", generator2_train_out.logits.shape)
+                print("generator2_train_out decoder_hidden_states shape ", generator2_train_out.decoder_hidden_states)
+                print("generator2_train_out encoder_last_hidden_state shape ", generator2_train_out.encoder_last_hidden_state.shape)
+                print("generator2_train_out encoder_hidden_states shape ", generator2_train_out.encoder_hidden_states)
+                print("generator2_train_out past_key_values shape ", generator2_train_out.past_key_values)
+
+                fake_tgt_sentences_probs = F.log_softmax(generator2_train_out.logits, dim=-1)
                 fake_tgt_sentences_probs = fake_tgt_sentences_probs.view(
                     -1, fake_tgt_sentences_probs.size(-1)
                 )  # Shape: [batch_size * seq_len, vocab_size]
@@ -969,18 +1052,19 @@ def main(args):
 
                 # Optional: Incorporate discriminator feedback directly into G2's loss
                 # Assume discriminator provides a reward signal for PG training
-                rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach()).detach()
-                pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
+                # rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach()).detach()
+                # pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
 
 
                 # Including soft-Knowledge distillation loss
                 
-                g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)   
-                # print("g1_translated_embeddings ", g1_translated_embeddings) 
-                soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
+                # g1_translated_embeddings = encode_with_bert(translated_sentences_from_G1, device)   
+                # # print("g1_translated_embeddings ", g1_translated_embeddings) 
+                # soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
 
                 #-------------------------------
-                total_g_loss = g_loss + pg_loss  + soft_target_loss
+                # total_g_loss = g_loss + pg_loss  + soft_target_loss
+                total_g_loss = g_loss
                 
                 total_valid_g_loss += total_g_loss.item()
 
@@ -1117,18 +1201,30 @@ def main(args):
         )
 
         # After each epoch of validation, save the model and optimizer states
+        # torch.save(
+        #     {
+        #         "epoch": epoch_i,
+        #         "generator_state_dict": generator2_train.state_dict(),
+        #         "discriminator_state_dict": discriminator_cnn.state_dict(),
+        #         "optimizer_g_state_dict": optimizer_g.state_dict(),
+        #         "optimizer_d_state_dict": optimizer_d.state_dict(),
+        #         "g_loss": total_valid_g_loss / len(valid_dataloader),
+        #         "d_loss": total_valid_d_loss / len(valid_dataloader),
+        #     },
+        #     checkpoints_path + f"validation_checkpoint_{epoch_i}.pt",
+        # )
+
         torch.save(
-            {
-                "epoch": epoch_i,
-                "generator_state_dict": generator2_train.state_dict(),
-                "discriminator_state_dict": discriminator_cnn.state_dict(),
-                "optimizer_g_state_dict": optimizer_g.state_dict(),
-                "optimizer_d_state_dict": optimizer_d.state_dict(),
-                "g_loss": total_valid_g_loss / len(valid_dataloader),
-                "d_loss": total_valid_d_loss / len(valid_dataloader),
-            },
-            checkpoints_path + f"validation_checkpoint_{epoch_i}.pt",
-        )
+                generator2_train,
+                open(checkpoints_path + f"valid_checkpoint__generator{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
+        torch.save(
+                discriminator_cnn,
+                open(checkpoints_path + f"valid_checkpoint__discriminator{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
+
 
         # Save the model and optimizer states in pickle files only when the validation loss is less than the best loss
 
@@ -1140,16 +1236,23 @@ def main(args):
         # If the validation loss improved, save the entire model
         if avg_val_loss < best_loss:
             best_loss = avg_val_loss
+            patience_counter = 0
             torch.save(
                 generator2_train,
-                open(checkpoints_path + f"best_generator.pt", "wb"),
+                open(checkpoints_path + f"best_generator_at_{epoch_i}.pt", "wb"),
                 pickle_module=dill,
             )
             torch.save(
                 discriminator_cnn,
-                open(checkpoints_path + f"best_discriminator.pt", "wb"),
+                open(checkpoints_path + f"best_discriminator_at_{epoch_i}.pt", "wb"),
                 pickle_module=dill,
             )
+        else:
+            patience_counter += 1
+        
+        if patience_counter >= patience_threshold:
+            print(f"Early stopping at epoch {epoch_i}")
+            break
 
 
 if __name__ == "__main__":
