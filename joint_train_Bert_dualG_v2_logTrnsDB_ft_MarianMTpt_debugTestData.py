@@ -146,8 +146,9 @@ def main(args):
 
     from transformers import AutoTokenizer
 
-    checkpoint = 'Helsinki-NLP/opus-mt-en-fr'
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    # checkpoint = 'Helsinki-NLP/opus-mt-en-fr'
+    # tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-fr")
 
     def preprocess_MarianMT(examples):
         # Initialize the BERT tokenizer
@@ -288,7 +289,11 @@ def main(args):
     # tokenizer =  .from_pretrained(model_name)
     # generator2_train = MarianMTModel.from_pretrained(model_name)
     from transformers import AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, Seq2SeqTrainer
-    generator2_train = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
+    # generator2_train = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
+
+    checkpoint = '/workspace/2024/Adversarial_NMT_th/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs/best_generator_at_2.pt'
+    # Load the entire model directly
+    generator2_train = torch.load(open(checkpoint, "rb"), pickle_module=dill)
 
 
     #### --------------------Loading D - Discriminator in Train() in GAN --------------------#####
@@ -312,9 +317,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_debugTestData"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_debugTestData")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_debugTestData/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -455,7 +460,7 @@ def main(args):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_1mil_20epochs.db"
-    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained.db"
+    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_debugTestData.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -473,7 +478,7 @@ def main(args):
         batch_size = args.joint_batch_size
 
         # Converting the processed data to PyTorch Tensors
-        tokenized_train_datasets.set_format(
+        tokenized_test_datasets.set_format(
             type="torch",
             columns=[
                 "input_ids",
@@ -484,7 +489,8 @@ def main(args):
         )
 
         # Create a DataLoader for the train data
-        train_dataloader = DataLoader(tokenized_train_datasets, batch_size=batch_size)
+        # train_dataloader = DataLoader(tokenized_train_datasets, batch_size=batch_size)
+        test_dataloader = DataLoader(tokenized_test_datasets, batch_size=batch_size)
 
         # from transformers import DataCollatorForSeq2Seq, AutoTokenizer
         # checkpoint = "sriram-sanjeev9s/T5_wmt14_En_Fr_1million"
@@ -547,7 +553,7 @@ def main(args):
             param.requires_grad = True
 
         ######-------------------------------------TRAINING --------------------------------------------#####
-        for i, sample in enumerate(train_dataloader):
+        for i, sample in enumerate(test_dataloader):
 
             print("At epoch_i ", epoch_i)
             print("At batch no# ", i)
@@ -884,8 +890,8 @@ def main(args):
             total_train_d_loss += d_loss.item()
 
         # Print Training losses
-        print(f"Training Generator Loss: {total_train_g_loss / len(train_dataloader)}")
-        print(f"Training Discriminator Loss: {total_train_d_loss / len(train_dataloader)}")
+        print(f"Training Generator Loss: {total_train_g_loss / len(test_dataloader)}")
+        print(f"Training Discriminator Loss: {total_train_d_loss / len(test_dataloader)}")
 
         # torch.save(
         #     {
@@ -910,8 +916,6 @@ def main(args):
                 open(checkpoints_path + f"train_checkpoint__discriminator{epoch_i}.pt", "wb"),
                 pickle_module=dill,
             )
-        generator2_train.save_pretrained(checkpoints_path + f"train_checkpoint_generator_save_pretrained{epoch_i}")
-        
         
 
         #### -----------------------------------------VALIDATION --------------------------------------------#####
