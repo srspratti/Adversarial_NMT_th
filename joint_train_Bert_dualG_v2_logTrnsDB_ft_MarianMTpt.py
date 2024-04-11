@@ -314,13 +314,13 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained"):
-    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained")
-    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer/"
 
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
+    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2"):
+    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
+    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -460,8 +460,8 @@ def main(args):
 
     # Example usage
     getpwd = os.getcwd()
-    db_name = "translations_600sents_debug_spchars_v2.db"
-    # db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained.db"
+    # db_name = "translations_600sents_debug_spchars_v2.db"
+    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -469,7 +469,7 @@ def main(args):
     # best_val_loss = float('inf')
     best_loss = math.inf
     patience_counter = 0
-    patience_threshold = 3  # Example value, adjust as needed
+    patience_threshold = 2  # Example value, adjust as needed
 
     for epoch_i in tqdm(range(1, args.epochs + 1)):
         logging.info("At {0}-th epoch.".format(epoch_i))
