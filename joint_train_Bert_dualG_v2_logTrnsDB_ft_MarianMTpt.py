@@ -128,7 +128,7 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    # train_dataset = dataset["train"].select(range(100020))
+    # train_dataset = dataset["train"].select(range(1000020))
     train_dataset = dataset["train"].select(range(200))
 
     # Keep the full valid and test datasets
@@ -314,9 +314,13 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer/"
+       if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_200sents_2epochs_save_pretrained_with_tokenizer_dict_format"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_200sents_2epochs_save_pretrained_with_tokenizer_dict_format")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_200sents_2epochs_save_pretrained_with_tokenizer_dict_format/"
+
+    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer"):
+    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer")
+    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
@@ -461,7 +465,7 @@ def main(args):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_600sents_debug_spchars_v2.db"
-    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer.db"
+    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -909,18 +913,18 @@ def main(args):
         print(f"Training Generator Loss: {total_train_g_loss / len(train_dataloader)}")
         print(f"Training Discriminator Loss: {total_train_d_loss / len(train_dataloader)}")
 
-        # torch.save(
-        #     {
-        #         "epoch": epoch_i,
-        #         "generator_state_dict": generator2_train.state_dict(),
-        #         "discriminator_state_dict": discriminator_cnn.state_dict(),
-        #         "optimizer_g_state_dict": optimizer_g.state_dict(),
-        #         "optimizer_d_state_dict": optimizer_d.state_dict(),
-        #         "g_loss": total_train_g_loss/ len(train_dataloader),
-        #         "d_loss": total_train_d_loss / len(train_dataloader),
-        #     },
-        #     checkpoints_path + f"train_checkpoint_{epoch_i}.pt",
-        # )
+        torch.save(
+            {
+                "epoch": epoch_i,
+                "generator_state_dict": generator2_train.state_dict(),
+                "discriminator_state_dict": discriminator_cnn.state_dict(),
+                "optimizer_g_state_dict": optimizer_g.state_dict(),
+                "optimizer_d_state_dict": optimizer_d.state_dict(),
+                "g_loss": total_train_g_loss/ len(train_dataloader),
+                "d_loss": total_train_d_loss / len(train_dataloader),
+            },
+            checkpoints_path + f"train_checkpoint_dict_format_at_{epoch_i}.pt",
+        )
 
         # torch.save(
         #         generator2_train,
@@ -1226,29 +1230,31 @@ def main(args):
         )
 
         # After each epoch of validation, save the model and optimizer states
-        # torch.save(
-        #     {
-        #         "epoch": epoch_i,
-        #         "generator_state_dict": generator2_train.state_dict(),
-        #         "discriminator_state_dict": discriminator_cnn.state_dict(),
-        #         "optimizer_g_state_dict": optimizer_g.state_dict(),
-        #         "optimizer_d_state_dict": optimizer_d.state_dict(),
-        #         "g_loss": total_valid_g_loss / len(valid_dataloader),
-        #         "d_loss": total_valid_d_loss / len(valid_dataloader),
-        #     },
-        #     checkpoints_path + f"validation_checkpoint_{epoch_i}.pt",
-        # )
+        torch.save(
+            {
+                "epoch": epoch_i,
+                "generator_state_dict": generator2_train.state_dict(),
+                "discriminator_state_dict": discriminator_cnn.state_dict(),
+                "optimizer_g_state_dict": optimizer_g.state_dict(),
+                "optimizer_d_state_dict": optimizer_d.state_dict(),
+                "g_loss": total_valid_g_loss / len(valid_dataloader),
+                "d_loss": total_valid_d_loss / len(valid_dataloader),
+            },
+            checkpoints_path + f"validation_checkpoint_dict_format_at_{epoch_i}.pt",
+        )
 
         # torch.save(
         #         generator2_train,
         #         open(checkpoints_path + f"valid_checkpoint__generator{epoch_i}.pt", "wb"),
         #         pickle_module=dill,
+        # #     )
+        # torch.save(
+        #         discriminator_cnn,
+        #         open(checkpoints_path + f"valid_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
+        #         pickle_module=dill,
         #     )
-        torch.save(
-                discriminator_cnn,
-                open(checkpoints_path + f"valid_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
-                pickle_module=dill,
-            )
+        torch.save(discriminator_cnn, checkpoints_path + f"valid_checkpoint_discriminator_at_{epoch_i}.pt", pickle_module=dill)
+
         generator2_train.save_pretrained(checkpoints_path + f"valid_checkpoint_generator_save_pretrained_at_{epoch_i}")
         tokenizer.save_pretrained(checkpoints_path + f"valid_checkpoint_tokenizer_save_pretrained_at_{epoch_i}")
         
@@ -1275,12 +1281,25 @@ def main(args):
             tokenizer.save_pretrained(checkpoints_path + f"best_generator_tokenizer_save_pretrained_at_{epoch_i}")
         
 
-            #Saving Discriminator using torch-save()
+            # #Saving Discriminator using torch-save()
+            # torch.save(
+            #     discriminator_cnn,
+            #     open(checkpoints_path + f"best_discriminator_at_{epoch_i}.pt", "wb"),
+            #     pickle_module=dill,
+            # )
             torch.save(
-                discriminator_cnn,
-                open(checkpoints_path + f"best_discriminator_at_{epoch_i}.pt", "wb"),
-                pickle_module=dill,
+            {
+                "epoch": epoch_i,
+                "generator_state_dict": generator2_train.state_dict(),
+                "discriminator_state_dict": discriminator_cnn.state_dict(),
+                "optimizer_g_state_dict": optimizer_g.state_dict(),
+                "optimizer_d_state_dict": optimizer_d.state_dict(),
+                "g_loss": total_valid_g_loss / len(valid_dataloader),
+                "d_loss": total_valid_d_loss / len(valid_dataloader),
+            },
+            checkpoints_path + f"best_checkpoint_dict_format_{epoch_i}.pt",
             )
+            torch.save(discriminator_cnn, checkpoints_path + f"best_discriminator_at_{epoch_i}.pt", pickle_module=dill)
         else:
             patience_counter += 1
         
