@@ -57,7 +57,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 #### Logging ####
 
@@ -129,7 +129,8 @@ def main(args):
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
     # train_dataset = dataset["train"].select(range(1000020))
-    train_dataset = dataset["train"].select(range(200))
+    train_dataset = dataset["train"].select(range(1000080))
+    # train_dataset = dataset["train"].select(range(240))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -314,9 +315,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-       if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_200sents_2epochs_save_pretrained_with_tokenizer_dict_format"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_200sents_2epochs_save_pretrained_with_tokenizer_dict_format")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_200sents_2epochs_save_pretrained_with_tokenizer_dict_format/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer")
@@ -903,7 +904,8 @@ def main(args):
 
             # d_loss = (real_loss + fake_loss) / 2
             # combining the real and fake loss from the two generators
-            d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
+            # d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
+            d_loss = 0.10*real_loss + 0.10*fake_loss + 0.80*fake_loss_pretrain
 
             d_loss.backward()
             optimizer_d.step()
@@ -931,11 +933,9 @@ def main(args):
         #         open(checkpoints_path + f"train_checkpoint__generator{epoch_i}.pt", "wb"),
         #         pickle_module=dill,
         #     )
-        torch.save(
-                discriminator_cnn,
-                open(checkpoints_path + f"train_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
-                pickle_module=dill,
-            )
+        torch.save(discriminator_cnn, checkpoints_path + f"train_checkpoint_discriminator_at_{epoch_i}.pt", pickle_module=dill)
+        # torch.save(discriminator_cnn, checkpoints_path + f"best_discriminator_at_{epoch_i}.pt", pickle_module=dill)
+
         generator2_train.save_pretrained(checkpoints_path + f"train_checkpoint_generator_save_pretrained_at_{epoch_i}")
         tokenizer.save_pretrained(checkpoints_path + f"train_checkpoint_tokenizer_save_pretrained_at_{epoch_i}")
         
