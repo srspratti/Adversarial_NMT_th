@@ -12,6 +12,14 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
+from dask_cuda import LocalCUDACluster
+from dask.distributed import Client
+import dask_cudf
+from cuml.dask.common import utils as dask_utils
+from cuml.dask.svm import SVC as daskSVC
+from cuml.dask.feature_extraction.text import TfidfVectorizer as daskTfidfVectorizer
+
+
 from joblib import dump,load
 
 def read_data_from_db(db_name):
@@ -60,25 +68,42 @@ def main():
     start_time = time.time()
     print("Hello, world! This is the train_svm.py script.")
     # train_db_path = os.getcwd() + "/balanced_data_train.db"
-    # train_db_path = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_sm_100k.db'
-    train_db_path = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_1millimit_v2.db'
+    train_db_path = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_sm_100k.db'
     df_from_db = read_data_from_db(train_db_path)
     print("df_from_db head: ", df_from_db.head())
 
+    # Start a local CUDA cluster
+    cluster = LocalCUDACluster()
+    client = Client(cluster)
+
     # Combine source and translated sentences into a single feature for simplicity
-    df_from_db['combined_text'] = df_from_db['src_sentence'] + " " + df_from_db['translation']
+
+    # Load data into Dask DataFrame
+    ddf = dask_cudf.from_cudf(df_from_db, npartitions=2 * cluster.number_of_workers)  # Adjust partitions according to your setup
+
+    # Combine source and translated sentences into a single feature
+    ddf['combined_text'] = ddf['src_sentence'] + " " + ddf['translation']
 
     # Split the dataset
-    X_train, X_test, y_train, y_test = train_test_split(df_from_db['combined_text'], df_from_db['ht_or_mt_target'], test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = dask_utils.train_test_split(ddf['combined_text'], ddf['ht_or_mt_target'], test_size=0.2, random_state=42)
 
-    # Create a pipeline that first vectorizes the text and then applies SVM
-    pipeline = make_pipeline(TfidfVectorizer(), SVC(kernel='linear'))
+    # Create a pipeline with TfidfVectorizer and SVC
+    pipeline = make_pipeline(daskTfidfVectorizer(), daskSVC(kernel='linear'))
+
+
+    # df_from_db['combined_text'] = df_from_db['src_sentence'] + " " + df_from_db['translation']
+
+    # # Split the dataset
+    # X_train, X_test, y_train, y_test = train_test_split(df_from_db['combined_text'], df_from_db['ht_or_mt_target'], test_size=0.2, random_state=42)
+
+    # # Create a pipeline that first vectorizes the text and then applies SVM
+    # pipeline = make_pipeline(TfidfVectorizer(), SVC(kernel='linear'))
 
     # Train the SVM model
     pipeline.fit(X_train, y_train)
 
     # dumping the model
-    model_path = os.getcwd() + "/svm_model_sm_1millimit_v2.joblib"
+    model_path = os.getcwd() + "/svm_model_sm_100k_mgpu.joblib"
     dump(pipeline, model_path)
     print(f"Model saved at {model_path}")
 
