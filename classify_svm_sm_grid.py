@@ -1,5 +1,6 @@
 import pandas as pd
 from joblib import load
+import os
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
 def load_test_data(csv_file_path):
@@ -27,7 +28,8 @@ def preprocess_test_data(test_df):
     """
     # Assuming the model was trained on combined source and translation text
     # test_df['combined_text'] = test_df['src_sentence'] + " " + test_df['translation']
-    test_df['combined_text'] = test_df['src'] + " " + test_df['target']
+    # test_df['combined_text'] = test_df['src'] + " " + test_df['target']
+    test_df['combined_text'] = test_df['src'] + " " + test_df['ht_mt_target']
     return test_df['combined_text']
 
 def predict_with_saved_model(model_path, test_data):
@@ -48,10 +50,12 @@ def predict_with_saved_model(model_path, test_data):
 def main():
 
     getpwd = os.getcwd()
-    testdata_folder = "/test_data/wmt14_en_fr_test/standard_classifiers"
-    model_path = getpwd + "/svm_model_sm_grid.joblib"  # Update with the actual path to your saved model
-    test_data = getpwd + testdata_folder + "wmt14_en_fr_test_std_classifiers.csv"  # Update with the actual path to your test data CSV file
-    
+    # testdata_folder = "/test_data/wmt14_en_fr_test/standard_classifiers"
+    # model_path = getpwd + "/svm_model_sm_grid.joblib"  # Update with the actual path to your saved model
+    model_path = '/workspace/2024/git_repo_vastai/svm_model_sm_100k.joblib'
+    # test_data = getpwd + testdata_folder + "wmt14_en_fr_test_std_classifiers.csv"  # Update with the actual path to your test data CSV file
+    test_data = '/workspace/2024/Adversarial_NMT_th/test_data/wmt14_en_fr_test/standard_classifiers/wmt14_en_fr_test_std_classifiers.csv'
+
     # Load and preprocess the test data
     test_df = load_test_data(test_data)
     preprocessed_test_data = preprocess_test_data(test_df)

@@ -55,7 +55,10 @@ def read_data_from_db(db_name):
 def main():
 
     print("Hello, world! This is the train_svm.py script.")
-    train_db_path = os.getcwd() + "/balanced_data_train.db"
+    # train_db_path = os.getcwd() + "/balanced_data_train.db"
+    # /workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db
+    # train_db_path = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db'
+    train_db_path = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_1millimit.db'
     df_from_db = read_data_from_db(train_db_path)
     print("df_from_db head: ", df_from_db.head())
 

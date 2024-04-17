@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 import sqlite3
 
 import pandas as pd
@@ -52,19 +52,21 @@ def fetch_balanced_data_train(db_name, epochs):
     select count(*) from translations_train;
     """
     c.execute(query)
-    row_count = c.fetchall()
-    # row_count = 9
+    # row_count = c.fetchall()
+    row_count = 1000000
+    # row_count = 100000
     print("row count: ", row_count)
-    print("type of row_count: ", type(row_count[0][0]))
-    row_count = row_count[0][0]
+    # print("type of row_count: ", type(row_count[0][0]))
+    # row_count = row_count[0][0]
+
 
     # Placeholder lists for data
     data = []
     
     for epoch_i in range(1, epochs+1):
         # Calculate the limit for each category based on N
-        limit_human = int(row_count / 2)
-        limit_machine = int(row_count / 4)  # Assuming you want half for G2 and half for G1
+        limit_human = int(row_count / 4)
+        limit_machine = int(row_count / 8)  # Assuming you want half for G2 and half for G1
         print("limit machine ", limit_machine)
         print("limit human ", limit_human)
 
@@ -128,16 +130,18 @@ def fetch_balanced_data_train(db_name, epochs):
 def main():
     
     # db_name = os.getcwd() + '/translations.db'
-    db_name = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db'
+    db_name = '/workspace/2024/git_repo_vastai/translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db'
     print("db_name: ", db_name)
     epochs = 2  # Example value
     df = fetch_balanced_data_train(db_name, epochs)
     print("df: ", df)
-    df.to_csv('data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.csv', index=False)
+    df.to_csv('data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_1millimit_v2.csv', index=False)
     print("df shape: ", df.shape)
 
     # writing the df to db
-    db_name_train_data = os.getcwd() + '/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db'
+    # db_name_train_data = os.getcwd() + '/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db'
+    # db_name_train_data = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_1millimit.db'
+    db_name_train_data = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_1millimit_v2.db'
     write_df_to_db(db_name_train_data, df)
 
 
