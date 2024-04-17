@@ -127,16 +127,17 @@ def fetch_balanced_data_train(db_name, epochs):
 # df = fetch_balanced_data_train(db_name, epochs)
 def main():
     
-    db_name = os.getcwd() + '/translations.db'
+    # db_name = os.getcwd() + '/translations.db'
+    db_name = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db'
     print("db_name: ", db_name)
     epochs = 2  # Example value
     df = fetch_balanced_data_train(db_name, epochs)
     print("df: ", df)
-    df.to_csv('data_train.csv', index=False)
+    df.to_csv('data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.csv', index=False)
     print("df shape: ", df.shape)
 
     # writing the df to db
-    db_name_train_data = os.getcwd() + '/balanced_data_train.db'
+    db_name_train_data = os.getcwd() + '/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db'
     write_df_to_db(db_name_train_data, df)
 
 

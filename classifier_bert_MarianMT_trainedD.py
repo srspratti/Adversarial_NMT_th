@@ -303,7 +303,7 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Loading test dataset
-    test_dataset = dataset["test"].select(range(100))  # Load the first 100 examples
+    test_dataset = dataset["test"]  # Load the first 100 examples
     
     # Preprocess the data
     tokenized_test_datasets_translated = test_dataset.map(
@@ -317,8 +317,9 @@ def main(args):
     # checkpoints_path = 'checkpoints/bert_dualG/wmt14_en_fr_20k/' + saved_model
 
     # checkpoints_path = '/home/paperspace/google_drive_v7/Research_Thesis/2024/Adversarial_NMT_th/checkpoints/best_discriminator_at_2.pt'
-    # checkpoints_path = '/home/paperspace/google_drive_v7/Research_Thesis/2024/Adversarial_NMT_th/best_discriminator_at_2.pt'
-    checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_checkpoint_dict_format_2.pt'
+    checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_discriminator_at_2.pt'
+    # checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_discriminator_at_1.pt'
+    # checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_checkpoint_dict_format_2.pt'
     # checkpoints_path = '/home/paperspace/google_drive_v7/Research_Thesis/2024/Adversarial_NMT_th/checkpoints/bert_dualG/wmt14_en_fr_800sent_pg_kd_loss/best_discriminator.pt'
 
     # Load the saved state dictionaries
@@ -329,11 +330,11 @@ def main(args):
     # checkpoint_D_dict = checkpoint_D.state_dict()
 
     # # Load the state dictionaries into the model
-    discriminator_cnn.load_state_dict(checkpoints_path['discriminator_state_dict'])
+    # discriminator_cnn.load_state_dict(checkpoints_path['discriminator_state_dict'])
     # discriminator_cnn.load_state_dict(checkpoint.state_dict())
 
 
-    """
+   
     model_dict = discriminator_cnn.state_dict()
     model = torch.load(checkpoints_path)
     pretrained_dict = model.state_dict()
@@ -346,7 +347,7 @@ def main(args):
     model_dict.update(pretrained_dict)
     # 3. load the new state dict
     discriminator_cnn.load_state_dict(model_dict)
-    """
+   
     
 
     discriminator_cnn = discriminator_cnn.module if hasattr(discriminator_cnn, "module") else discriminator_cnn
