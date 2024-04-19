@@ -78,7 +78,9 @@ def main():
         print("GPU not found, using CPU instead.")
 
     print("Hello, world! This is the train_svm.py script.")
-    train_db_path = os.getcwd() + "/balanced_data_train.db"
+    # train_db_path = os.getcwd() + "/balanced_data_train.db"
+    train_db_path = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_1millimit_v2.db'
+    # train_db_path = '/workspace/2024/git_repo_vastai/balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_sm_20k.db'
     df_from_db = read_data_from_db(train_db_path)
     print("df_from_db head: ", df_from_db.head())
 
@@ -103,7 +105,7 @@ def main():
     # Define training arguments
     training_args = TrainingArguments(
     output_dir='./results',
-    num_train_epochs=3,
+    num_train_epochs=5,
     per_device_train_batch_size=8,  # Adjust based on your GPU's memory
     per_device_eval_batch_size=8,   # Adjust based on your GPU's memory
     warmup_steps=500,
@@ -133,6 +135,9 @@ def main():
 
     # Evaluate the model
     trainer.evaluate()
+
+    trainer.save_model("/workspace/2024/git_repo_vastai/roberta_using_balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_1millimit_v2")
+    # trainer.save_model("/workspace/2024/git_repo_vastai/roberta_balanced_data_train_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_sm_20k.db")
 
 if __name__ == "__main__":
     main()
