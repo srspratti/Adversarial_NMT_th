@@ -8,6 +8,8 @@ from transformers import BertModel, BertTokenizer, BertTokenizerFast
 import datasets
 from datasets import load_dataset
 from torch.utils.data import DataLoader
+# import torch
+from fairseq.data.data_utils import collate_tokens
 
 # importing other required libraries
 import argparse
@@ -57,7 +59,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
 
@@ -128,8 +130,8 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(1000020))
-    # train_dataset = dataset["train"].select(range(200))
+    # train_dataset = dataset["train"].select(range(1000020))
+    train_dataset = dataset["train"].select(range(600))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -205,19 +207,22 @@ def main(args):
     from fairseq.models.transformer import TransformerModel
 
     getpwd = os.getcwd()
-    path_to_your_pretrained_model = (
-        getpwd + "/pretrained_models/wmt14.en-fr.joined-dict.transformer"
-    )
-    generator1_pretrained = TransformerModel.from_pretrained(
-        path_to_your_pretrained_model,
-        checkpoint_file="model.pt",
-        bpe="subword_nmt",
-        # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
-        data_name_or_path=getpwd
-        + "/pretrained_models/wmt14.en-fr.joined-dict.transformer",
-        bpe_codes=getpwd
-        + "/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes",
-    )
+    # path_to_your_pretrained_model = (
+    #     getpwd + "/pretrained_models/wmt14.en-fr.joined-dict.transformer"
+    # )
+    # generator1_pretrained = TransformerModel.from_pretrained(
+    #     path_to_your_pretrained_model,
+    #     checkpoint_file="model.pt",
+    #     bpe="subword_nmt",
+    #     # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
+    #     data_name_or_path=getpwd
+    #     + "/pretrained_models/wmt14.en-fr.joined-dict.transformer",
+    #     bpe_codes=getpwd
+    #     + "/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes",
+    # )
+
+    generator1_pretrained = torch.hub.load('pytorch/fairseq', 'transformer.wmt14.en-fr', tokenizer='moses', bpe='subword_nmt')
+
     print("G1 - Pre-Trained fairseq Generator loaded successfully!")
 
     # G1 - Pre-Trained fairseq Generator : Help methods #
@@ -314,17 +319,17 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format/"
+    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format"):
+    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format")
+    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer")
     # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer/"
 
-    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2"):
-    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
-    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
 
     # Definining loss function methods for generator - Additional 
 
@@ -464,8 +469,8 @@ def main(args):
 
     # Example usage
     getpwd = os.getcwd()
-    # db_name = "translations_600sents_debug_spchars_v2.db"
-    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db"
+    db_name = "translations_600sents_debug_spchars_v2.db"
+    # db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -926,16 +931,18 @@ def main(args):
             checkpoints_path + f"train_checkpoint_dict_format_at_{epoch_i}.pt",
         )
 
-        # torch.save(
-        #         generator2_train,
-        #         open(checkpoints_path + f"train_checkpoint__generator{epoch_i}.pt", "wb"),
-        #         pickle_module=dill,
-        #     )
         torch.save(
-                discriminator_cnn,
-                open(checkpoints_path + f"train_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
+                generator2_train,
+                open(checkpoints_path + f"train_checkpoint_generator_dill_format_open_at_{epoch_i}.pt", "wb"),
                 pickle_module=dill,
             )
+        torch.save(
+                discriminator_cnn,
+                open(checkpoints_path + f"train_checkpoint_discriminator_dill_format_open_at_{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
+        torch.save(generator2_train, checkpoints_path + f"train_checkpoint_generator_dill_format_direct_at_{epoch_i}.pt", pickle_module=dill)
+        torch.save(discriminator_cnn, checkpoints_path + f"train_checkpoint_discriminator_dill_format_direct_at_{epoch_i}.pt", pickle_module=dill)
         generator2_train.save_pretrained(checkpoints_path + f"train_checkpoint_generator_save_pretrained_at_{epoch_i}")
         tokenizer.save_pretrained(checkpoints_path + f"train_checkpoint_tokenizer_save_pretrained_at_{epoch_i}")
         
@@ -1243,16 +1250,16 @@ def main(args):
             checkpoints_path + f"validation_checkpoint_dict_format_at_{epoch_i}.pt",
         )
 
-        # torch.save(
-        #         generator2_train,
-        #         open(checkpoints_path + f"valid_checkpoint__generator{epoch_i}.pt", "wb"),
-        #         pickle_module=dill,
-        # #     )
-        # torch.save(
-        #         discriminator_cnn,
-        #         open(checkpoints_path + f"valid_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
-        #         pickle_module=dill,
-        #     )
+        torch.save(
+                generator2_train,
+                open(checkpoints_path + f"valid_checkpoint__generator{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
+        torch.save(
+                discriminator_cnn,
+                open(checkpoints_path + f"valid_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
         torch.save(discriminator_cnn, checkpoints_path + f"valid_checkpoint_discriminator_at_{epoch_i}.pt", pickle_module=dill)
 
         generator2_train.save_pretrained(checkpoints_path + f"valid_checkpoint_generator_save_pretrained_at_{epoch_i}")
@@ -1271,11 +1278,11 @@ def main(args):
         if avg_val_loss < best_loss:
             best_loss = avg_val_loss
             patience_counter = 0
-            # torch.save(
-            #     generator2_train,
-            #     open(checkpoints_path + f"best_generator_at_{epoch_i}.pt", "wb"),
-            #     pickle_module=dill,
-            # )
+            torch.save(
+                generator2_train,
+                open(checkpoints_path + f"best_generator_at_{epoch_i}.pt", "wb"),
+                pickle_module=dill,
+            )
             # Saving G and Tokenizer using save_pretrained
             generator2_train.save_pretrained(checkpoints_path + f"best_generator_save_pretrained_at_{epoch_i}")
             tokenizer.save_pretrained(checkpoints_path + f"best_generator_tokenizer_save_pretrained_at_{epoch_i}")
