@@ -8,8 +8,6 @@ from transformers import BertModel, BertTokenizer, BertTokenizerFast
 import datasets
 from datasets import load_dataset
 from torch.utils.data import DataLoader
-# import torch
-from fairseq.data.data_utils import collate_tokens
 
 # importing other required libraries
 import argparse
@@ -28,8 +26,7 @@ import utils
 from meters import AverageMeter
 from PGLoss import PGLoss
 from tqdm import tqdm
-# from dictionary import Dictionary
-from fairseq.data import Dictionary
+from dictionary import Dictionary
 import re
 import subprocess
 import os
@@ -60,7 +57,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 #### Logging ####
 
@@ -81,7 +78,6 @@ options.add_checkpoint_args(parser)
 options.add_generator_model_args(parser)
 options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
-
 
 
 def main(args):
@@ -132,8 +128,8 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(1000080))
-    # train_dataset = dataset["train"].select(range(1000))
+    train_dataset = dataset["train"].select(range(1000020))
+    # train_dataset = dataset["train"].select(range(200))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -205,39 +201,24 @@ def main(args):
 
     #### --------------------Loading G1 - Pre-Trained fairseq Generator --------------------#####
     # path_to_your_pretrained_model = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
-    
-    # from fairseq.models.transformer import TransformerModel
 
-    # getpwd = os.getcwd()
-    # path_to_your_pretrained_model = (
-    #     getpwd + "/pretrained_models/wmt14.en-fr.joined-dict.transformer"
-    # )
-    # generator1_pretrained = TransformerModel.from_pretrained(
-    #     path_to_your_pretrained_model,
-    #     checkpoint_file="model.pt",
-    #     bpe="subword_nmt",
-    #     # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
-    #     data_name_or_path=getpwd
-    #     + "/pretrained_models/wmt14.en-fr.joined-dict.transformer",
-    #     bpe_codes=getpwd
-    #     + "/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes",
-    # )
-    # print("G1 - Pre-Trained fairseq Generator loaded successfully!")
-    
-    #### -------------------Loading G1 using hub.load--------------------#####
-    
-    generator1_pretrained = torch.hub.load('pytorch/fairseq', 'transformer.wmt14.en-fr', tokenizer='moses', bpe='subword_nmt')
+    from fairseq.models.transformer import TransformerModel
 
-    # Specify the path to your dictionary file
-    dict_path = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
-
-    # Load the dictionary
-    dictionary = Dictionary.load(dict_path)
-
-    # Now you can access various attributes of the dictionary
-    pad_idx = dictionary.pad()
-
-    print("G1 - Pre-Trained fairseq Generator loaded successfully using hub.load !")
+    getpwd = os.getcwd()
+    path_to_your_pretrained_model = (
+        getpwd + "/pretrained_models/wmt14.en-fr.joined-dict.transformer"
+    )
+    generator1_pretrained = TransformerModel.from_pretrained(
+        path_to_your_pretrained_model,
+        checkpoint_file="model.pt",
+        bpe="subword_nmt",
+        # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
+        data_name_or_path=getpwd
+        + "/pretrained_models/wmt14.en-fr.joined-dict.transformer",
+        bpe_codes=getpwd
+        + "/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes",
+    )
+    print("G1 - Pre-Trained fairseq Generator loaded successfully!")
 
     # G1 - Pre-Trained fairseq Generator : Help methods #
     def ids_to_sentences_bert(input_ids):
@@ -333,9 +314,9 @@ def main(args):
         generator1_pretrained.cpu()
 
     # adversarial training checkpoints saving path
-    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format"):
-    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format")
-    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer")
@@ -345,13 +326,6 @@ def main(args):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
     # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
 
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained/"
-
-    # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm"):
-    #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm")
-    # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm/"
     # Definining loss function methods for generator - Additional 
 
     # Define the policy gradient loss function
@@ -499,47 +473,7 @@ def main(args):
     # best_val_loss = float('inf')
     best_loss = math.inf
     patience_counter = 0
-    patience_threshold = 1  # Example value, adjust as needed
-
-    def cosine_embedding_loss(fake_tgt_sentences_embeds, fr_decoded_bert_embeds):
-
-        batch_size = fake_tgt_sentences_embeds.size(0)
-        seq_length = fake_tgt_sentences_embeds.size(1)
-
-        # Create a target tensor for batch
-        target = torch.ones((batch_size, seq_length), dtype=torch.float, device=fake_tgt_sentences_embeds.device)
-
-        cosine_loss = torch.nn.functional.cosine_embedding_loss(
-        fake_tgt_sentences_embeds.view(-1, fake_tgt_sentences_embeds.size(2)),  # Reshape to [batch_size * seq_length, embedding_size]
-        fr_decoded_bert_embeds.view(-1, fr_decoded_bert_embeds.size(2)),  # Reshape similarly
-        target.view(-1),  # Flatten the target to match the reshaped embeddings
-        margin=0.5)
-
-        return cosine_loss
-    
-    def kl_divergence_loss(fake_tgt_sentences_embeds, fr_decoded_bert_embeds):
-
-        # Normalize embeddings to probability distributions
-        prob_fairseq = torch.nn.functional.softmax(fr_decoded_bert_embeds, dim=-1)
-        prob_marian = torch.nn.functional.softmax(fake_tgt_sentences_embeds, dim=-1)
-
-        # Compute KL divergence from Marian to Fairseq
-        kl_divergence = torch.nn.functional.kl_div(torch.log(prob_marian), prob_fairseq, reduction='batchmean')
-        print("KL Divergence (Marian || Fairseq):", kl_divergence.item())
-
-        return kl_divergence
-
-    def kl_divergence_loss_reverse(fake_tgt_sentences_embeds, fr_decoded_bert_embeds):
-
-        # Normalize embeddings to probability distributions
-        prob_fairseq = torch.nn.functional.softmax(fr_decoded_bert_embeds, dim=-1)
-        prob_marian = torch.nn.functional.softmax(fake_tgt_sentences_embeds, dim=-1)
-
-        # Compute KL divergence from Fairseq to Marian
-        kl_divergence_reverse = torch.nn.functional.kl_div(torch.log(prob_fairseq), prob_marian, reduction='batchmean')
-        print("KL Divergence (Fairseq || Marian):", kl_divergence_reverse.item())
-
-        return kl_divergence_reverse
+    patience_threshold = 2  # Example value, adjust as needed
 
     for epoch_i in tqdm(range(1, args.epochs + 1)):
         logging.info("At {0}-th epoch.".format(epoch_i))
@@ -617,10 +551,6 @@ def main(args):
         # generator2_train.to_text_file("generator2_train.txt")
         for param in generator2_train.model.parameters():
             param.requires_grad = False
-        
-        # for layer in generator2_train.model.decoder.layers[:2]:
-        #     for param in layer.parameters():
-        #         param.requires_grad = True
 
         # Unfreeze the lm_head
         for param in generator2_train.lm_head.parameters():
@@ -707,30 +637,11 @@ def main(args):
 
             # Now use the translate method
             # translations = original_generator_pt.translate(sentences)
-            
-            # OLD METHOD TO TRANSLATE SENTENCES FOR DISCRIMINATOR
+
             translated_sentences_from_G1 = original_generator_pt.translate(
                 src_sentences_for_G1
             )
-            # print("src_sentences_for_G1 shape:", src_sentences_for_G1.shape)
-
-            # Translating using G1- pretrained generate()
-            
-            # sentence_to_translate_toks = original_generator_pt.tokenize(src_sentences_for_G1)
-            # sentence_to_translate_bpe = original_generator_pt.apply_bpe(sentence_to_translate_toks)
-            # sentence_to_translate_bnrz = original_generator_pt.binarize(sentence_to_translate_bpe)
-
-            # translated_sentences_using_generate = original_generator_pt.generate(sentence_to_translate_bnrz, beam=5, sampling=True, sampling_topk=20)
-
-            # translated_sentences_using_generate_generated_toks = translated_sentences_using_generate[0]['tokens']
-
-            # translated_sentences_from_G1 = original_generator_pt.decode(translated_sentences_using_generate_generated_toks)
-
-            # translated_sentences_using_generate_generated_toks_str_with_bpe = original_generator_pt.string(translated_sentences_using_generate_generated_toks)
-            # translated_sentences_using_generate_generated_toks_str_bpe_removed = original_generator_pt.remove_bpe(translated_sentences_using_generate_generated_toks_str_with_bpe)
-            # translated_sentences_from_G1 = original_generator_pt.detokenize(translated_sentences_using_generate_generated_toks_str_bpe_removed)
-
-            print("translated_sentences_from_G1 ", translated_sentences_from_G1)
+            # print("translated_sentences_from_G1 ", translated_sentences_from_G1)
             # print("translated_sentences_from_G1 shape ", translated_sentences_from_G1.shape)
             print("sentences translated from G1 ")
             print("At epoch_i ", epoch_i)
@@ -740,27 +651,34 @@ def main(args):
                 translated_sentences_from_G1, max_length=128
             )
 
-            print(
-                " type of fake_tgt_sentences_G1_pretrain_probs ",
-                type(fake_tgt_sentences_G1_pretrain_probs),
-            )
-            print(
-                "fake_tgt_sentences_G1_pretrain_probs dict keys ",
-                fake_tgt_sentences_G1_pretrain_probs.keys(),
-            )
-            print(
-                "size of dict fake_tgt_sentences_G1_pretrain_probs ",
-                len(fake_tgt_sentences_G1_pretrain_probs),
-            )
-            print(
-                "dict info key input_ids fake_tgt_sentences_G1_pretrain_probs ",
-                fake_tgt_sentences_G1_pretrain_probs.get("input_ids"),
-            )
+            # print(
+            #     " type of fake_tgt_sentences_G1_pretrain_probs ",
+            #     type(fake_tgt_sentences_G1_pretrain_probs),
+            # )
+            # print(
+            #     "fake_tgt_sentences_G1_pretrain_probs dict keys ",
+            #     fake_tgt_sentences_G1_pretrain_probs.keys(),
+            # )
+            # print(
+            #     "size of dict fake_tgt_sentences_G1_pretrain_probs ",
+            #     len(fake_tgt_sentences_G1_pretrain_probs),
+            # )
+            # print(
+            #     "dict info key input_ids fake_tgt_sentences_G1_pretrain_probs ",
+            #     fake_tgt_sentences_G1_pretrain_probs.get("input_ids"),
+            # )
+            # print(
+            #     "dict info key input_ids type of fake_tgt_sentences_G1_pretrain_probs ",
+            #     type(fake_tgt_sentences_G1_pretrain_probs.get("input_ids")),
+            # )
+            # print(
+            #     " shape of dict keys input_ids fake_tgt_sentences_G1_pretrain_probs ",
+            #     fake_tgt_sentences_G1_pretrain_probs.get("input_ids").shape,
+            # )
 
-            print(
-                " shape of dict keys input_ids fake_tgt_sentences_G1_pretrain_probs ",
-                fake_tgt_sentences_G1_pretrain_probs.get("input_ids").shape,
-            )
+            # Now, encoded_translations["input_ids"] and encoded_translations["attention_mask"]
+            # can be fed into the discriminator for further processing.
+            # fake_tgt_sentences_G1_pretrain_probs = fake_tgt_sentences_G1_pretrain_probs.view(-1, fake_tgt_sentences_G1_pretrain_probs.size(-1))
 
             # -------------------------------------------------Train the discriminator
             print("training discriminator")
@@ -824,32 +742,10 @@ def main(args):
             # # print("g1_translated_embeddings ", g1_translated_embeddings) 
             # soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
 
-            g2_token_embeds = generator2_train_dp.model.shared(fake_tgt_sentences)
-            g1_token_embeds = generator2_train_dp.model.shared(fake_tgt_sentences_G1_pretrain_probs['input_ids'].to(device))
-
-            print("shape of g2 token embeds: ", g2_token_embeds.shape)
-            print("shape of g1 token embeds: ", g1_token_embeds.shape)
-
-            g_cosine_loss = cosine_embedding_loss(g2_token_embeds, g1_token_embeds)
-            g_kl_loss_reverse = kl_divergence_loss_reverse(g2_token_embeds, g1_token_embeds)
-            g_kl_loss = kl_divergence_loss(g2_token_embeds, g1_token_embeds)
-
 
             # #################################################   Total G2 loss
             # total_g_loss = g_loss + pg_loss  + soft_target_loss # You can adjust the weighting of these components as needed
-            # total_g_loss = g_loss + g_cosine_loss + g_kl_loss_reverse
-            # total_g_loss = (g_loss + g_cosine_loss + g_kl_loss_reverse)/3
-            # total_g_loss = (g_loss + g_cosine_loss + g_kl_loss)/3
-            # total_g_loss = g_cosine_loss
-            # total_g_loss = g_kl_loss
-            # total_g_loss = 0.5*g_loss + 0.5*g_kl_loss
-            # total_g_loss = 0.5*g_cosine_loss + 0.5*g_kl_loss
-            # total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss
-            # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
-            # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-            # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
-            total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss 
-
+            total_g_loss = g_loss
 
             total_g_loss.backward()
             optimizer_g.step()
@@ -1007,8 +903,7 @@ def main(args):
 
             # d_loss = (real_loss + fake_loss) / 2
             # combining the real and fake loss from the two generators
-            #d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
-            d_loss = 0.10*real_loss + 0.90*fake_loss + 0.00*fake_loss_pretrain
+            d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
 
             d_loss.backward()
             optimizer_d.step()
@@ -1031,14 +926,14 @@ def main(args):
             checkpoints_path + f"train_checkpoint_dict_format_at_{epoch_i}.pt",
         )
 
-        torch.save(
-                generator2_train,
-                open(checkpoints_path + f"train_checkpoint_generator_dill_open_format_at_{epoch_i}.pt", "wb"),
-                pickle_module=dill,
-            )
+        # torch.save(
+        #         generator2_train,
+        #         open(checkpoints_path + f"train_checkpoint__generator{epoch_i}.pt", "wb"),
+        #         pickle_module=dill,
+        #     )
         torch.save(
                 discriminator_cnn,
-                open(checkpoints_path + f"train_checkpoint_discriminator_dill_direct_format_at_{epoch_i}.pt", "wb"),
+                open(checkpoints_path + f"train_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
                 pickle_module=dill,
             )
         generator2_train.save_pretrained(checkpoints_path + f"train_checkpoint_generator_save_pretrained_at_{epoch_i}")
@@ -1196,32 +1091,9 @@ def main(args):
                 # # print("g1_translated_embeddings ", g1_translated_embeddings) 
                 # soft_target_loss = soft_target_distillation_loss(decoder_out, g1_translated_embeddings)
 
-                g2_token_embeds = generator2_train_dp.model.shared(fake_tgt_sentences)
-                g1_token_embeds = generator2_train_dp.model.shared(fake_tgt_sentences_G1_pretrain_probs['input_ids'].to(device))
-
-                print("shape of g2 token embeds: ", g2_token_embeds.shape)
-                print("shape of g1 token embeds: ", g1_token_embeds.shape)
-
-                g_cosine_loss = cosine_embedding_loss(g2_token_embeds, g1_token_embeds)
-                g_kl_loss_reverse = kl_divergence_loss_reverse(g2_token_embeds, g1_token_embeds)
-                g_kl_loss = kl_divergence_loss(g2_token_embeds, g1_token_embeds)
-
-
                 #-------------------------------
                 # total_g_loss = g_loss + pg_loss  + soft_target_loss
-                # total_g_loss = g_loss + g_cosine_loss + g_kl_loss_reverse
-                # total_g_loss = g_cosine_loss
-                # total_g_loss = (g_loss + g_cosine_loss + g_kl_loss_reverse)/3
-                # total_g_loss = (g_loss + g_cosine_loss + g_kl_loss)/3
-                # total_g_loss = g_kl_loss
-                # total_g_loss = 0.5*g_loss + 0.5*g_cosine_loss
-                # total_g_loss = 0.5*g_cosine_loss + 0.5*g_kl_loss
-                # total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss
-                #total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss
-                # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
-                # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-                # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
-                total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss 
+                total_g_loss = g_loss
                 
                 total_valid_g_loss += total_g_loss.item()
 
@@ -1348,9 +1220,7 @@ def main(args):
                 ######---------------------------------############################
                 
                 # combining the real and fake loss from the two generators
-                # d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
-                #d_loss = 0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
-                d_loss = 0.10*real_loss + 0.90*fake_loss + 0.00*fake_loss_pretrain
+                d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
                 total_valid_d_loss += d_loss.item()
 
         # Print validation losses
@@ -1373,11 +1243,11 @@ def main(args):
             checkpoints_path + f"validation_checkpoint_dict_format_at_{epoch_i}.pt",
         )
 
-        torch.save(
-                generator2_train,
-                open(checkpoints_path + f"valid_checkpoint_generator_dill_format_at_{epoch_i}.pt", "wb"),
-                pickle_module=dill,
-            )
+        # torch.save(
+        #         generator2_train,
+        #         open(checkpoints_path + f"valid_checkpoint__generator{epoch_i}.pt", "wb"),
+        #         pickle_module=dill,
+        # #     )
         # torch.save(
         #         discriminator_cnn,
         #         open(checkpoints_path + f"valid_checkpoint_discriminator_at_{epoch_i}.pt", "wb"),
@@ -1401,11 +1271,11 @@ def main(args):
         if avg_val_loss < best_loss:
             best_loss = avg_val_loss
             patience_counter = 0
-            torch.save(
-                generator2_train,
-                open(checkpoints_path + f"best_generator_dill_open_at_{epoch_i}.pt", "wb"),
-                pickle_module=dill,
-            )
+            # torch.save(
+            #     generator2_train,
+            #     open(checkpoints_path + f"best_generator_at_{epoch_i}.pt", "wb"),
+            #     pickle_module=dill,
+            # )
             # Saving G and Tokenizer using save_pretrained
             generator2_train.save_pretrained(checkpoints_path + f"best_generator_save_pretrained_at_{epoch_i}")
             tokenizer.save_pretrained(checkpoints_path + f"best_generator_tokenizer_save_pretrained_at_{epoch_i}")
@@ -1429,7 +1299,7 @@ def main(args):
             },
             checkpoints_path + f"best_checkpoint_dict_format_{epoch_i}.pt",
             )
-            torch.save(discriminator_cnn, checkpoints_path + f"best_discriminator_dill_direct_at_{epoch_i}.pt", pickle_module=dill)
+            torch.save(discriminator_cnn, checkpoints_path + f"best_discriminator_at_{epoch_i}.pt", pickle_module=dill)
         else:
             patience_counter += 1
         
