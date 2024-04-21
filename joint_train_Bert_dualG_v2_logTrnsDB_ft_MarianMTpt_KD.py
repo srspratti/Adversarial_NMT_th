@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 #### Logging ####
 
@@ -132,11 +132,11 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    # train_dataset = dataset["train"].select(range(1000020))
-    train_dataset = dataset["train"].select(range(1000))
+    train_dataset = dataset["train"].select(range(1000080))
+    # train_dataset = dataset["train"].select(range(1000))
 
     # Keep the full valid and test datasets
-    valid_dataset = dataset["validation"].select(range(300))
+    valid_dataset = dataset["validation"]
     test_dataset = dataset["test"]
 
     # Loading Bert Model
@@ -229,7 +229,7 @@ def main(args):
     generator1_pretrained = torch.hub.load('pytorch/fairseq', 'transformer.wmt14.en-fr', tokenizer='moses', bpe='subword_nmt')
 
     # Specify the path to your dictionary file
-    dict_path = '/home/paperspace/google_drive_v2/Research_Thesis/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
+    dict_path = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
 
     # Load the dictionary
     dictionary = Dictionary.load(dict_path)
@@ -499,7 +499,7 @@ def main(args):
     # best_val_loss = float('inf')
     best_loss = math.inf
     patience_counter = 0
-    patience_threshold = 2  # Example value, adjust as needed
+    patience_threshold = 1  # Example value, adjust as needed
 
     def cosine_embedding_loss(fake_tgt_sentences_embeds, fr_decoded_bert_embeds):
 
@@ -847,7 +847,8 @@ def main(args):
             # total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss
             # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
             # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-            total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+            # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+            total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss 
 
 
             total_g_loss.backward()
@@ -1218,7 +1219,8 @@ def main(args):
                 #total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss
                 # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
                 # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-                total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+                # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+                total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss 
                 
                 total_valid_g_loss += total_g_loss.item()
 
