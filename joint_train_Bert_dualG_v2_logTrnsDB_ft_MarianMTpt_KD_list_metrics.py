@@ -83,8 +83,74 @@ options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
 
 
+g_and_d_loss_checkpoint_config =[
+    {
+    "combination" : "G10_D9",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
+    "d_loss" : {"real_loss":0.90, "fake_loss": 0.90, "fake_loss_pretrain":0.00} #[0.20, 0.60, 0.20 ] #0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
+    },
+    {
+    "combination" : "G10_D6",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
+    "d_loss" : {"real_loss":0.00, "fake_loss": 0.75, "fake_loss_pretrain":0.25} #[0.20, 0.60, 0.20 ] #0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
+    },
+    {
+    "combination" : "G10_D7",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
+    "d_loss" : {"real_loss":0.00, "fake_loss": 0.25, "fake_loss_pretrain":0.75} #[0.20, 0.60, 0.20 ] #0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
+    },
+    {
+    "combination" : "G10_D3",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #[0.0, 0.90, 0.10] #0.90*g_cosine_loss + 0.10*g_kl_loss,
+    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.0} #[0.50, 0.50] #0.50*real_loss + 0.50*fake_loss
+    },
+    {
+    "combination" : "G10_D4",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
+    "d_loss" : {"real_loss":0.50, "fake_loss":0.00, "fake_loss_pretrain":0.50} #0.50*real_loss + 0.50*fake_loss_pretrain
+    },
+    {
+    "combination" : "G1_D3", # G_Baseline D_Baseline 3
+    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
+    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss
+    },
+    {
+    "combination" : "G1_D4", # G_Baseline D_Prop_1
+    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
+    "d_loss" : {"real_loss":0.50, "fake_loss":0.00, "fake_loss_pretrain":0.50} #0.50*real_loss + 0.50*fake_loss_pretrain
+    },
+    { "combination" : "G1_D_baseline_3", # G_Baseline D_Baseline 3
+    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
+    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss
+    },
+    {
+    "combination" : "G1_D_baseline_1",
+    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
+    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    },
+    {
+    "combination" : "G1_D_baseline_2",
+    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.75, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    },
+    {
+    "combination" : "G2_D_baseline_3", 
+    "total_g_loss" :  {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss
+    },
+    {
+    "combination" : "G2_D_baseline_2",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    },
+    {
+    "combination" : "G2_D_baseline_1",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    }
+]
 
-def main(args):
+def main(args, config):
 
     use_cuda = torch.cuda.is_available()
 
@@ -345,9 +411,9 @@ def main(args):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
     # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
 
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm")
@@ -847,7 +913,8 @@ def main(args):
             # total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss
             # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
             # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-            total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+            # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+            total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
 
 
             total_g_loss.backward()
@@ -1007,7 +1074,7 @@ def main(args):
             # d_loss = (real_loss + fake_loss) / 2
             # combining the real and fake loss from the two generators
             #d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
-            d_loss = 0.10*real_loss + 0.90*fake_loss + 0.00*fake_loss_pretrain
+            d_loss = config['d_loss']['real_loss']*real_loss + config['d_loss']['fake_loss']*fake_loss + config['d_loss']['fake_loss_pretrain']*fake_loss_pretrain
 
             d_loss.backward()
             optimizer_d.step()
@@ -1219,7 +1286,8 @@ def main(args):
                 #total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss
                 # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
                 # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-                total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+                #total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+                total_g_loss = total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
                 
                 total_valid_g_loss += total_g_loss.item()
 
@@ -1348,7 +1416,7 @@ def main(args):
                 # combining the real and fake loss from the two generators
                 # d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
                 #d_loss = 0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
-                d_loss = 0.10*real_loss + 0.90*fake_loss + 0.00*fake_loss_pretrain
+                d_loss = config['d_loss']['real_loss']*real_loss + config['d_loss']['fake_loss']*fake_loss + config['d_loss']['fake_loss_pretrain']*fake_loss_pretrain
                 total_valid_d_loss += d_loss.item()
 
         # Print validation losses
@@ -1441,4 +1509,6 @@ if __name__ == "__main__":
     options = ret[0]
     if ret[1]:
         logging.warning(f"unknown arguments: {parser.parse_known_args()[1]}")
-    main(options)
+    for config in tqdm(g_and_d_loss_checkpoint_config, desc="Running models with diff. g_loss and d_loss"):
+        print(" running config ", config["combination"])
+        main(options, config)
