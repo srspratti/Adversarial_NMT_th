@@ -15,6 +15,7 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 import sys
 from transformers import AutoTokenizer
+import time
 
 
 torch.cuda.empty_cache()
@@ -96,6 +97,7 @@ def translate_with_max_length(text, max_length):
         return translated_text[:max_length]
 
 checkpoint = 'Helsinki-NLP/opus-mt-en-fr'
+# checkpoint = '/home/paperspace/google_drive_v2/Research_Thesis/2024/git_repo/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb2_save_open_direct_pretrained/best_generator_tokenizer_save_pretrained_at_1'
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 def preprocess_testData_MarianMT(data):
@@ -257,6 +259,8 @@ def predict(model, test_dataloader):
 
 
 def main(args):
+
+    start_time = time.time()
     
     use_cuda = torch.cuda.is_available()
 
@@ -317,10 +321,11 @@ def main(args):
     # checkpoints_path = 'checkpoints/bert_dualG/wmt14_en_fr_20k/' + saved_model
 
     # checkpoints_path = '/home/paperspace/google_drive_v7/Research_Thesis/2024/Adversarial_NMT_th/checkpoints/best_discriminator_at_2.pt'
-    checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_discriminator_at_2.pt'
+    # checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_discriminator_at_2.pt'
     # checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_discriminator_at_1.pt'
     # checkpoints_path = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/best_checkpoint_dict_format_2.pt'
     # checkpoints_path = '/home/paperspace/google_drive_v7/Research_Thesis/2024/Adversarial_NMT_th/checkpoints/bert_dualG/wmt14_en_fr_800sent_pg_kd_loss/best_discriminator.pt'
+    checkpoints_path = '/home/paperspace/google_drive_v2/Research_Thesis/2024/git_repo/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt' # COMB-2
 
     # Load the saved state dictionaries
     # checkpoint_D = torch.load(checkpoints_path, pickle_module=dill)
@@ -451,6 +456,9 @@ def main(args):
     print(f'Precision: {precision}')
     print(f'Recall: {recall}')
     print(f'Confusion Matrix:\n{conf_matrix}')
+
+    end_time = time.time()
+    print("elapsed time is : ", (end_time - start_time))
     
        
 if __name__ == "__main__":
