@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
 
@@ -84,70 +84,22 @@ options.add_generation_args(parser)
 
 
 g_and_d_loss_checkpoint_config =[
-    {
-    "combination" : "G10_D9",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
-    "d_loss" : {"real_loss":0.90, "fake_loss": 0.90, "fake_loss_pretrain":0.00} #[0.20, 0.60, 0.20 ] #0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
-    },
-    {
-    "combination" : "G10_D6",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
-    "d_loss" : {"real_loss":0.00, "fake_loss": 0.75, "fake_loss_pretrain":0.25} #[0.20, 0.60, 0.20 ] #0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
-    },
-    {
-    "combination" : "G10_D7",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
-    "d_loss" : {"real_loss":0.00, "fake_loss": 0.25, "fake_loss_pretrain":0.75} #[0.20, 0.60, 0.20 ] #0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
-    },
-    {
-    "combination" : "G10_D3",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #[0.0, 0.90, 0.10] #0.90*g_cosine_loss + 0.10*g_kl_loss,
-    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.0} #[0.50, 0.50] #0.50*real_loss + 0.50*fake_loss
-    },
-    {
-    "combination" : "G10_D4",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.90,"g_kl_loss":0.10}, #0.90*g_cosine_loss + 0.10*g_kl_loss,
-    "d_loss" : {"real_loss":0.50, "fake_loss":0.00, "fake_loss_pretrain":0.50} #0.50*real_loss + 0.50*fake_loss_pretrain
-    },
-    {
-    "combination" : "G1_D3", # G_Baseline D_Baseline 3
-    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
-    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss
-    },
-    {
-    "combination" : "G1_D4", # G_Baseline D_Prop_1
-    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
-    "d_loss" : {"real_loss":0.50, "fake_loss":0.00, "fake_loss_pretrain":0.50} #0.50*real_loss + 0.50*fake_loss_pretrain
-    },
-    { "combination" : "G1_D_baseline_3", # G_Baseline D_Baseline 3
-    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
-    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss
-    },
-    {
-    "combination" : "G1_D_baseline_1",
-    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
-    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    },
-    {
-    "combination" : "G1_D_baseline_2",
-    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_loss,
-    "d_loss" : {"real_loss":0.25, "fake_loss":0.75, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    },
-    {
-    "combination" : "G2_D_baseline_3", 
-    "total_g_loss" :  {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss
-    },
-    {
-    "combination" : "G2_D_baseline_2",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    },
-    {
-    "combination" : "G2_D_baseline_1",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    #  {   "combination" : "G2_D_pretrain_3",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # },
+    {   "combination" : "G1_D_pretrain_3_1000sents_lmfz_encr0_2unfz",
+    "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
     }
+    #      {   "combination" : "G2_D_pretrain_1",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.33, "fake_loss":0.33, "fake_loss_pretrain":0.33} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # },
+    # {   "combination" : "G1_D_pretrain_1",
+    # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.33, "fake_loss":0.33, "fake_loss_pretrain":0.33} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # }
 ]
 
 def main(args, config):
@@ -199,7 +151,7 @@ def main(args, config):
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
     # train_dataset = dataset["train"].select(range(1000020))
-    train_dataset = dataset["train"].select(range(1000))
+    train_dataset = dataset["train"].select(range(100))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"].select(range(300))
@@ -295,7 +247,7 @@ def main(args, config):
     generator1_pretrained = torch.hub.load('pytorch/fairseq', 'transformer.wmt14.en-fr', tokenizer='moses', bpe='subword_nmt')
 
     # Specify the path to your dictionary file
-    dict_path = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
+    dict_path = '/home/paperspace/google_drive_v3/Research_Thesis/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
 
     # Load the dictionary
     dictionary = Dictionary.load(dict_path)
@@ -684,13 +636,20 @@ def main(args, config):
         for param in generator2_train.model.parameters():
             param.requires_grad = False
         
+        # Freeze early encoder layers (for example, the first 2 layers)
+        for layer in generator2_train.model.encoder.layers[:2]:
+            for param in layer.parameters():
+                param.requires_grad = True
+        
+        
         # for layer in generator2_train.model.decoder.layers[:2]:
         #     for param in layer.parameters():
         #         param.requires_grad = True
 
+
         # Unfreeze the lm_head
         for param in generator2_train.lm_head.parameters():
-            param.requires_grad = True
+            param.requires_grad = False
 
         ######-------------------------------------TRAINING --------------------------------------------#####
         for i, sample in enumerate(train_dataloader):
