@@ -491,7 +491,7 @@ def main(args):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_600sents_debug_spchars_v2.db"
-    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db"
+    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format_G2_D_baseline_2.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
