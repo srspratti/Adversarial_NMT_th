@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 #### Logging ####
 
@@ -295,7 +295,7 @@ def main(args, config):
     generator1_pretrained = torch.hub.load('pytorch/fairseq', 'transformer.wmt14.en-fr', tokenizer='moses', bpe='subword_nmt')
 
     # Specify the path to your dictionary file
-    dict_path = '/home/paperspace/google_drive_v2/Research_Thesis/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
+    dict_path = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
 
     # Load the dictionary
     dictionary = Dictionary.load(dict_path)

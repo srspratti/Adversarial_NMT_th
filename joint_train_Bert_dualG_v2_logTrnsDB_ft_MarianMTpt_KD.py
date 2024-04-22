@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 #### Logging ####
 
@@ -132,11 +132,11 @@ def main(args):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    # train_dataset = dataset["train"].select(range(1000020))
-    train_dataset = dataset["train"].select(range(1000))
+    train_dataset = dataset["train"].select(range(1000080))
+    # train_dataset = dataset["train"].select(range(1000))
 
     # Keep the full valid and test datasets
-    valid_dataset = dataset["validation"].select(range(300))
+    valid_dataset = dataset["validation"]
     test_dataset = dataset["test"]
 
     # Loading Bert Model
@@ -229,7 +229,7 @@ def main(args):
     generator1_pretrained = torch.hub.load('pytorch/fairseq', 'transformer.wmt14.en-fr', tokenizer='moses', bpe='subword_nmt')
 
     # Specify the path to your dictionary file
-    dict_path = '/home/paperspace/google_drive_v2/Research_Thesis/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
+    dict_path = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
 
     # Load the dictionary
     dictionary = Dictionary.load(dict_path)
@@ -345,9 +345,9 @@ def main(args):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
     # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
 
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_Normalkd_comb_G2_D_baseline_2_save_open_direct_pretrained"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_Normalkd_comb_G2_D_baseline_2_save_open_direct_pretrained")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_Normalkd_comb_G2_D_baseline_2_save_open_direct_pretrained/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm")
@@ -499,7 +499,7 @@ def main(args):
     # best_val_loss = float('inf')
     best_loss = math.inf
     patience_counter = 0
-    patience_threshold = 2  # Example value, adjust as needed
+    patience_threshold = 1  # Example value, adjust as needed
 
     def cosine_embedding_loss(fake_tgt_sentences_embeds, fr_decoded_bert_embeds):
 
@@ -847,7 +847,8 @@ def main(args):
             # total_g_loss = 0.10*g_loss + 0.70*g_cosine_loss + 0.20*g_kl_loss
             # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
             # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-            total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+            # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+            total_g_loss = 0.00*g_loss + 1*g_cosine_loss + 0.00*g_kl_loss #### ***************  wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_Normalkd_comb_************* G2_D_baseline_2
 
 
             total_g_loss.backward()
@@ -1007,7 +1008,8 @@ def main(args):
             # d_loss = (real_loss + fake_loss) / 2
             # combining the real and fake loss from the two generators
             #d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
-            d_loss = 0.10*real_loss + 0.90*fake_loss + 0.00*fake_loss_pretrain
+            # d_loss = 0.10*real_loss + 0.90*fake_loss + 0.00*fake_loss_pretrain
+            d_loss = 0.75*real_loss + 0.25*fake_loss + 0.00*fake_loss_pretrain ########## ***************wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_Normalkd_comb_************* G2_D_baseline_2
 
             d_loss.backward()
             optimizer_d.step()
@@ -1219,8 +1221,8 @@ def main(args):
                 #total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss
                 # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
                 # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
-                total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
-                
+                # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
+                total_g_loss = 0.00*g_loss + 1*g_cosine_loss + 0.00*g_kl_loss #### ****************** wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_Normalkd_comb_ ************ G2_D_baseline_2 
                 total_valid_g_loss += total_g_loss.item()
 
                 # ---------------------------------------fake loss from the Generator 2 now in eval() mode --------------------------
@@ -1348,7 +1350,7 @@ def main(args):
                 # combining the real and fake loss from the two generators
                 # d_loss = (real_loss + fake_loss + fake_loss_pretrain) / 3
                 #d_loss = 0.20*real_loss + 0.60*fake_loss + 0.20*fake_loss_pretrain
-                d_loss = 0.10*real_loss + 0.90*fake_loss + 0.00*fake_loss_pretrain
+                d_loss = 0.75*real_loss + 0.25*fake_loss + 0.00*fake_loss_pretrain ########## *************wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_Normalkd_comb_************* G2_D_baseline_2
                 total_valid_d_loss += d_loss.item()
 
         # Print validation losses
