@@ -102,55 +102,50 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 import os
 getpwd = os.getcwd()
 
-model_tokenizer_configs = [
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_dedbug_gloss_nonkd_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreeze_lmlayer_dcd_tp_2_1000sents_debug_Normalkd_2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb4_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb5_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb6_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb7_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb8_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb9_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#    {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb10_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#    {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb11_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#      {
-#        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb12_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#    },
-#   {
-#        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb13_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#    },
-#      {
- #       "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D5_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-  #  },
-      {
-        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D5_save_open_direct_pretrained/valid_checkpoint_discriminator_at_1.pt"
-    }
+model_tokenizer_configs = [ # /workspace/2024/git_repo_vastai/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_baseline_1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_baseline_1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_baseline_2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_baseline_3_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D3_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D4_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G2_D_baseline_1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G2_D_baseline_2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G2_D_baseline_3_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    # {
+    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    # },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D3_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D4_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D6_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+   {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D7_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+     {
+       "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D9_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+   }
+
 ]
 
 
@@ -390,7 +385,7 @@ def main(args,checkpoints_path):
     # discriminator_cnn.load_state_dict(checkpoints_path['discriminator_state_dict'])
     # discriminator_cnn.load_state_dict(checkpoint.state_dict())
 
-
+    print("checkpoints_path ", checkpoints_path)
    
     model_dict = discriminator_cnn.state_dict()
     model = torch.load(checkpoints_path)
