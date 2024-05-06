@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 #### Logging ####
 
@@ -88,10 +88,22 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
     # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
     # },
-    {   "combination" : "G1_D_pretrain_3_1000sents_lmfz_encr0_2unfz",
+    {   "combination" : "G1_D_baseline_1_1mil_only_biasTermsUpdating", #G1_D_pretrain_3_1000sents_lmfz_encr0_1unfz
     "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
+    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    },
+    {   "combination" : "G2_D_baseline_1_1mil_only_biasTermsUpdating", #G1_D_pretrain_3_1000sents_lmfz_encr0_1unfz
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
     }
+    # {   "combination" : "G1_D_pretrain_3_1mil_all_layers_unfz_inl_lmlayer", #G1_D_pretrain_3_1000sents_lmfz_encr0_1unfz
+    # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # },
+    # {   "combination" : "G2_D_pretrain_3_1mil_all_layers_unfz_inl_lmlayer", #G1_D_pretrain_3_1000sents_lmfz_encr0_1unfz
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # }
     #      {   "combination" : "G2_D_pretrain_1",
     # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
     # "d_loss" : {"real_loss":0.33, "fake_loss":0.33, "fake_loss_pretrain":0.33} #0.50*real_loss + 0.50*fake_loss_pretrain
@@ -150,11 +162,11 @@ def main(args, config):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    # train_dataset = dataset["train"].select(range(1000020))
-    train_dataset = dataset["train"].select(range(100))
+    train_dataset = dataset["train"].select(range(1000080))
+    # train_dataset = dataset["train"].select(range(100080))
 
     # Keep the full valid and test datasets
-    valid_dataset = dataset["validation"].select(range(300))
+    valid_dataset = dataset["validation"]
     test_dataset = dataset["test"]
 
     # Loading Bert Model
@@ -247,7 +259,8 @@ def main(args, config):
     generator1_pretrained = torch.hub.load('pytorch/fairseq', 'transformer.wmt14.en-fr', tokenizer='moses', bpe='subword_nmt')
 
     # Specify the path to your dictionary file
-    dict_path = '/home/paperspace/google_drive_v3/Research_Thesis/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
+    # dict_path = '/home/paperspace/google_drive_v3/Research_Thesis/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
+    dict_path = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/dict.fr.txt'
 
     # Load the dictionary
     dictionary = Dictionary.load(dict_path)
@@ -509,7 +522,7 @@ def main(args, config):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_600sents_debug_spchars_v2.db"
-    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db"
+    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_"+config['combination']+"_save_pretrained_with_tokenizer_dict_format.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -630,16 +643,21 @@ def main(args, config):
         #         param.requires_grad = False
                 
         """
-        print("generator2_train ", generator2_train)
+        print("generator2_train parameters", generator2_train)
         # writer = SummaryWriter()
         # generator2_train.to_text_file("generator2_train.txt")
-        for param in generator2_train.model.parameters():
+        # for param in generator2_train.model.parameters():
+        for name, param in generator2_train.named_parameters():
             param.requires_grad = False
+            
+            # Enable requires_grad only for bias terms
+            if 'bias' in name:
+                param.requires_grad = True
         
         # Freeze early encoder layers (for example, the first 2 layers)
-        for layer in generator2_train.model.encoder.layers[:2]:
-            for param in layer.parameters():
-                param.requires_grad = True
+        # for layer in generator2_train.model.encoder.layers[:1]:
+        #     for param in layer.parameters():
+        #         param.requires_grad = True
         
         
         # for layer in generator2_train.model.decoder.layers[:2]:
