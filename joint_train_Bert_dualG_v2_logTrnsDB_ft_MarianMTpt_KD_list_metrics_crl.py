@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
 
@@ -84,11 +84,15 @@ options.add_generation_args(parser)
 
 
 g_and_d_loss_checkpoint_config =[
-    {   "combination" : "G1_D_pretrain_3_1mil_all_layersunfrz",
+    #  {   "combination" : "G2_D_pretrain_3",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # },
+    {   "combination" : "G1_D_pretrain_3_1MIL_only_biasTermsUpdating_crl",
     "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
     "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
     },
-    {   "combination" : "G2_D_pretrain_3_1mil_all_layersunfrz",
+    {   "combination" : "G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl",
     "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
     "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
     }
@@ -150,8 +154,9 @@ def main(args, config):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(1000080))
-    # train_dataset = dataset["train"].select(range(100080))
+    train_dataset = dataset["train"].select(range(1000020))
+    #train_dataset = dataset["train"].select(range(100000))
+    # train_dataset = dataset["train"].select(range(1000))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -363,9 +368,9 @@ def main(args, config):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
     # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
 
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained/"
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm")
@@ -474,7 +479,8 @@ def main(args, config):
 
 
     ## Define loss functions for the generator and the Discriminator
-    g_criterion = torch.nn.NLLLoss(reduction="sum", ignore_index=0)
+    # g_criterion = torch.nn.NLLLoss(reduction="sum", ignore_index=0)
+    g_criterion = nn.CrossEntropyLoss(reduction="sum", ignore_index=0)
     d_criterion = torch.nn.BCELoss()
     pg_criterion = PGLoss(size_average=True, reduce=True)
 
@@ -509,7 +515,7 @@ def main(args, config):
     # Example usage
     getpwd = os.getcwd()
     # db_name = "translations_600sents_debug_spchars_v2.db"
-    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_save_pretrained_with_tokenizer_dict_format.db"
+    db_name = "translations_wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1mil_20epochs_comb_"+config['combination']+"save_pretrained_with_tokenizer_dict_format.db"
     db_path = getpwd + "/" + db_name
     remove_db_if_exists(db_path)
     
@@ -619,10 +625,10 @@ def main(args, config):
         for param in generator2_train.model.decoder.embed_positions.parameters():
             param.requires_grad = False
 
-        # Freeze early encoder layers (for example, the first 2 layers)
-        for layer in generator2_train.model.encoder.layers[:2]:
-            for param in layer.parameters():
-                param.requires_grad = False
+        # # Freeze early encoder layers (for example, the first 2 layers)
+        # for layer in generator2_train.model.encoder.layers[:2]:
+        #     for param in layer.parameters():
+        #         param.requires_grad = False
         
         # Similarly, you might consider freezing early decoder layers if needed
         # for layer in generator2_train.model.decoder.layers[:2]:
@@ -632,12 +638,17 @@ def main(args, config):
         """
         print("generator2_train ", generator2_train)
         # writer = SummaryWriter()
-        # generator2_train.to_text_file("generator2_train.txt")
-        for param in generator2_train.model.parameters():
-            param.requires_grad = True
-        
-        # Freeze early encoder layers (for example, the first 2 layers)
-        # for layer in generator2_train.model.encoder.layers[:2]:
+        # # generator2_train.to_text_file("generator2_train.txt")
+        # for name, param in generator2_train.model.parameters():
+        for name, param in generator2_train.named_parameters():
+            param.requires_grad = False
+            
+            # Enable requires_grad only for bias terms
+            if 'bias' in name:
+                param.requires_grad = True
+
+        # # Freeze early encoder layers (for example, the first 2 layers)
+        # for layer in generator2_train.model.encoder.layers[:1]:
         #     for param in layer.parameters():
         #         param.requires_grad = True
         
@@ -647,7 +658,7 @@ def main(args, config):
         #         param.requires_grad = True
 
 
-        # freeze the lm_head
+        # Unfreeze the lm_head
         for param in generator2_train.lm_head.parameters():
             param.requires_grad = False
 
@@ -712,7 +723,18 @@ def main(args, config):
             # )
             # print("tgt_sentences_flat shape ", tgt_sentences_flat.shape)
 
-            g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
+            #g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
+      
+            print("shape of generator2_train_out.logits ", generator2_train_out.logits.shape)
+
+            logits_flat = generator2_train_out.logits.view(-1, generator2_train_out.logits.size(-1))  # Shape: [batch_size * seq_len, vocab_size]
+            
+            print("shape of tgt_sentences ", tgt_sentences.shape)
+            print(" shape of logits_flat ", logits_flat.shape)
+
+            #g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
+            #g_loss = g_criterion(generator2_train_out.logits, tgt_sentences)
+            g_loss = g_criterion(logits_flat, tgt_sentences_flat)
 
 
             # -------------------------------------Generating translations using the pre-trained generator
@@ -1137,7 +1159,18 @@ def main(args, config):
                 tgt_sentences_flat = tgt_sentences.view(-1)  # Shape: [batch_size * seq_len]
 
                 # Calculate generator loss
-                g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
+                # g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
+
+                print("shape of generator2_train_out.logits ", generator2_train_out.logits.shape)
+
+                logits_flat = generator2_train_out.logits.view(-1, generator2_train_out.logits.size(-1))  # Shape: [batch_size * seq_len, vocab_size]
+                
+                print("shape of tgt_sentences ", tgt_sentences.shape)
+                print(" shape of logits_flat ", logits_flat.shape)
+
+                #g_loss = g_criterion(fake_tgt_sentences_probs, tgt_sentences_flat)
+                #g_loss = g_criterion(generator2_train_out.logits, tgt_sentences)
+                g_loss = g_criterion(logits_flat, tgt_sentences_flat)
 
                 # -------------------------------------Generating translations using the pre-trained generator
                 src_sentences_for_G1 = ids_to_sentences_bert(src_sentences)
