@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader
 import sys
 from transformers import AutoTokenizer
 from tqdm import tqdm
+import random
 
 
 torch.cuda.empty_cache()
@@ -105,50 +106,45 @@ getpwd = os.getcwd()
 
 model_tokenizer_configs = [ # /workspace/2024/git_repo_vastai/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_baseline_1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt
     {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G1_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+   {
+        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
+    },
+    {
         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G1_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
     },
    {
         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
     }
-    # {
-    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_pretrain_3_100ksents_all_layers_unfz_inl_lmlayer_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-    # },
-    # {
-    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G2_D_pretrain_3_100ksents_all_layers_unfz_inl_lmlayer_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-    # },
-    # {
-    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D4_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-    # },
-    # {
-    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G2_D_baseline_1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-    # },
-    # {
-    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G2_D_baseline_2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-    # },
-    # {
-    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G2_D_baseline_3_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-    # },
-    # {
-    #     "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D2_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-    # },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D3_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D4_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D6_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#    {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D7_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#      {
-#        "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G10_D9_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#    }
-
 ]
 
+def set_random_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+def run_model_with_seeds(options, model_tokenizer_configs, num_runs=5):
+    results = []
+    seeds = [random.randint(1, 10000) for _ in range(num_runs)]
+    for seed in seeds:
+        set_random_seed(seed)
+        for config in model_tokenizer_configs:
+            accuracy, precision, recall, conf_matrix = main(options, config["checkpoints_path"])
+            results.append({
+                "model": config["checkpoints_path"],
+                "seed": seed,
+                "accuracy": accuracy,
+                "precision": precision,
+                "recall": recall,
+                "conf_matrix": conf_matrix
+            })
+    return results
+
+def get_top_results(results, top_n=5):
+    # Sort results by accuracy and get the top N results
+    return sorted(results, key=lambda x: x["accuracy"], reverse=True)[:top_n]
 
 def preprocess_testData_MarianMT(data):
     max_length = 128
@@ -514,22 +510,42 @@ if __name__ == "__main__":
     if ret[1]:
         logging.warning(f"unknown arguments: {parser.parse_known_args()[1]}")
     # main(options)
-    results = []
-    for config in tqdm(model_tokenizer_configs,desc="Running models"):
-        accuracy, precision, recall, conf_matrix = main(options, config["checkpoints_path"])
-        results.append({
-            "model": config["checkpoints_path"],
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "conf_matrix": conf_matrix
-        })
+    # results = []
+    # for config in tqdm(model_tokenizer_configs,desc="Running models"):
+    #     accuracy, precision, recall, conf_matrix = main(options, config["checkpoints_path"])
+    #     results.append({
+    #         "model": config["checkpoints_path"],
+    #         "accuracy": accuracy,
+    #         "precision": precision,
+    #         "recall": recall,
+    #         "conf_matrix": conf_matrix
+    #     })
     
-    # Optionally save results to a file or print them
-    for result in results:
+    # # Optionally save results to a file or print them
+    # for result in results:
+    #     print(result)
+
+    # with open("disc_checkpoints_results_G10_D5.txt", "w") as file:
+    #     for result in results:
+    #         file.write(f"{result}\n")
+    
+    all_results = run_model_with_seeds(options, model_tokenizer_configs, num_runs=20)
+
+    # Get the top 5 results
+    top_results = get_top_results(all_results)
+
+    # Print or save the top results
+    print("Top 5 results:")
+    for result in top_results:
         print(result)
 
-    with open("disc_checkpoints_results_G10_D5.txt", "w") as file:
-        for result in results:
+    # 
+    with open("All_seed_and_classifiers_baseline_pretrain.txt", 'w') as file_all:
+        for all_result in all_results:
+            file_all.write(f"{all_result}\n")
+
+    # Optionally, save to file
+    with open("top_5_classifier_accuracies_baseline_pretrain.txt", "w") as file:
+        for result in top_results:
             file.write(f"{result}\n")
     
