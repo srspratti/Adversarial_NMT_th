@@ -66,7 +66,7 @@ import random
 # torch.manual_seed(seed)
 # print("seed: ", seed)
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
 
 os.environ["CUDA_VISIBLE_DEVICES"] ="0"
 
@@ -95,19 +95,41 @@ getpwd = os.getcwd()
 
 model_tokenizer_configs = [ # /workspace/2024/git_repo_vastai/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_baseline_1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt
     {
-        "d_model_path": getpwd + "/data_combinations_only_d/checkpoint_b_iv/train_joint_d_0.001.epoch_1.pt",
-        "g_model_path" : getpwd + "/data_combinations_only_d/checkpoint_b_iv/train_joint_g_9.695.epoch_10.pt",
-        "comb": "b_iv_test"
+        "d_model_path": getpwd + "/data_combinations/checkpoint_b_i/train_joint_d_0.000.epoch_10.pt",
+        "g_model_path" : getpwd + "/data_combinations/checkpoint_b_i/train_joint_g_9.695.epoch_10.pt",
+        "comb": "b_i"
+    },
+        {
+        "d_model_path": getpwd + "/data_combinations/checkpoint_b_ii/train_joint_d_0.012.epoch_5.pt",
+        "g_model_path" : getpwd + "/data_combinations/checkpoint_b_ii/train_joint_g_9.696.epoch_5.pt",
+        "comb": "b_ii"
+    },
+        {
+        "d_model_path": getpwd + "/data_combinations/checkpoint_b_ii_v2/train_joint_d_0.002.epoch_3.pt",
+        "g_model_path" : getpwd + "/data_combinations/checkpoint_b_ii_v2/train_joint_g_9.690.epoch_2.pt",
+        "comb": "b_ii_v2"
+    },
+        {
+        "d_model_path": getpwd + "/data_combinations/checkpoint_b_iii/train_joint_d_0.003.epoch_5.pt",
+        "g_model_path" : getpwd + "/data_combinations/checkpoint_b_iii/train_joint_g_9.685.epoch_4.pt",
+        "comb": "b_iii"
+    },
+        {
+        "d_model_path": getpwd + "/data_combinations/checkpoint_b_iv/train_joint_d_0.001.epoch_1.pt",
+        "g_model_path" : getpwd + "/data_combinations/checkpoint_b_iv/train_joint_g_9.734.epoch_1.pt",
+        "comb": "b_iv"
+    },
+        {
+        "d_model_path": getpwd + "/data_combinations/checkpoint_b_iv_v2/train_joint_d_0.000.epoch_5.pt",
+        "g_model_path" : getpwd + "data_combinations/checkpoint_b_iv_v2/train_joint_d_0.001.epoch_1.pt",
+        "comb": "b_iv_v2"
+    },
+        {
+        "d_model_path": getpwd + "/data_combinations/checkpoint_b_v/train_joint_d_0.002.epoch_5.pt",
+        "g_model_path" : getpwd + "/data_combinations/checkpoint_b_v/train_joint_g_9.699.epoch_5.pt",
+        "comb": "b_v"
     }
-#    {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G1_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#    {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     }
+
 ]
 
 
@@ -1019,7 +1041,7 @@ if __name__ == "__main__":
         logging.warning("unknown arguments: {0}".format(
             parser.parse_known_args()[1]))
     # main(options)
-    all_results = run_model_with_seeds(options, model_tokenizer_configs, num_runs=2)
+    all_results = run_model_with_seeds(options, model_tokenizer_configs, num_runs=20)
 
     # Get the top 5 results
     top_results = get_top_results(all_results)
