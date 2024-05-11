@@ -3,7 +3,6 @@ import logging
 import re
 import pandas as pd
 import html
-import numpy as np
 
 import torch
 import os
@@ -57,18 +56,16 @@ from sequence_generator import SequenceGenerator
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix  # for metrics
 
 import random
-# seed = random.randint(0, 2**32 - 1)
-# torch.manual_seed(1964997770)
-# # torch.manual_seed(seed)
-# print("seed used: ", 1964997770)
+seed = random.randint(0, 2**32 - 1)
+torch.manual_seed(1964997770)
+# torch.manual_seed(seed)
+print("seed used: ", 1964997770)
 
 # torch.manual_seed(3203451255)
 # torch.manual_seed(seed)
 # print("seed: ", seed)
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
-
-os.environ["CUDA_VISIBLE_DEVICES"] ="0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s: %(message)s',
@@ -89,54 +86,6 @@ options.add_checkpoint_args(parser)
 options.add_generator_model_args(parser)
 options.add_discriminator_model_args(parser)
 options.add_generation_args(parser)
-
-import os
-getpwd = os.getcwd()
-
-model_tokenizer_configs = [ # /workspace/2024/git_repo_vastai/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_1000sents_debug_Normalkd_comb_G1_D_baseline_1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt
-    {
-        "d_model_path": getpwd + "/data_combinations_only_d/checkpoint_b_iv/train_joint_d_0.001.epoch_1.pt",
-        "g_model_path" : getpwd + "/data_combinations_only_d/checkpoint_b_iv/train_joint_g_9.695.epoch_10.pt",
-        "comb": "b_iv_test"
-    }
-#    {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#     {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G1_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     },
-#    {
-#         "checkpoints_path": getpwd + "/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1_save_open_direct_pretrained/best_discriminator_dill_direct_at_1.pt"
-#     }
-]
-
-
-def set_random_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-
-def run_model_with_seeds(options, model_tokenizer_configs, num_runs=5):
-    results = []
-    seeds = [random.randint(1, 10000) for _ in range(num_runs)]
-    for seed in seeds:
-        set_random_seed(seed)
-        for config in model_tokenizer_configs:
-            accuracy, precision, recall = main(options, config["d_model_path"], config["d_model_path"], config["comb"])
-            results.append({
-                "model": config["d_model_path"],
-                "seed": seed,
-                "accuracy": accuracy,
-                "precision": precision,
-                "recall": recall
-                # "conf_matrix": conf_matrix
-            })
-    return results
-
-def get_top_results(results, top_n=5):
-    # Sort results by accuracy and get the top N results
-    return sorted(results, key=lambda x: x["accuracy"], reverse=True)[:top_n]
 
 # Metric Calculation Functions    
 def calculate_metrics(y_true, y_pred):
@@ -208,14 +157,14 @@ def ids_to_sentences(src_tokens, dict):
     return sentences
 
 
-def main(args, d_model_path, g_model_path, comb):
+def main(args):
     
     import gc
     torch.cuda.empty_cache()
     gc.collect()
     
     # Replace with the path to your learned BPE codes.
-    BPE_CODE_PATH = "/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/code"
+    BPE_CODE_PATH = "/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/code"
     # /u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/subword-nmt/subword_nmt/apply_bpe.py
     def apply_bpe(sentence):
         """Apply BPE encoding to a sentence using a subprocess call to apply_bpe.py."""
@@ -229,7 +178,7 @@ def main(args, d_model_path, g_model_path, comb):
     # torch.cuda.empty_cache()
     print("args.fixed_max_len) ", args.fixed_max_len)
     # use_cuda = (len(args.gpuid) >= 1)
-    use_cuda = False #True
+    use_cuda = True
     dataset = data.load_raw_text_dataset_test_classify(
                 args.data,
                 ['test'],
@@ -300,8 +249,7 @@ def main(args, d_model_path, g_model_path, comb):
     # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_20_40_40/train_joint_d_0.027.epoch_1.pt'
     # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_50_50/train_joint_d_0.028.epoch_1.pt'
     # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_80_20/train_joint_d_0.021.epoch_6.pt'
-    # d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/train_joint_d_0.001.epoch_1.pt'
-    d_model_path = d_model_path
+    d_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/train_joint_d_0.001.epoch_1.pt'
     print("d_model_path ", d_model_path)
     
     assert os.path.exists(d_model_path)
@@ -345,8 +293,7 @@ def main(args, d_model_path, g_model_path, comb):
     # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_20_40_40/train_joint_g_10.400.epoch_1.pt'
     # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_50_50/train_joint_g_10.399.epoch_1.pt'
     # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_80_20/train_joint_g_10.339.epoch_6.pt'
-    # g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/train_joint_g_10.398.epoch_1.pt'
-    g_model_path = g_model_path
+    g_model_path = '/root/Adversarial_NMT_th/checkpoints/joint/test_wmt14_en_fr_2023_40mil__mgpu_ptfseqOnly_v2_0_100_0/train_joint_g_10.398.epoch_1.pt'
     assert os.path.exists(g_model_path)
     print("g_model_path: ", g_model_path)
      # Load model
@@ -379,15 +326,15 @@ def main(args, d_model_path, g_model_path, comb):
     
     ################ Loading Pre-Trained Generator ( FairSeq PreTrained Tranformer) #####################
     
-    path_to_your_pretrained_model = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
+    path_to_your_pretrained_model = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer'
     from fairseq.models.transformer import TransformerModel
     generator_pt = TransformerModel.from_pretrained(
     model_name_or_path=path_to_your_pretrained_model,
     checkpoint_file='model.pt',
     bpe='subword_nmt',
     # data_name_or_path='/u/prattisr/phase-2/all_repos/Adversarial_NMT/neural-machine-translation-using-gan-master/data-bin/wmt14_en_fr_raw_sm/50kLines',
-    data_name_or_path='/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer',
-    bpe_codes = '/workspace/2024/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
+    data_name_or_path='/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer',
+    bpe_codes = '/root/Adversarial_NMT_th/pretrained_models/wmt14.en-fr.joined-dict.transformer/bpecodes'
     )
     print("Pretrained Generator loaded successfully!")
     
@@ -620,7 +567,7 @@ def main(args, d_model_path, g_model_path, comb):
     print("ht_mt_target_converted: ", len(ht_mt_target_converted))
     print("fake_sentence_generator_converted ", len(fake_sentence_generator_converted))
     print("len of translations_all ", len(translations_all))
-    # print("seed: ", seed)
+    print("seed: ", seed)
     
     # data = {}
     classify_df = pd.DataFrame(data={"src_sentences_converted":src_sentences_converted, "target_converted": target_converted ,"ht_mt_target_converted": ht_mt_target_converted, "fake_sentence_generator_converted":fake_sentence_generator_converted, "Translated_by_FairSeqTransf_G":translations_all,"y_true": y_true, "y_pred": y_pred})
@@ -635,7 +582,7 @@ def main(args, d_model_path, g_model_path, comb):
     # classify_df.to_excel('classify_df_8mil_D3_v1.xlsx', index=False)   # 8 million 8 gpu with only D loss Only Fake/Machine
     # classify_df.to_excel('classify_df_4mil_D10_v1.xlsx', index=False) 
     # classify_df.to_excel('classify_df_4mil_D16_40mil_ptfseqOnly_v2_0_100_0_v1.xlsx', index=False)
-    classify_df.to_excel('classify_df_'+comb+'.xlsx', index=False) 
+    classify_df.to_excel('classify_df_4mil_D29_4mil_ptfseqOnly_v2_0_100_0_all_Metrics_seed_1964997770_60_v8-1.xlsx', index=False) 
     
     # def calculate_bleu(hypotheses, references):
     #     return corpus_bleu(hypotheses, [references]).score
@@ -893,7 +840,7 @@ def main(args, d_model_path, g_model_path, comb):
     classify_df['fake_sentence_generator_converted'] = classify_df['fake_sentence_generator_converted'].apply(clean_text)
     classify_df['Translated_by_FairSeqTransf_G'] = classify_df['Translated_by_FairSeqTransf_G'].apply(clean_text)
     
-    classify_df.to_excel('classify_df_'+comb+'-2.xlsx', index=False) 
+    classify_df.to_excel('classify_df_4mil_D29_4mil_ptfseqOnly_v2_0_100_0_all_Metrics_seed_1964997770_60_v8-2.xlsx', index=False) 
     
     # Load a pre-trained sentence transformer model
     model = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')
@@ -953,7 +900,7 @@ def main(args, d_model_path, g_model_path, comb):
 
     # Display the updated DataFrame
     # print(classify_df)
-    classify_df.to_excel('classify_df_'+comb+'-3.xlsx', index=False) 
+    classify_df.to_excel('classify_df_4mil_D29_4mil_ptfseqOnly_v2_0_100_0_all_Metrics_seed_1964997770_60_v8-3.xlsx', index=False) 
     
     from collections import Counter
     # from nltk.tokenize import word_tokenize
@@ -1001,9 +948,8 @@ def main(args, d_model_path, g_model_path, comb):
     classify_df['ht_mt_target_converted_sent'] = classify_df['ht_mt_target_converted'].apply(analyze_sentiment)
     classify_df['Translated_by_FairSeqTransf_G_sent'] = classify_df['Translated_by_FairSeqTransf_G'].apply(analyze_sentiment)
     
-    classify_df.to_excel('classify_df_'+comb+'-4.xlsx', index=False)
+    classify_df.to_excel('classify_df_4mil_D29_4mil_ptfseqOnly_v2_0_100_0_all_Metrics_seed_1964997770_60_v8-4.xlsx', index=False)
     
-    return overall_accuracy_cm, precision, recall
     # for col in classify_df.columns:
     #     classify_df[col + '_TTR'] = df[col].apply(calculate_ttr)
     #     classify_df[col + '_YulesI'] = df[col].apply(calculate_yules_i)
@@ -1018,23 +964,4 @@ if __name__ == "__main__":
     if ret[1]:
         logging.warning("unknown arguments: {0}".format(
             parser.parse_known_args()[1]))
-    # main(options)
-    all_results = run_model_with_seeds(options, model_tokenizer_configs, num_runs=2)
-
-    # Get the top 5 results
-    top_results = get_top_results(all_results)
-
-    # Print or save the top results
-    print("Top 5 results:")
-    for result in top_results:
-        print(result)
-
-    # 
-    with open("All_seed_and_classifiers_TF.txt", 'w') as file_all:
-        for all_result in all_results:
-            file_all.write(f"{all_result}\n")
-
-    # Optionally, save to file
-    with open("top_5_classifier_accuracies_TF.txt", "w") as file:
-        for result in top_results:
-            file.write(f"{result}\n")
+    main(options)
