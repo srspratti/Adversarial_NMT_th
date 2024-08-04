@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
 
@@ -92,7 +92,7 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
     # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
     # }
-    {   "combination" : "G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1-debug",
+    {   "combination" : "G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1-pg-debug",
     "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
     "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
     }
@@ -157,7 +157,7 @@ def main(args, config):
     # Load 50k rows of the train dataset
     # train_dataset = dataset["train"].select(range(1000020))
     # train_dataset = dataset["train"].select(range(100000))
-    train_dataset = dataset["train"].select(range(1000))
+    train_dataset = dataset["train"].select(range(100))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -385,28 +385,32 @@ def main(args, config):
     # Definining loss function methods for generator - Additional 
 
     # Define the policy gradient loss function
-    # def policy_gradient_loss(discriminator, src_sentences, fake_tgt_sentences,rewards):
-    #     """
-    #     Calculate the policy gradient loss for the generator, aligning with the Discriminator_cnn_bert's requirements.
+    def policy_gradient_loss(discriminator, src_sentences, fake_tgt_sentences,rewards):
+        """
+        Calculate the policy gradient loss for the generator, aligning with the Discriminator_cnn_bert's requirements.
         
-    #     Args:
-    #         discriminator: The Discriminator_cnn_bert model.
-    #         src_sentences: Tensor of real source sentences.
-    #         fake_tgt_sentences: Tensor of generated target sentences by the generator.
-    #         rewards: Tensor of rewards from the discriminator for each generated sentence pair.
+        Args:
+            discriminator: The Discriminator_cnn_bert model.
+            src_sentences: Tensor of real source sentences.
+            fake_tgt_sentences: Tensor of generated target sentences by the generator.
+            rewards: Tensor of rewards from the discriminator for each generated sentence pair.
         
-    #     Returns:
-    #         loss: The computed policy gradient loss.
-    #     """
-    #     # Here we call the discriminator with both the source and fake target sentences
-    #     # It's assumed that rewards are the discriminator's output for these pairs
-    #     discriminator_scores = discriminator(src_sentences, fake_tgt_sentences).squeeze()
+        Returns:
+            loss: The computed policy gradient loss.
+        """
+        # Here we call the discriminator with both the source and fake target sentences
+        # It's assumed that rewards are the discriminator's output for these pairs
+        discriminator_scores = discriminator(src_sentences, fake_tgt_sentences).squeeze()
+        print("type of discriminator_scores ", type(discriminator_scores))
+        print("shape of discriminator_scores ", discriminator_scores.shape)
         
-    #     # Assuming the discriminator_scores are probabilities (after sigmoid in the discriminator),
-    #     # directly use them for calculating the loss. If they're logits, apply sigmoid here.
-    #     loss = -torch.mean(rewards * torch.log(discriminator_scores + 1e-8))
+        # Assuming the discriminator_scores are probabilities (after sigmoid in the discriminator),
+        # directly use them for calculating the loss. If they're logits, apply sigmoid here.
+        loss = -torch.mean(rewards * torch.log(discriminator_scores + 1e-8))
+        print("type of loss ", type(loss))
+        print("loss ", loss)
         
-    #     return loss
+        return loss
 
     # Define knowledge distillation loss function
     # from transformers import AutoTokenizer
@@ -671,6 +675,8 @@ def main(args, config):
         
         # Update logic
         update_count = 0
+        pg_count = 0  # Counter for policy gradient inclusion
+        pg_interval = 2  # Interval for PG loss calculation (every 2 updates)
 
 
         ######-------------------------------------TRAINING --------------------------------------------#####
@@ -906,7 +912,30 @@ def main(args, config):
             # total_g_loss = 0.30*g_cosine_loss + 0.70*g_kl_loss
             # total_g_loss = 0.05*g_loss + 0.90*g_cosine_loss * 0.05*g_kl_loss 
             # total_g_loss = 0.90*g_cosine_loss + 0.10*g_kl_loss 
-            total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
+            # total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
+
+            # Check if it's time to calculate PG loss based on pg_count
+            if pg_count % pg_interval == 0:
+                # _, predicted_indices = logits_flat.max(-1)
+                # fake_sentences = torch.reshape(predicted_indices, src_sentences.shape)
+                # discriminator_scores = discriminator(src_sentences, fake_sentences.detach()).squeeze()
+                # rewards = discriminator_scores.detach()  # Detach to ensure no gradients flow back
+
+                # Calculate PG loss
+                # pg_loss = policy_gradient_loss(discriminator_scores, rewards)
+
+                # Including policy gradient loss
+                # Incorporate discriminator feedback directly into G2's loss
+                # Assume discriminator provides a reward signal for PG training
+                # rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach()).detach()
+                rewards = discriminator_cnn(src_sentences, fake_tgt_sentences.detach())
+                print("type of rewards ", type(rewards))
+                print("rewards shape ", rewards.shape)
+                pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
+                total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss + 0.3 * pg_loss  # PG loss included
+                pg_count += 1  # Increment PG counter
+            else:
+                total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
 
 
             # total_g_loss.backward()
@@ -929,7 +958,7 @@ def main(args, config):
             #         # d_loss.backward()
             # update_count += 1 # Increment the update count
 
-            if update_count % 100 == 0:
+            if update_count % 10 == 0:
                 total_g_loss.backward()
                 optimizer_g.step()
                 optimizer_g.zero_grad()  # Clear gradients after update
