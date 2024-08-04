@@ -1571,3 +1571,4 @@ if __name__ == "__main__":
     for config in tqdm(g_and_d_loss_checkpoint_config, desc="Running models with diff. g_loss and d_loss"):
         print(" running config ", config["combination"])
         main(options, config)
+
