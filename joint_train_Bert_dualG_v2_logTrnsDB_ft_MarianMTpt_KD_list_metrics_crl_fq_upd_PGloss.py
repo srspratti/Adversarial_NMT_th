@@ -60,7 +60,7 @@ torch.cuda.device_count() # result is 1, using first GPU
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6"
 
 #### Logging ####
 
@@ -84,26 +84,29 @@ options.add_generation_args(parser)
 
 
 g_and_d_loss_checkpoint_config =[
-    #  {   "combination" : "G2_D_pretrain_3",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+     {   "combination" : "G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_1_every_2_updates-v1",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} 
+    }
+    # {   "combination" : "G1_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
+    # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
     # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
     # },
-    # {   "combination" : "G1_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1",
+    # {   "combination" : "G1_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
     # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
     # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    # }
-    {   "combination" : "G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_100_v1-pg-debug",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    }
-    #      {   "combination" : "G2_D_pretrain_1",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    # "d_loss" : {"real_loss":0.33, "fake_loss":0.33, "fake_loss_pretrain":0.33} #0.50*real_loss + 0.50*fake_loss_pretrain
     # },
-    # {   "combination" : "G1_D_pretrain_1",
-    # "total_g_loss" : {"g_loss":1.0, "g_cosine_los
-    #s":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    # "d_loss" : {"real_loss":0.33, "fake_loss":0.33, "fake_loss_pretrain":0.33} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # {   "combination" : "G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # },
+    # {   "combination" : "G2_kl_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
+    # },
+    # {   "combination" : "G2_kl_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, #g_cosine_loss,
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
     # }
 ]
 
@@ -155,9 +158,9 @@ def main(args, config):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    # train_dataset = dataset["train"].select(range(1000020))
+    train_dataset = dataset["train"].select(range(1000080))
     # train_dataset = dataset["train"].select(range(100000))
-    train_dataset = dataset["train"].select(range(100))
+    # train_dataset = dataset["train"].select(range(1000))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -932,7 +935,7 @@ def main(args, config):
                 print("type of rewards ", type(rewards))
                 print("rewards shape ", rewards.shape)
                 pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
-                total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss + 0.3 * pg_loss  # PG loss included
+                total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss + 1* pg_loss  # PG loss included
                 pg_count += 1  # Increment PG counter
             else:
                 total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
@@ -958,7 +961,7 @@ def main(args, config):
             #         # d_loss.backward()
             # update_count += 1 # Increment the update count
 
-            if update_count % 10 == 0:
+            if update_count % 100 == 0:
                 total_g_loss.backward()
                 optimizer_g.step()
                 optimizer_g.zero_grad()  # Clear gradients after update
