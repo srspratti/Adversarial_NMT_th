@@ -84,10 +84,18 @@ options.add_generation_args(parser)
 
 
 g_and_d_loss_checkpoint_config =[
-     {   "combination" : "G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_1_every_2_updates-v1",
+    {   "combination" : "G2_D_baseline_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_1_every_200_updates-v1",
     "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     }
+    #    {   "combination" : "G2_D_baseline_2_1MIL_only_biasTermsUpdating_crl_upc_every_10_updates-PGloss_1_every_2_updates-v1",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.30, "fake_loss":0.70, "fake_loss_pretrain":0.00} 
+    # }
+    #  {   "combination" : "G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_1_every_2_updates-v1",
+    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} 
+    # }
     # {   "combination" : "G1_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
     # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
     # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
@@ -158,7 +166,7 @@ def main(args, config):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(1000080))
+    train_dataset = dataset["train"].select(range(1000000))
     # train_dataset = dataset["train"].select(range(100000))
     # train_dataset = dataset["train"].select(range(1000))
 
@@ -650,6 +658,12 @@ def main(args, config):
         #         param.requires_grad = False
                 
         """
+
+        # Freeze the generator2_train model lm layers based on counter
+        # lm_counter = 0
+        # lm_interval = 10000  # Interval for updating the lm layers
+
+
         print("generator2_train ", generator2_train)
         # writer = SummaryWriter()
         # # generator2_train.to_text_file("generator2_train.txt")
@@ -679,7 +693,7 @@ def main(args, config):
         # Update logic
         update_count = 0
         pg_count = 0  # Counter for policy gradient inclusion
-        pg_interval = 2  # Interval for PG loss calculation (every 2 updates)
+        pg_interval = 200  # Interval for PG loss calculation (every 2 updates)
 
 
         ######-------------------------------------TRAINING --------------------------------------------#####
@@ -699,6 +713,13 @@ def main(args, config):
             attention_mask = sample["attention_mask"]
 
             print("src_sentences ", src_sentences.shape)
+
+            # if lm_counter % lm_interval == 0:
+            #     # Unfreeze the generator2_train model lm layers based on counter
+            #     for param in generator2_train.lm_head.parameters():
+            #         param.requires_grad = True
+            
+            # lm_counter += 1
 
             # ---------------------------------------------------------Train the generator 2 train()
             # optimizer_g.zero_grad()
@@ -936,10 +957,11 @@ def main(args, config):
                 print("rewards shape ", rewards.shape)
                 pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
                 total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss + 1* pg_loss  # PG loss included
-                pg_count += 1  # Increment PG counter
+                # pg_count += 1  # Increment PG counter
             else:
                 total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
 
+            pg_count += 1  # Increment PG counter
 
             # total_g_loss.backward()
             # optimizer_g.step()
