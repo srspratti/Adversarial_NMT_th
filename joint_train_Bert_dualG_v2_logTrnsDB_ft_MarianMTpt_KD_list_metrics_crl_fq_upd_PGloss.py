@@ -84,38 +84,98 @@ options.add_generation_args(parser)
 
 
 g_and_d_loss_checkpoint_config =[
-    {   "combination" : "G2_D_baseline_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_1_every_200_updates-v1",
+    # With K.D losses - Either cosine or KL ; Without PreTrain loss included in D loss
+    {   "combination" : "G2_cos_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
     "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+       {   "combination" : "G2_kl_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+     {   "combination" : "G2_cos_kl_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    {   "combination" : "G2_cos_kl_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    {   "combination" : "G2_cos_kl_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    # With MLE and K.D losses - Either cosine or KL ; ; Without PreTrain loss included in D loss
+    {   "combination" : "G1_G2_cos_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.50,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    {   "combination" : "G1_G2_cos_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.25,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    {   "combination" : "G1_G2_cos_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.25, "g_cosine_loss":0.75,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    {   "combination" : "G1_G2_kl_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.00,"g_kl_loss":0.50}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    {   "combination" : "G1_G2_kl_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    },
+    {   "combination" : "G1_G2_kl_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    }, 
+    # With K.D losses - Either cosine or KL ; With PreTrain loss included in D loss
+    {   "combination" : "G2_cos_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+       {   "combination" : "G2_kl_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+     {   "combination" : "G2_cos_kl_1_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G2_cos_kl_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G2_cos_kl_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    # With MLE and K.D losses - Either cosine or KL ; ; With PreTrain loss included in D loss
+    {   "combination" : "G1_G2_cos_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.50,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_cos_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.25,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_cos_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.25, "g_cosine_loss":0.75,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_kl_1_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.00,"g_kl_loss":0.50}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_kl_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_kl_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
     }
-    #    {   "combination" : "G2_D_baseline_2_1MIL_only_biasTermsUpdating_crl_upc_every_10_updates-PGloss_1_every_2_updates-v1",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
-    # "d_loss" : {"real_loss":0.30, "fake_loss":0.70, "fake_loss_pretrain":0.00} 
-    # }
-    #  {   "combination" : "G2_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_1_every_2_updates-v1",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
-    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} 
-    # }
-    # {   "combination" : "G1_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
-    # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
-    # },
-    # {   "combination" : "G1_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
-    # "total_g_loss" : {"g_loss":1.0, "g_cosine_loss":0.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    # },
-    # {   "combination" : "G2_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, #g_cosine_loss,
-    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    # },
-    # {   "combination" : "G2_kl_D_baseline_1_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, #g_cosine_loss,
-    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} #0.50*real_loss + 0.50*fake_loss_pretrain
-    # },
-    # {   "combination" : "G2_kl_D_pretrain_3_1MIL_only_biasTermsUpdating_crl_upc_every_100_updates-PGloss_0.3_every_2_updates-v1",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, #g_cosine_loss,
-    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} #0.50*real_loss + 0.50*fake_loss_pretrain
-    # }
 ]
 
 def main(args, config):
@@ -166,9 +226,9 @@ def main(args, config):
 
     # Here, you should adjust the loading of subsets to avoid redundant downloads or loading.
     # Load 50k rows of the train dataset
-    train_dataset = dataset["train"].select(range(1000000))
+    # train_dataset = dataset["train"].select(range(1000000))
     # train_dataset = dataset["train"].select(range(100000))
-    # train_dataset = dataset["train"].select(range(1000))
+    train_dataset = dataset["train"].select(range(1000))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -693,7 +753,7 @@ def main(args, config):
         # Update logic
         update_count = 0
         pg_count = 0  # Counter for policy gradient inclusion
-        pg_interval = 200  # Interval for PG loss calculation (every 2 updates)
+        pg_interval = 2  # Interval for PG loss calculation (every 2 updates)
 
 
         ######-------------------------------------TRAINING --------------------------------------------#####
@@ -983,7 +1043,7 @@ def main(args, config):
             #         # d_loss.backward()
             # update_count += 1 # Increment the update count
 
-            if update_count % 100 == 0:
+            if update_count % 1 == 0:
                 total_g_loss.backward()
                 optimizer_g.step()
                 optimizer_g.zero_grad()  # Clear gradients after update
