@@ -20,93 +20,93 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
     # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # }
-       {   "combination" : "G2_kl_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-     {   "combination" : "G2_cos_kl_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-    {   "combination" : "G2_cos_kl_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-    {   "combination" : "G2_cos_kl_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-    # With MLE and K.D losses - Either cosine or KL ; ; Without PreTrain loss included in D loss
-    {   "combination" : "G1_G2_cos_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.50,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-    {   "combination" : "G1_G2_cos_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.25,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-    {   "combination" : "G1_G2_cos_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.25, "g_cosine_loss":0.75,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-    {   "combination" : "G1_G2_kl_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.00,"g_kl_loss":0.50}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    },
-    {   "combination" : "G1_G2_kl_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
-    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    }
-    # {   "combination" : "G1_G2_kl_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    # "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
-    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
-    # }, 
-    # # With K.D losses - Either cosine or KL ; With PreTrain loss included in D loss
-    # {   "combination" : "G2_cos_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
-    # },
-    #    {   "combination" : "G2_kl_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    #    {   "combination" : "G2_kl_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    #  {   "combination" : "G2_cos_kl_1_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    #  {   "combination" : "G2_cos_kl_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    # {   "combination" : "G2_cos_kl_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # {   "combination" : "G2_cos_kl_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    # {   "combination" : "G2_cos_kl_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # {   "combination" : "G2_cos_kl_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    # # With MLE and K.D losses - Either cosine or KL ; ; With PreTrain loss included in D loss
+    # # With MLE and K.D losses - Either cosine or KL ; ; Without PreTrain loss included in D loss
     # {   "combination" : "G1_G2_cos_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.50,"g_kl_loss":0.00}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    # {   "combination" : "G1_G2_cos_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # {   "combination" : "G1_G2_cos_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.25,"g_kl_loss":0.00}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    # {   "combination" : "G1_G2_cos_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # {   "combination" : "G1_G2_cos_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.25, "g_cosine_loss":0.75,"g_kl_loss":0.00}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    # {   "combination" : "G1_G2_kl_1_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # {   "combination" : "G1_G2_kl_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.00,"g_kl_loss":0.50}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # },
-    # {   "combination" : "G1_G2_kl_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # {   "combination" : "G1_G2_kl_2_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
-    # },
-    # {   "combination" : "G1_G2_kl_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    # "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
-    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
     # }
+    {   "combination" : "G1_G2_kl_3_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    }, 
+    # With K.D losses - Either cosine or KL ; With PreTrain loss included in D loss
+    {   "combination" : "G2_cos_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+       {   "combination" : "G2_kl_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.00,"g_kl_loss":1.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+     {   "combination" : "G2_cos_kl_1_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G2_cos_kl_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G2_cos_kl_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.0, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    # With MLE and K.D losses - Either cosine or KL ; ; With PreTrain loss included in D loss
+    {   "combination" : "G1_G2_cos_1_D_baseline_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.50,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_cos_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.25,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_cos_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.25, "g_cosine_loss":0.75,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_kl_1_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.00,"g_kl_loss":0.50}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_kl_2_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    },
+    {   "combination" : "G1_G2_kl_3_D_pretrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    "total_g_loss" : {"g_loss":0.75, "g_cosine_loss":0.00,"g_kl_loss":0.25}, 
+    "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    }
 ]
 
 def main(args, config):
@@ -174,8 +174,8 @@ def main(args, config):
     # checkpoint_path_tokenizer = "/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/best_generator_tokenizer_save_pretrained_at_1"
     # translations_generated_filename = "translated_french_by_MarianMT_FT_600sents.txt"
     
-    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_2')
-    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_2')
+    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_1')
+    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_1')
 
     # Load the entire model directly
     # generator2_checkpoint = torch.load(open(checkpoint_path_generator, "rb"), pickle_module=dill)
