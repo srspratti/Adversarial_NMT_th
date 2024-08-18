@@ -143,7 +143,7 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
     # "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} 
     # }
-
+#
 ]
 
 def main(args, config):
