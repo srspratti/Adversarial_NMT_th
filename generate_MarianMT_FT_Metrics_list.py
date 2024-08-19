@@ -133,7 +133,7 @@ g_and_d_loss_checkpoint_config =[
     {   "combination" : "G1_75_25_D_PreTrain_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
     "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.75} 
-    },
+    }
     ############################
     # {   "combination" : "G1_D_NoPreTrain_baseline_2_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
@@ -143,7 +143,6 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
     # "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} 
     # }
-#
 ]
 
 def main(args, config):
