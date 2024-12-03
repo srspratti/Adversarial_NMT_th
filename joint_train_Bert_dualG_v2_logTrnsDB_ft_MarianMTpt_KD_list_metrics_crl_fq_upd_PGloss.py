@@ -343,10 +343,10 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
     # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
     # }
-    { "combination" : "G_0_1_0_cos_kl_10_100_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
-    "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":1, "fake_loss":10, "fake_loss_pretrain":0.00} 
-    }
+    # { "combination" : "G_0_1_0_cos_kl_10_100_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":1, "fake_loss":10, "fake_loss_pretrain":0.00} 
+    # }
     # { "combination" : "G_0_0_1_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG_0001lr",
     # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.00,"g_kl_loss":1.00}, 
     # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
@@ -354,6 +354,14 @@ g_and_d_loss_checkpoint_config =[
     # { "combination" : "G_0_50_50_cos_kl_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_0PG_0001lr",
     # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
     # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
+    # }
+    { "combination" : "G_50_100_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
+    }
+    # { "combination" : "G_10_500_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":50.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
     # }
 ]
 
