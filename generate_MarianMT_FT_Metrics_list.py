@@ -122,18 +122,164 @@ g_and_d_loss_checkpoint_config =[
     # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} 
     # },
     # Combinations of above with different loss weights for fake_loss_pretrain
-    {   "combination" : "G1_75_25_D_PreTrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.25} 
-    },
-    {   "combination" : "G1_75_25_D_PreTrain_2_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.50} 
-    },
-    {   "combination" : "G1_75_25_D_PreTrain_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
-    "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.75} 
-    }
+    # {   "combination" : "G1_75_25_D_PreTrain_1_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.25} 
+    # },
+    # {   "combination" : "G1_75_25_D_PreTrain_2_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.50} 
+    # },
+    # {   "combination" : "G1_75_25_D_PreTrain_3_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.75} 
+    # }
+    #        {   "combination" : "G_0_25_75_cos_kl_75_25_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.75, "fake_loss":0.25, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_50_50_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_25_75_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.75, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_25_75_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.90, "fake_loss":0.10, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_1_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":1.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_0_1_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":1.00, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_0_0_1_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":1.00} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_20_60_20_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.20, "fake_loss":0.60, "fake_loss_pretrain":0.20} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_40_40_20_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.40, "fake_loss":0.40, "fake_loss_pretrain":0.20} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_40_20_40_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.40, "fake_loss":0.20, "fake_loss_pretrain":0.40} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_80_10_10_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.80, "fake_loss":0.10, "fake_loss_pretrain":0.10} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_10_80_10_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.80, "fake_loss_pretrain":0.10} 
+    # },
+    # {   "combination" : "G_0_25_75_cos_kl_10_10_80_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.10, "fake_loss_pretrain":0.80} 
+    # }
+    # Dec 1st - 2024
+    #      {   "combination" : "G_0_25_75_cos_kl_25_50_25_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # },
+    # {   "combination" : "G_0_50_50_cos_kl_25_50_25_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # },
+    # {   "combination" : "G_0_50_50_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_75_25_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # },
+    #     {   "combination" : "G_0_75_25_cos_kl_25_50_25_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # }
+    ## bs 80 
+    #       {   "combination" : "G_0_25_75_cos_kl_25_50_25_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.25,"g_kl_loss":0.75}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # },
+    # {   "combination" : "G_0_50_50_cos_kl_25_50_25_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # },
+    # {   "combination" : "G_0_50_50_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_0_75_25_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # },
+    #     {   "combination" : "G_0_75_25_cos_kl_25_50_25_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_80",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # }
+    # {   "combination" : "G_0_75_25_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # },
+    #     {   "combination" : "G_0_75_25_cos_kl_25_50_25_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.75,"g_kl_loss":0.25}, 
+    # "d_loss" : {"real_loss":0.25, "fake_loss":0.50, "fake_loss_pretrain":0.25} 
+    # }
+    #     {   "combination" : "G_1_0_0_cos_kl_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
+    # }
+    #         {   "combination" : "G_1_0_0_cos_kl_0_1_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":1.00, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_1_0_0_cos_kl_1_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":1.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
+    # },
+    # {   "combination" : "G_1_0_0_cos_kl_0_0_1_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":1.00} 
+    # }
+    # {   "combination" : "G_1_0_0_cos_kl_0_1_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":1.00, "fake_loss_pretrain":0.00} 
+    # }
+    # {   "combination" : "G_1_0_0_cos_kl_0_1_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG_0001lr",
+    # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":1.00, "fake_loss_pretrain":0.00} 
+    # }
+    #     { "combination" : "G_0_50_50_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_50_50_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":0.50,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_25_75_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.25, "g_cosine_loss":0.75,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_10_90_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":0.90,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
     ############################
     # {   "combination" : "G1_D_NoPreTrain_baseline_2_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd",
     # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
@@ -143,7 +289,48 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":1.00, "g_cosine_loss":0.00,"g_kl_loss":0.00}, 
     # "d_loss" : {"real_loss":0.50, "fake_loss":0.50, "fake_loss_pretrain":0.00} 
     # }
+    # { "combination" : "G_10_90_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":0.90,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_25_75_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.25, "g_cosine_loss":0.75,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_10_90_0_cos_kl_10_60_40_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.05, "g_cosine_loss":0.95,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.60, "fake_loss_pretrain":0.40} 
+    # }
+    #        { "combination" : "G_10_90_0_cos_kl_10_90_0_D_5000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":0.90,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
+    #         { "combination" : "G_10_90_0_cos_kl_10_90_0_D_5000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":0.90,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.10, "fake_loss":0.90, "fake_loss_pretrain":0.00} 
+    # }
+    #                 { "combination" : "G_0_1_0_cos_kl_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_0PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
+    # },
+    #         { "combination" : "G_0_0_1_cos_kl_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_0PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.00,"g_kl_loss":1.00}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
+    # },
+    #                 { "combination" : "G_0_50_50_cos_kl_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_0PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
+    # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_0_1_0_cos_kl_10_100_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10PG_0001lr",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":1, "fake_loss":10, "fake_loss_pretrain":0.00} 
+    # }
+    { "combination" : "G_0_1_0_cos_kl_10_100_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":1.00,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":1, "fake_loss":10, "fake_loss_pretrain":0.00} 
+    }
 ]
+
 
 def main(args, config):
 
