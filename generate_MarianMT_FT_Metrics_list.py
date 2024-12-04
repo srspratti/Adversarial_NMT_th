@@ -333,9 +333,53 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
     # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
     # }
-    { "combination" : "G_10_500_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
-    "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":50.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
+    # { "combination" : "G_10_500_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":50.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_50_100_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
+    # }
+    #     { "combination" : "G_50_100_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
+    # }
+    #      { "combination" : "G_50_100_0_cos_kl_10_70_20_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.20} 
+    # },
+    #         { "combination" : "G_50_100_0_cos_kl_10_100_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":10.00, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_50_100_0_cos_kl_10_100_100_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":10, "fake_loss_pretrain":10} 
+    # }
+    # { "combination" : "G_0.5_10_0_cos_kl_0.1_1_1_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":1, "fake_loss_pretrain":1} 
+    # }
+    #     { "combination" : "G_0.5_10_0_cos_kl_0.1_1_1_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":1, "fake_loss_pretrain":1} 
+    # }
+    # { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.2} 
+    # }
+    # { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_5000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.2} 
+    # }
+    # { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_2000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.2} 
+    # }
+    { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.5} 
     }
 ]
 
@@ -405,8 +449,8 @@ def main(args, config):
     # checkpoint_path_tokenizer = "/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/best_generator_tokenizer_save_pretrained_at_1"
     # translations_generated_filename = "translated_french_by_MarianMT_FT_600sents.txt"
     
-    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_1')
-    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_1')
+    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_5')
+    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_5')
 
     # Load the entire model directly
     # generator2_checkpoint = torch.load(open(checkpoint_path_generator, "rb"), pickle_module=dill)

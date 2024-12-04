@@ -33,6 +33,7 @@ from fairseq.data import Dictionary
 import re
 import subprocess
 import os
+from datetime import datetime
 
 # Importing Generator and Discriminator class methods
 # from generator_tf_bert import TransformerModel_bert
@@ -40,6 +41,30 @@ from generator_tf_bert_t5 import TransformerModel_t5
 from discriminator_cnn_bert import Discriminator_cnn_bert
 
 torch.cuda.empty_cache()
+
+# Generate a random seed
+seed = random.randint(0, 999999)
+
+# Set the seed for reproducibility
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
+# Dynamically generate a filename with timestamp
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # Format: YYYYMMDD_HHMMSS
+
+pwd = os.getcwd()
+if not os.path.exists(os.path.join(pwd, "checkpoints", "bert_dualG")):
+    os.makedirs(os.path.join(pwd, "checkpoints", "bert_dualG"))
+
+seed_file_name = os.path.join(pwd, "checkpoints", "bert_dualG")+f"seed_{timestamp}.txt"
+
+# Save the initial seed to the file
+with open(seed_file_name, "w") as seed_file:
+    seed_file.write(f"Generated Seed: {seed}\n")
+    seed_file.write("Configurations run:\n")  # Header for configurations
+
 
 # CUDA multiple-GPU configuration
 
@@ -355,14 +380,50 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":0.50,"g_kl_loss":0.50}, 
     # "d_loss" : {"real_loss":0.00, "fake_loss":0.00, "fake_loss_pretrain":0.00} 
     # }
-    { "combination" : "G_50_100_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
-    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
-    }
+    # { "combination" : "G_50_100_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
+    # }
     # { "combination" : "G_10_500_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_100PG_00001lr",
     # "total_g_loss" : {"g_loss":0.10, "g_cosine_loss":50.00,"g_kl_loss":0.00}, 
     # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
     # }
+    # { "combination" : "G_50_100_0_cos_kl_10_90_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.9, "fake_loss_pretrain":0.00} 
+    # }
+    #     { "combination" : "G_50_100_0_cos_kl_10_70_20_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.20} 
+    # },
+    #         { "combination" : "G_50_100_0_cos_kl_10_100_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":10.00, "fake_loss_pretrain":0.00} 
+    # }
+    # { "combination" : "G_50_100_0_cos_kl_10_100_100_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":10, "fake_loss_pretrain":10} 
+    # }
+    # { "combination" : "G_0.5_10_0_cos_kl_0.1_1_1_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":1, "fake_loss_pretrain":1} 
+    # }
+    #    { "combination" : "G_0.5_10_0_cos_kl_0.1_1_1_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_10000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.2} 
+    # }
+    # { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_5000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.2} 
+    # }
+    #     { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_2000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.2} 
+    # }
+          { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.5} 
+    }
 ]
 
 def main(args, config):
@@ -1203,7 +1264,7 @@ def main(args, config):
                 print("type of rewards ", type(rewards))
                 print("rewards shape ", rewards.shape)
                 pg_loss = policy_gradient_loss(discriminator_cnn, src_sentences, fake_tgt_sentences, rewards)
-                total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss + 100* pg_loss  # PG loss included
+                total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss + 2000* pg_loss  # PG loss included
                 # pg_count += 1  # Increment PG counter
             else:
                 total_g_loss = config['total_g_loss']['g_loss']*g_loss + config['total_g_loss']['g_cosine_loss']*g_cosine_loss + config['total_g_loss']['g_kl_loss']*g_kl_loss
@@ -1850,5 +1911,10 @@ if __name__ == "__main__":
         logging.warning(f"unknown arguments: {parser.parse_known_args()[1]}")
     for config in tqdm(g_and_d_loss_checkpoint_config, desc="Running models with diff. g_loss and d_loss"):
         print(" running config ", config["combination"])
+        
+        # Log the current configuration to the seed file
+        with open(seed_file_name, "a") as seed_file:
+            seed_file.write(f"Running config: {config['combination']}\n")
+        
         main(options, config)
 
