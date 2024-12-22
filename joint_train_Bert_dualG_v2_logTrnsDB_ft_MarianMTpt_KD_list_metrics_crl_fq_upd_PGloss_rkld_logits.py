@@ -430,7 +430,11 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":10}, 
     # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
     # }
-    { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    # }
+    { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_onlylm_lyr_frz_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
     "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
     "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
     }
@@ -1072,12 +1076,13 @@ def main(args, config):
         # writer = SummaryWriter()
         # # generator2_train.to_text_file("generator2_train.txt")
         # for name, param in generator2_train.model.parameters():
-        for name, param in generator2_train.named_parameters():
-            param.requires_grad = False
+        
+        # for name, param in generator2_train.named_parameters():
+        #     param.requires_grad = False
             
-            # Enable requires_grad only for bias terms
-            if 'bias' in name:
-                param.requires_grad = True
+        #     # Enable requires_grad only for bias terms
+        #     if 'bias' in name:
+        #         param.requires_grad = True
 
         # # Freeze early encoder layers (for example, the first 2 layers)
         # for layer in generator2_train.model.encoder.layers[:1]:
