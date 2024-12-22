@@ -14,7 +14,8 @@ import numpy as np
 import torch
 seed = 1234
 # import parser
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 parser = argparse.ArgumentParser(description="Adversarial-NMT-BERT")
 
@@ -377,9 +378,25 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
     # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.2} 
     # }
-    { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
-    "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
-    "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.5} 
+    # { "combination" : "G_0.5_10_0_cos_kl_0.1_0.7_0.2_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_1000PG_00001lr",
+    # "total_g_loss" : {"g_loss":0.50, "g_cosine_loss":10.00,"g_kl_loss":0.00}, 
+    # "d_loss" : {"real_loss":0.1, "fake_loss":0.7, "fake_loss_pretrain":0.5} 
+    # }
+    #     { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_crl_upc_every_1_updates_PGloss_1_every_2_upd_bs_100_0PG_1rkld_logits_00001lr",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":1}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    # }
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_PGloss_1_2_upd_bs_100_0PG_1rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":1}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    # }
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_PGloss_1_2_upd_bs_40_0PG_1rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":10}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    # }
+    { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_only_biasTermsUpd_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
     }
 ]
 
@@ -449,8 +466,8 @@ def main(args, config):
     # checkpoint_path_tokenizer = "/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/best_generator_tokenizer_save_pretrained_at_1"
     # translations_generated_filename = "translated_french_by_MarianMT_FT_600sents.txt"
     
-    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_5')
-    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_5')
+    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_3')
+    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_3')
 
     # Load the entire model directly
     # generator2_checkpoint = torch.load(open(checkpoint_path_generator, "rb"), pickle_module=dill)
