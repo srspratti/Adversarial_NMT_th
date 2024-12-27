@@ -398,9 +398,87 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
     # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
     # }
-    { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_onlylm_lyr_frz_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_onlylm_lyr_frz_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    # }
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_LM_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": False},
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
+    # }
+    #      { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # }
+    ###
+    #    { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":10000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": True}, 
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "C : This is the combination with ALL layers updating and LM layer updating"}
+    # }
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": True}, 
+    # "Dataset":{"train_size":10000},
+    # "Mscll":{"Comments": "C : This is the combination with ALL layers updating and LM layer updating"}
+    # }
+    #     { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": True}, 
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "C : This is the combination with ALL layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": True}, 
+    # "Dataset":{"train_size":2000},
+    # "Mscll":{"Comments": "C : This is the combination with ALL layers updating and LM layer updating"}
+    # },
+    #   { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":2000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_LM_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": False},
+    # "Dataset":{"train_size":2000},
+    # "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
+    # }
+        { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
     "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
-    "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    "gradient_update": {"BIAS": True, "LM": False},
+    "Dataset":{"train_size":1000},
+    "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
     }
 ]
 
@@ -462,16 +540,16 @@ def main(args, config):
     # hlepor_metric = evaluate.load("hlepor")
     # bertscore_metric = evaluate.load("bertscore")
 
-    if not os.path.exists(os.path.join(getpwd, "checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'])):
-        os.makedirs(os.path.join(getpwd, "checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination']))
+    if not os.path.exists(os.path.join(getpwd, "checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'],str(config['Dataset']['train_size']))):
+        os.makedirs(os.path.join(getpwd, "checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'],str(config['Dataset']['train_size'])))
         
     
     # checkpoint_path_generator = '/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/best_generator_at_1.pt'
     # checkpoint_path_tokenizer = "/home/paperspace/google_drive_v1/Research_Thesis/2024/git_repo/checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/best_generator_tokenizer_save_pretrained_at_1"
     # translations_generated_filename = "translated_french_by_MarianMT_FT_600sents.txt"
     
-    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_3')
-    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_" + config['combination'] +'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_3')
+    checkpoint_path_generator = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_" + config['combination'] +"_"+str(config['Dataset']['train_size'])+'_save_open_direct_pretrained'+'/train_checkpoint_generator_save_pretrained_at_3')
+    checkpoint_path_tokenizer = os.path.join(getpwd, "checkpoints", "bert_dualG", "wmt14_en_fr_1mil_" + config['combination'] +"_"+str(config['Dataset']['train_size'])+'_save_open_direct_pretrained'+'/train_checkpoint_tokenizer_save_pretrained_at_3')
 
     # Load the entire model directly
     # generator2_checkpoint = torch.load(open(checkpoint_path_generator, "rb"), pickle_module=dill)
@@ -535,7 +613,7 @@ def main(args, config):
     # Save the translations to a text file - translations
     import os
     # os.path.join(getpwd, "checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'])
-    file_path = os.path.join(os.getcwd(), "checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'],"translated_batch_"+config['combination']+".txt")
+    file_path = os.path.join(os.getcwd(), "checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'],str(config['Dataset']['train_size']),"translated_batch_"+config['combination']+".txt")
     with open(file_path, "w") as file:
         for translation in translations:
             file.write(translation + "\n")
@@ -544,11 +622,23 @@ def main(args, config):
     # result_batch = metric.compute(predictions=translations, references=labels)
     # result_batch = {"bleu": result_batch["score"]}
     # result_batch
+    
+    #     { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": True}, 
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "C : This is the combination with ALL layers updating and LM layer updating"}
+    # }
+    
 
     results = {
         "combination": config["combination"],
         "g_loss": config["total_g_loss"],
         "d_loss": config["d_loss"],
+        "gradient_update": config["gradient_update"],
+        "Dataset": config["Dataset"],
+        "Mscll": config["Mscll"],
         "bleu": bleu_metric.compute(predictions=translations, references=labels)["score"],
         "meteor": meteor_metric.compute(predictions=translations, references=labels)["meteor"],
         "rouge": rouge_metric.compute(predictions=translations, references=labels),
@@ -562,7 +652,7 @@ def main(args, config):
     }
 
 
-    file_path_en = os.path.join(getpwd,"checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'] ,"original_english_"+config['combination']+".txt")
+    file_path_en = os.path.join(getpwd,"checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'] ,str(config['Dataset']['train_size']),"original_english_"+config['combination']+".txt")
     # file_path = "/path/to/translations.txt"
 
     # Open the file in write mode
@@ -572,7 +662,7 @@ def main(args, config):
             file.write(text + "\n")
 
     
-    file_path_fr = os.path.join(getpwd,"checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'] ,"original_french_"+config['combination']+".txt")
+    file_path_fr = os.path.join(getpwd,"checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'] ,str(config['Dataset']['train_size']),"original_french_"+config['combination']+".txt")
     # file_path = "/path/to/translations.txt"
 
     # Open the file in write mode
@@ -584,11 +674,14 @@ def main(args, config):
 
 
      # Save results to a file
-    results_file_path = os.path.join(getpwd,"checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'] ,"results_" + config['combination'] + ".txt")
+    results_file_path = os.path.join(getpwd,"checkpoints", "bert_dualG", "g_and_d_loss_checkpoint_config_metrics_translations_output",config['combination'] ,str(config['Dataset']['train_size']),"results_" + config['combination'] + ".txt")
     with open(results_file_path, "w") as f:
         f.write("Combination: " + results["combination"] + "\n")
         f.write("G Loss: " + str(results["g_loss"]) + "\n")
         f.write("D Loss: " + str(results["d_loss"]) + "\n")
+        f.write("Gradient Update: " + str(results["gradient_update"]) + "\n")
+        f.write("Dataset: " + str(results["Dataset"]) + "\n")
+        f.write("Miscellaneous: " + str(results["Mscll"]) + "\n")
         f.write("BLEU Score: " + str(results["bleu"]) + "\n")
         f.write("METEOR Score: " + str(results["meteor"]) + "\n")
         f.write("ROUGE Scores: " + str(results["rouge"]) + "\n")

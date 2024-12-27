@@ -43,7 +43,8 @@ from discriminator_cnn_bert import Discriminator_cnn_bert
 torch.cuda.empty_cache()
 
 # Generate a random seed
-seed = random.randint(0, 999999)
+# seed = random.randint(0, 999999)
+seed = 88667
 
 # Set the seed for reproducibility
 random.seed(seed)
@@ -434,9 +435,86 @@ g_and_d_loss_checkpoint_config =[
     # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
     # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
     # }
-    { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_1000_to_1_mil_onlylm_lyr_frz_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_2000_to_1_mil_onlylm_lyr_frz_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    # }
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_LM_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": False},
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
+    # },
+    #  { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":10000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # },
+    #   { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_F_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": False}, 
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "B : This is the combination with ALL layers updating and LM layer freezed"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": True}, 
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "C : This is the combination with ALL layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": True}, 
+    # "Dataset":{"train_size":2000},
+    # "Mscll":{"Comments": "C : This is the combination with ALL layers updating and LM layer updating"}
+    # },
+    #   { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": True},
+    # "Dataset":{"train_size":2000},
+    # "Mscll":{"Comments": "A : This is the combination with Only Bias layers updating and LM layer updating"}
+    # },
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_LM_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": False},
+    # "Dataset":{"train_size":2000},
+    # "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
+    # }
+    #     { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_LM_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": True, "LM": False},
+    # "Dataset":{"train_size":2000},
+    # "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
+    # }
+    { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5",
     "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
-    "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0} 
+    "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    "gradient_update": {"BIAS": True, "LM": False},
+    "Dataset":{"train_size":1000},
+    "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
     }
 ]
 
@@ -490,7 +568,8 @@ def main(args, config):
     # Load 50k rows of the train dataset
     # train_dataset = dataset["train"].select(range(1000000))
     # train_dataset = dataset["train"].select(range(100000))
-    train_dataset = dataset["train"].select(range(1000))
+    # train_dataset = dataset["train"].select(range(1000))
+    train_dataset = dataset["train"].select(range(config['Dataset']['train_size']))
 
     # Keep the full valid and test datasets
     valid_dataset = dataset["validation"]
@@ -707,10 +786,11 @@ def main(args, config):
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2")
     # checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_spcChars__save_pretrained_v2/"
-
-    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained"):
-        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained")
-    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_debug_Normalkd_comb_"+config['combination']+"_save_open_direct_pretrained/"
+    
+    # G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_F_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5
+    if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_"+config['combination']+"_"+str(config['Dataset']['train_size'])+"_save_open_direct_pretrained"):
+        os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_"+config['combination']+"_"+str(config['Dataset']['train_size'])+"_save_open_direct_pretrained")
+    checkpoints_path = "checkpoints/bert_dualG/wmt14_en_fr_1mil_"+config['combination']+"_"+str(config['Dataset']['train_size'])+"_save_open_direct_pretrained/"
 
     # if not os.path.exists("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm"):
     #     os.makedirs("checkpoints/bert_dualG/wmt14_en_fr_1mil_pg_kd_loss_MarianMT_unfreezeonlylmlayer_600sents_dedbug_gloss_nonkd_save_open_direct_pretrained_onlygmlm")
@@ -1077,12 +1157,14 @@ def main(args, config):
         # # generator2_train.to_text_file("generator2_train.txt")
         # for name, param in generator2_train.model.parameters():
         
-        # for name, param in generator2_train.named_parameters():
-        #     param.requires_grad = False
+        
+        ############################# BIAS LAYERS ########################################
+        for name, param in generator2_train.named_parameters():
+            param.requires_grad = False
             
-        #     # Enable requires_grad only for bias terms
-        #     if 'bias' in name:
-        #         param.requires_grad = True
+            # Enable requires_grad only for bias terms
+            if 'bias' in name:
+                param.requires_grad = config['gradient_update']['BIAS'] #True
 
         # # Freeze early encoder layers (for example, the first 2 layers)
         # for layer in generator2_train.model.encoder.layers[:1]:
@@ -1095,9 +1177,9 @@ def main(args, config):
         #         param.requires_grad = True
 
 
-        # Unfreeze the lm_head
+        ########################### LM LAYERS ########################################
         for param in generator2_train.lm_head.parameters():
-            param.requires_grad = False
+            param.requires_grad = config['gradient_update']['LM'] #False
         
         # Update logic
         update_count = 0
@@ -2034,6 +2116,12 @@ if __name__ == "__main__":
         # Log the current configuration to the seed file
         with open(seed_file_name, "a") as seed_file:
             seed_file.write(f"Running config: {config['combination']}\n")
+            seed_file.write("G Loss: " + str(config["total_g_loss"]) + "\n")
+            seed_file.write("D Loss: " + str(config["d_loss"]) + "\n")
+            seed_file.write("Gradient Update: " + str(config["gradient_update"]) + "\n")
+            seed_file.write("Dataset: " + str(config["Dataset"]) + "\n")
+            seed_file.write("Miscellaneous: " + str(config["Mscll"]) + "\n")
+            seed_file.write(" ************** end of config ************** \n")
         
         main(options, config)
 
