@@ -22,7 +22,7 @@ import random
 import sys
 import numpy as np
 from collections import OrderedDict
-import data
+# import data
 import utils
 from meters import AverageMeter
 from PGLoss import PGLoss
@@ -33,6 +33,9 @@ import os
 from datetime import datetime
 from generator_tf_bert_t5 import TransformerModel_t5
 from discriminator_cnn_bert import Discriminator_cnn_bert
+
+from peft import get_peft_model, LoraConfig, TaskType
+# from t3vis.monitor import TrainingMonitor  # T3-Vis Monitoring
 
 torch.cuda.empty_cache()
 
@@ -48,6 +51,9 @@ torch.cuda.manual_seed_all(seed)
 
 # Dynamically generate a filename with timestamp
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # Format: YYYYMMDD_HHMMSS
+
+# T3-Vis Training Monitor
+# monitor = TrainingMonitor(log_interval=100, output_dir="./t3vis_logs")
 
 pwd = os.getcwd()
 if not os.path.exists(os.path.join(pwd, "checkpoints", "bert_dualG")):
@@ -81,7 +87,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 torch.cuda.device_count() # result is 1, using second GPU"""
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 #### Logging ####
 
@@ -510,6 +516,13 @@ g_and_d_loss_checkpoint_config =[
     "Dataset":{"train_size":1000},
     "Mscll":{"Comments": "Baseline : This is the combination with Only Bias layers updating and LM layer freezed"}
     }
+    # { "combination" : "G_0_0_0_0_1_cos_kl_pg_rkldlgts_0_0_0_D_x_to_1_mil_Bias_T_LM_T_PGloss_1_2_upd_bs_40_0PG_100rkld_lgts_00001lr_ep_5_peft",
+    # "total_g_loss" : {"g_loss":0.00, "g_cosine_loss":00.00,"g_kl_loss":0.00, "g_pg_loss":0, "g_rkld_logits":100}, 
+    # "d_loss" : {"real_loss":0.0, "fake_loss":0.0, "fake_loss_pretrain":0.0},
+    # "gradient_update": {"BIAS": False, "LM": False, "LORA":True},
+    # "Dataset":{"train_size":1000},
+    # "Mscll":{"Comments": "LORA Baseline  : This is the combination with Bias layers not updating and LM layer freezed, with LORA updating"}
+    # }
 ]
 
 def main(args, config):
@@ -689,7 +702,7 @@ def main(args, config):
 
     from transformers import AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, Seq2SeqTrainer
     generator2_train = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
-
+    
     #### --------------------Loading D - Discriminator in Train() in GAN --------------------#####
 
     discriminator_cnn = Discriminator_cnn_bert(args, use_cuda=use_cuda)
@@ -901,6 +914,25 @@ def main(args, config):
             
         return reverse_kld_tensor
 
+    """
+    ### -- Adding LORA and Adapter layers -------------- ####
+    
+    # LoRA configuration
+    from peft import get_peft_model, LoraConfig, TaskType
+    from peft import LoraConfig
+
+    lora_config = LoraConfig(
+        task_type="SEQ_2_SEQ_LM",  # This task type aligns with MarianMTModel
+        r=8,  # LoRA rank
+        lora_alpha=16,  # Scaling factor
+        lora_dropout=0.1,  # Dropout probability
+        target_modules=[
+            "self_attn.k_proj", "self_attn.q_proj", "self_attn.v_proj",  # Encoder self-attention
+            "encoder_attn.k_proj", "encoder_attn.q_proj", "encoder_attn.v_proj"  # Decoder encoder-attention
+        ]
+    )
+    """
+    
     for epoch_i in tqdm(range(1, args.epochs + 1)):
         logging.info("At {0}-th epoch.".format(epoch_i))
 
@@ -934,7 +966,10 @@ def main(args, config):
         # Freeze embedding layers 
         #Access the underlying MarianMT model from DataParallel wrapper if necessary
         generator2_train = generator2_train.module if hasattr(generator2_train, 'module') else generator2_train
-
+        """
+        generator2_train = get_peft_model(generator2_train, lora_config)
+        """
+        
         """
         # Freeze embedding layers
         for param in generator2_train.model.shared.parameters():
@@ -979,6 +1014,9 @@ def main(args, config):
         for name, param in generator2_train.named_parameters():
             param.requires_grad = False
             
+            # if "lora_" in name:
+            #     param.requires_grad = config['gradient_update']['LORA']
+            
             # Enable requires_grad only for bias terms
             if 'bias' in name:
                 param.requires_grad = config['gradient_update']['BIAS'] #True
@@ -1003,6 +1041,10 @@ def main(args, config):
         pg_count = 0  # Counter for policy gradient inclusion
         pg_interval = 2  # Interval for PG loss calculation (every 2 updates)
 
+        """
+        if torch.cuda.device_count() > 1:
+            generator2_train = torch.nn.DataParallel(generator2_train).cuda()
+        """
 
         ######-------------------------------------TRAINING --------------------------------------------#####
         for i, sample in enumerate(train_dataloader):

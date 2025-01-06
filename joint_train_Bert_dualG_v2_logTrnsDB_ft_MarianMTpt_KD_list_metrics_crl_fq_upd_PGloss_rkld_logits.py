@@ -23,7 +23,7 @@ import sys
 import numpy as np
 from collections import OrderedDict
 
-import data
+# import data
 import utils
 from meters import AverageMeter
 from PGLoss import PGLoss
